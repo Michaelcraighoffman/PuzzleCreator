@@ -12,9 +12,7 @@ public class PView extends JFrame {
 
 	private PController m_controller;
 	
-	public PView(PController controller) {
-//        super("Crossword");
-		
+	public PView(PController controller) {		
 		m_controller = controller;
 		
         //Create and set up the window.
