@@ -36,19 +36,28 @@ package crossword;
 import javax.swing.*;        
 
 public class MainWindow {
-    /**
-     * Create the GUI and show it.  For thread safety,
-     * this method should be invoked from the
-     * event-dispatching thread.
-     */
-    private static void createAndShowGUI() {
+	
+    
+	/**
+	 * 
+	 * 
+	 */
+    private static void initJFrame() {
         //Create and set up the window.
-        JFrame frame = new JFrame("HelloWorldSwing");
+        JFrame frame = new JFrame("Crossword");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         //Add the ubiquitous "Hello World" label.
-        JLabel label = new JLabel("Hello World");
-        frame.getContentPane().add(label);
+        JLabel PuzzlePlaceholder = new JLabel("Puzzle PlaceHolder");
+        JLabel WordlistPlaceholder = new JLabel("Wordlist PlaceHolder");
+        JLabel ButtonsPlaceholder = new JLabel("Buttons PlaceHolder");
+        //frame.getContentPane().add(label);
+        
+        JSplitPane rightSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT, WordlistPlaceholder, ButtonsPlaceholder);
+        
+        JSplitPane mainSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, PuzzlePlaceholder, rightSplit);
+        
+        frame.getContentPane().add(mainSplit);
 
         //Display the window.
         frame.pack();
@@ -60,7 +69,7 @@ public class MainWindow {
         //creating and showing this application's GUI.
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                createAndShowGUI();
+            	initJFrame();
             }
         });
     }
