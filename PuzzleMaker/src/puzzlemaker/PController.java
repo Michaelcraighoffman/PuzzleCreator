@@ -1,5 +1,6 @@
 package puzzlemaker;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -7,6 +8,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -35,7 +37,7 @@ public class PController implements KeyListener {
 	
 	public PController() {
 		initMenuBar();
-		initPuzzlePanel();
+		//initPuzzlePanel();
 		initWordPanel();
 		initPuzzleButtonPanel();
 		
@@ -124,8 +126,25 @@ public class PController implements KeyListener {
 		
 	}
 	
-	private void initPuzzlePanel() {
-		
+	/*
+	 * Author: Alex Shisler
+	 * initPuzzelPanel
+	 * Displays a 2D Grid of char holding objects using jtextfields(or jlabels) 
+	 */
+	private JPanel initPuzzlePanel(ArrayList<ArrayList<Character>> grid) {
+
+		JPanel contentPane = new JPanel(new GridLayout(8, 8));
+		contentPane.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+		JLabel text;
+		for(int i = 0; i < grid.size(); i++)
+			for(int x = 0; x < grid.get(i).size(); x++)
+			{
+				text = new JLabel(Character.toString(grid.get(i).get(x)), JLabel.CENTER);
+				text.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+				contentPane.add(text);
+			}
+		return contentPane;
+	
 	}
 
 	private void initWordPanel() {

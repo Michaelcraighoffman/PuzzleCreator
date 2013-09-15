@@ -1,12 +1,7 @@
 package puzzlemaker;
 
-import java.util.ArrayList;
-
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-
 import puzzlemaker.gui.PView;
-import puzzlemaker.puzzles.*;
+import puzzlemaker.puzzles.Puzzle;
 
 public class PuzzleMaker {
 
