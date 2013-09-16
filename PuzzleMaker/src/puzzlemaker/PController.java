@@ -163,8 +163,8 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		JButton btnWordSearch = new JButton(m_wordSearchIcon);
 		JButton btnCrossWord = new JButton(m_crossWordIcon);
 		
-		btnWordSearch.addComponentListener(this);
-		btnCrossWord.addComponentListener(this);
+//		btnWordSearch.addComponentListener(this);
+//		btnCrossWord.addComponentListener(this);
 		
 		btnWordSearch.addMouseListener(this);
 		btnCrossWord.addMouseListener(this);
