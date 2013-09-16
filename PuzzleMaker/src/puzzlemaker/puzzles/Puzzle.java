@@ -1,31 +1,54 @@
 package puzzlemaker.puzzles;
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.util.ArrayList;
+
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
 
 import puzzlemaker.gui.CharacterField;
 
 public abstract class Puzzle {
 	
-	private ArrayList<String> m_wordList;
-	private ArrayList<ArrayList<CharacterField>> m_grid;
+	protected ArrayList<ArrayList<CharacterField>> m_grid;
+	protected JPanel m_displayPanel;
 	
-	public Puzzle(int width, int height) {
-		m_grid = new ArrayList<ArrayList<CharacterField>>(width);
+//	public Puzzle() {
+//	}
+	
+	protected void instantiatePuzzle(int minSize) {
+		m_grid = new ArrayList<ArrayList<CharacterField>>(minSize);
+		m_displayPanel = new JPanel();
+		// This line border still doesn't "hug" the characters..
+		m_displayPanel.setBorder(BorderFactory.createLineBorder(Color.black, 1));
+		m_displayPanel.setLayout(new GridLayout(minSize, minSize));
+		m_displayPanel.setMinimumSize(new Dimension(minSize * 30, minSize * 30));
+		m_displayPanel.setPreferredSize(new Dimension(minSize * 30, minSize * 30));
+
+		ArrayList<CharacterField> tmpColumn;
+		CharacterField tmpField;
 		
-		for (ArrayList<CharacterField> column : m_grid) {
-			column = new ArrayList<CharacterField>(height);
-			column.add(new CharacterField());
+		for (int i = 0; i < minSize; i++) {
+			tmpColumn = new ArrayList<CharacterField>(minSize);
+			for (int j = 0; j < minSize; j++) {
+				tmpField = new CharacterField((char)(j+i));
+				tmpColumn.add(tmpField);
+				
+				m_displayPanel.add(tmpField);
+
+			}
+			m_grid.add(tmpColumn);
 		}
 	}
 	
-	public void addWord(String word) {
-		m_wordList.add(word);
+	public int getSize() {
+		return m_grid.size();
 	}
 	
-	public void removeWord(String word) {
-		if (!m_wordList.remove(word)) {
-			System.err.println("removeWord returned false for: \"" + word + "\" (word not found)");
-		}
+	public JPanel getDisplayComponent() {
+		return m_displayPanel;
 	}
 	
 	public void clearGrid() {
@@ -39,10 +62,31 @@ public abstract class Puzzle {
 	/**
 	 * Do something like clear(), generate()
 	 */
-	public abstract void randomize();
+	public abstract void generate(String[] wordList);
 	
 	public abstract void showSolution();
 	
 	public abstract void hideSolution();
 	
+	@Override
+	public String toString() {
+		String out = "";
+		String append = "";
+		
+		for (int i = 0; i < m_grid.size(); i++) {
+			for (int j = 0; j < m_grid.get(0).size(); j++) {
+				append = m_grid.get(i).get(j).getText();
+				if (append.length() == 0) {
+					out += "  ";
+				}
+				else {
+					out = out + append + " ";
+				}
+			}
+			
+			out = out + "\r";
+		}
+		
+		return out;
+	}
 }

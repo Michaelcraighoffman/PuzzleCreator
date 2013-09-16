@@ -2,12 +2,12 @@ package puzzlemaker.puzzles;
 
 public class CrossWordPuzzle extends Puzzle {
 
-	public CrossWordPuzzle(int width, int height) {
-		super(width, height);
+	public CrossWordPuzzle() {
+		super();
 	}
 
 	@Override
-	public void randomize() {
+	public void generate(String[] wordList) {
 		
 	}
 
@@ -20,5 +20,7 @@ public class CrossWordPuzzle extends Puzzle {
 	public void hideSolution() {
 		
 	}
+
+
 
 }

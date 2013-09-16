@@ -5,13 +5,13 @@ import javax.swing.JTextField;
 public class CharacterField extends JTextField {
 	private static final long serialVersionUID = 1L;
 	
-	public CharacterField() {
-		super("W", 1);
-		this.setSize(20, 20);
+	public CharacterField(char chr) {
+		super (Character.toString(Character.toUpperCase(chr)), 1);
+		this.setHorizontalAlignment(JTextField.CENTER);
 	}
 	
-	/**
-	 * Enforce only a single character being entered.
-	 */
+	public void setText(char chr) {
+		this.setText(Character.toString(chr));
+	}
 	
 }
