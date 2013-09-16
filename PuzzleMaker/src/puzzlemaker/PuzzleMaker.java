@@ -1,18 +1,30 @@
 package puzzlemaker;
 
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+
 import puzzlemaker.gui.PView;
-import puzzlemaker.puzzles.Puzzle;
 
 public class PuzzleMaker {
-
-	private Puzzle m_puzzle;
 	
 	public static void main(String[] args) {
-		 PController controller = new PController();
+		// Set the look and feel of the program to the OS defaults.
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+		}
+				
+		PController controller = new PController();
 		 
-		 PView mainWindow = new PView(controller);
-		 mainWindow.setSize(640, 640);
-		 mainWindow.setVisible(true);
-
+		PView mainWindow = new PView(controller);
+		mainWindow.setSize(640, 640);
+		mainWindow.setVisible(true);
 	}
 }

@@ -1,15 +1,22 @@
 package puzzlemaker;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -19,28 +26,40 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 
-import puzzlemaker.gui.PView;
-
-public class PController implements KeyListener {
-
-	private PView m_view;
-	
+public class PController implements KeyListener, ComponentListener {
+	// Puzzle grid.
 	/**
-	 * Top-level words container. Includes word list and word entry field.
+	 * Contains {@code m_puzzleGrid}'s {@code JLabel}s.
+	 */
+	private JPanel m_puzzlePanel;
+	private ArrayList<ArrayList<JLabel>> m_puzzleGrid;
+	
+	// Word list.
+	/**
+	 * Top-level words container. Includes {@code m_wordListPanel}, {@code m_wordEntryField}, and {@code m_puzzleButtonPanel}.
 	 */
 	private JPanel m_wordsPanel;
-	
-	private ArrayList<JLabel> m_displayedWords;
-	private JPanel m_displayedWordsPanel;
+	/**
+	 * Contains one {@link JLabel} for each currently entered word.
+	 */
+	private JPanel m_wordListPanel;
 	private JTextField m_wordEntryField;
-	private JMenuBar menuBar;
+	/**
+	 * Belongs to {@code m_wordsPanel}.<br>
+	 * Contains one button for each type of puzzle (e.g.: word search, crossword, etc.).
+	 */
+	private JPanel m_puzzleButtonPanel;
+	private ImageIcon m_wordSearchIcon;
+	private ImageIcon m_crossWordIcon;
+	
+	// Menu bar.
+	private JMenuBar m_menuBar;
 	
 	public PController() {
 		initMenuBar();
-		//initPuzzlePanel();
+		initPuzzlePanel(8, 8);
 		initWordPanel();
 		initPuzzleButtonPanel();
-		
 	}
 
 	private void initMenuBar() {
@@ -48,15 +67,15 @@ public class PController implements KeyListener {
 		JMenuItem menuItem;
 		JRadioButtonMenuItem rbMenuItem;
 		
-		menuBar = new JMenuBar();
+		m_menuBar = new JMenuBar();
 		
-		// creates top level menu items
+		// "File" 
 		menu = new JMenu("File");
 		menu.setMnemonic(KeyEvent.VK_F);
 		menu.getAccessibleContext().setAccessibleDescription("This contains basic functions for the project");
-		menuBar.add(menu);
+		m_menuBar.add(menu);
 
-		// creates the sub menus		
+		// "File" sub-menus
 		menuItem = new JMenuItem("Open", KeyEvent.VK_O);
 		menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
 		menuItem.getAccessibleContext().setAccessibleDescription("Open a preexisting project");
@@ -87,15 +106,14 @@ public class PController implements KeyListener {
 		menuItem.getAccessibleContext().setAccessibleDescription("Print current puzzle view");
 		menu.add(menuItem);
 		
-		
-		
-		// creates top level menu items
+
+		// "Puzzle"
 		menu = new JMenu("Puzzle");
 		menu.setMnemonic(KeyEvent.VK_Z);
 		menu.getAccessibleContext().setAccessibleDescription("This contains functions to alter the current puzzle");
-		menuBar.add(menu);
+		m_menuBar.add(menu);
 
-		// creates the sub menus		
+		// "Puzzle" sub-menus	
 		menuItem = new JMenuItem("Randomize", KeyEvent.VK_R);
 		menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
 		menuItem.getAccessibleContext().setAccessibleDescription("Reorder the current puzzle");
@@ -107,13 +125,13 @@ public class PController implements KeyListener {
 		rbMenuItem.getAccessibleContext().setAccessibleDescription("Show or hide the puzzle key");
 		menu.add(rbMenuItem);
 
-		// creates top level menu items
+		// "Help"
 		menu = new JMenu("Help");
 		menu.setMnemonic(KeyEvent.VK_H);
 		menu.getAccessibleContext().setAccessibleDescription("Learn about the program");
-		menuBar.add(menu);
+		m_menuBar.add(menu);
 
-		// creates the sub menus		
+		// "Help" sub-menus
 		menuItem = new JMenuItem("How to Use", KeyEvent.VK_W);
 		menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
 		menuItem.getAccessibleContext().setAccessibleDescription("Get help how to use the program");
@@ -122,8 +140,7 @@ public class PController implements KeyListener {
 		menuItem = new JMenuItem("About", KeyEvent.VK_A);
 		menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.CTRL_MASK));
 		menuItem.getAccessibleContext().setAccessibleDescription("Get the current version of the program");
-		menu.add(menuItem);		
-		
+		menu.add(menuItem);			
 	}
 	
 	/*
@@ -131,56 +148,95 @@ public class PController implements KeyListener {
 	 * initPuzzelPanel
 	 * Displays a 2D Grid of char holding objects using jtextfields(or jlabels) 
 	 */
-	private JPanel initPuzzlePanel(ArrayList<ArrayList<Character>> grid) {
+	private void initPuzzlePanel(int width, int height) {
+		m_puzzlePanel = new JPanel(new GridLayout(height, width));
+		m_puzzlePanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
 
-		JPanel contentPane = new JPanel(new GridLayout(8, 8));
-		contentPane.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
-		JLabel text;
-		for(int i = 0; i < grid.size(); i++)
-			for(int x = 0; x < grid.get(i).size(); x++)
-			{
-				text = new JLabel(Character.toString(grid.get(i).get(x)), JLabel.CENTER);
-				text.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
-				contentPane.add(text);
+		m_puzzleGrid = new ArrayList<ArrayList<JLabel>>(width);
+		
+		ArrayList<JLabel> tmpColumn;
+		JLabel tmpLabel;
+		
+		for (int i = 0; i < width; i++) {
+			tmpColumn = new ArrayList<JLabel>(height);
+			for (int j = 0; j < height; j++) {
+				tmpLabel = new JLabel(Integer.toString(j + i), JLabel.CENTER);
+				tmpLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+				tmpColumn.add(tmpLabel);
+				
+				m_puzzlePanel.add(tmpLabel);
 			}
-		return contentPane;
-	
+			m_puzzleGrid.add(tmpColumn);
+		}
 	}
-
+	
 	private void initWordPanel() {
 		m_wordEntryField = new JTextField(12);
 		m_wordEntryField.addKeyListener(this);
-		m_wordEntryField.setMaximumSize(new Dimension(200, 36));
+		m_wordEntryField.setMinimumSize(new Dimension(140, 20));
+		m_wordEntryField.setPreferredSize(new Dimension(200, 20));
+		m_wordEntryField.setMaximumSize(new Dimension(200, 24));
 	
-		m_displayedWords = new ArrayList<JLabel>(0);
-		m_displayedWordsPanel = new JPanel();
-		m_displayedWordsPanel.setLayout(new GridLayout(16, 2));
+		m_wordListPanel = new JPanel();
+		m_wordListPanel.setBorder(BorderFactory.createEmptyBorder(5,  5,  5, 5));
+		m_wordListPanel.setLayout(new GridLayout(16, 2));
+		m_wordListPanel.setMinimumSize(new Dimension(200, 200));
+		m_wordListPanel.setPreferredSize(new Dimension(200, 500));
 		
 		m_wordsPanel = new JPanel();
 		m_wordsPanel.setLayout(new BoxLayout(m_wordsPanel, BoxLayout.Y_AXIS));
 
-		m_wordsPanel.add(m_displayedWordsPanel);
+		m_wordsPanel.add(m_wordListPanel);
 		m_wordsPanel.add(m_wordEntryField);
-		
-		// Leave in for debugging.
-		addWord("fillerword");
-//		addWord("doughnut");
-//		addWord("coffee");
-//		addWord("ignominious");
-//		addWord("magnanimity");
-		// Leave in for debugging.
 	}
 	
 	private void initPuzzleButtonPanel() {
+		final int MIN_BUTTON_SIZE = 56;
+		final int MAX_BUTTON_SIZE = 82;
+		Dimension MIN_BUTTON_DIMENSION = new Dimension(MIN_BUTTON_SIZE, MIN_BUTTON_SIZE);
+		Dimension MAX_BUTTON_DIMENSION = new Dimension(MAX_BUTTON_SIZE, MAX_BUTTON_SIZE);
 		
+		m_wordSearchIcon = new ImageIcon("res/wordsearch.png", "Word Search");
+		m_crossWordIcon = new ImageIcon("res/crossword.png", "Crossword");
+		
+		JButton btnWordSearch = new JButton(m_wordSearchIcon);
+		JButton btnCrossWord = new JButton(m_crossWordIcon);
+		
+		btnWordSearch.addComponentListener(this);
+		btnCrossWord.addComponentListener(this);
+		btnWordSearch.setName("btnWordSearch");
+		btnCrossWord.setName("btnCrossWord");
+		btnWordSearch.setMinimumSize(MIN_BUTTON_DIMENSION);
+		btnWordSearch.setMaximumSize(MAX_BUTTON_DIMENSION);
+		btnCrossWord.setMinimumSize(MIN_BUTTON_DIMENSION);
+		btnCrossWord.setMaximumSize(MAX_BUTTON_DIMENSION);
+		
+		JPanel innerPanel = new JPanel();
+		innerPanel.setLayout(new GridLayout (1, 2, 10, 10));
+		innerPanel.add(btnWordSearch);
+		innerPanel.add(btnCrossWord);
+		innerPanel.setMaximumSize(new Dimension((MAX_BUTTON_SIZE * 2) + 10, MAX_BUTTON_SIZE));
+		innerPanel.setPreferredSize(new Dimension((MAX_BUTTON_SIZE * 2) + 10, MAX_BUTTON_SIZE));
+		innerPanel.setName("innerButtonPanel");
+		innerPanel.addComponentListener(this);
+		
+		m_puzzleButtonPanel = new JPanel();
+		m_puzzleButtonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		m_puzzleButtonPanel.setLayout(new BoxLayout(m_puzzleButtonPanel, BoxLayout.Y_AXIS));
+		m_puzzleButtonPanel.setPreferredSize(new Dimension(200, 200));
+		m_puzzleButtonPanel.setMaximumSize(new Dimension(200, 200));
+		
+		m_puzzleButtonPanel.add(Box.createVerticalGlue());
+		m_puzzleButtonPanel.add(innerPanel);
+		m_puzzleButtonPanel.add(Box.createVerticalGlue());
 	}
 	
 	private void addWord(String word) {
 		word = filterToLetters(word);
 		if (!word.equals("")) {
 			JLabel newWord = new JLabel(word);
-			m_displayedWords.add(newWord);
-			m_displayedWordsPanel.add(newWord);
+			m_wordListPanel.add(newWord);
+			m_wordListPanel.doLayout();
 		}
 	}
 	
@@ -198,37 +254,24 @@ public class PController implements KeyListener {
 	
 	public JMenuBar getMenuBar() {
 		
-		return menuBar;
+		return m_menuBar;
 	}
 	
 	public JPanel getPuzzlePanel() {
-		
-		return null;
+		return m_puzzlePanel;
 	}
 	
-	public JPanel getWordsPanel() {
+	public JPanel getWordListPanel() {
 		return m_wordsPanel;
 	}
 	
 	public JPanel getPuzzleButtonPanel() {
-		
-		return null;
-	}
-	
-	@Override
-	public void keyTyped(KeyEvent e) {
-		
+		return m_puzzleButtonPanel;
 	}
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		// Leave in for debugging.
-//		m_displayedWords.get(0).setText(Integer.toString(e.getID()));
-//		m_displayedWords.get(1).setText(Integer.toString(e.getKeyCode()));
-//		m_displayedWords.get(2).setText(Integer.toString(e.getKeyLocation()));
-//		m_displayedWords.get(3).setText(Integer.toString(e.getExtendedKeyCode()));
-		// Leave in for debugging.
-		
+		// Add user's typed word to m_wordListPanel.
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 			addWord(m_wordEntryField.getText().trim());
 			m_wordEntryField.setText("");
@@ -237,7 +280,59 @@ public class PController implements KeyListener {
 
 	@Override
 	public void keyReleased(KeyEvent e) {
+		// unused
+	}
+
+
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// unused
+	}
+
+	
+	@Override
+	public void componentResized(ComponentEvent e) {
+		if (e.getComponent().getName().equals("innerButtonPanel")) {
+			JPanel sender = (JPanel) e.getComponent();
+			for (Component c : sender.getComponents()) {
+				JButton button = (JButton) c;
+				if (button.getName().equals("btnCrossWord")) {
+					button.setIcon(new ImageIcon(m_crossWordIcon.getImage().getScaledInstance(button.getWidth() - 10, button.getHeight() - 8, Image.SCALE_SMOOTH)));
+				}
+				else if (button.getName().equals("btnWordSearch")) {
+					button.setIcon(new ImageIcon(m_wordSearchIcon.getImage().getScaledInstance(button.getWidth() - 10, button.getHeight() - 8, Image.SCALE_SMOOTH)));
+				}
+			}
+		}
+	}
+	
+
+	@Override
+	public void componentMoved(ComponentEvent e) {
+		if (e.getComponent().getName().equals("innerButtonPanel")) {
+			JPanel sender = (JPanel) e.getComponent();
+			for (Component c : sender.getComponents()) {
+				JButton button = (JButton) c;
+				if (button.getName().equals("btnCrossWord")) {
+					button.setIcon(new ImageIcon(m_crossWordIcon.getImage().getScaledInstance(button.getWidth() - 10, button.getHeight() - 8, Image.SCALE_SMOOTH)));
+				}
+				else if (button.getName().equals("btnWordSearch")) {
+					button.setIcon(new ImageIcon(m_wordSearchIcon.getImage().getScaledInstance(button.getWidth() - 10, button.getHeight() - 8, Image.SCALE_SMOOTH)));
+				}
+			}
+		}
+	}
+
+	
+	@Override
+	public void componentShown(ComponentEvent e) {
 		
 	}
 	
+
+	@Override
+	public void componentHidden(ComponentEvent e) {
+		
+	}
 }
