@@ -12,13 +12,15 @@ import puzzlemaker.gui.CharacterField;
 
 public abstract class Puzzle {
 	
-	protected ArrayList<ArrayList<CharacterField>> m_grid;
+	protected String[] m_wordList;
 	protected JPanel m_displayPanel;
-	
-//	public Puzzle() {
-//	}
+	protected ArrayList<ArrayList<CharacterField>> m_grid;
 	
 	protected void instantiatePuzzle(int minSize) {
+		if (minSize < 1) {
+			minSize = 8;
+		}
+		
 		m_grid = new ArrayList<ArrayList<CharacterField>>(minSize);
 		m_displayPanel = new JPanel();
 		// This line border still doesn't "hug" the characters..

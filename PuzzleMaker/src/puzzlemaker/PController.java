@@ -3,7 +3,6 @@ package puzzlemaker;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
@@ -26,6 +25,7 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 
+import puzzlemaker.model.PModel;
 import puzzlemaker.puzzles.Puzzle;
 import puzzlemaker.puzzles.WordSearchPuzzle;
 
@@ -66,7 +66,9 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		initPuzzleButtonPanel();
 	}
 
-	// Init methods.
+	///////////////////
+	// Init methods. //
+	///////////////////
 	
 	private void initMenuBar() {
 		JMenu menu;
@@ -76,7 +78,7 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		m_menuBar = new JMenuBar();
 		
 		// "File" 
-		menu = createTopLevelMenu("File", KeyEvent.VK_F, "This contains basic functions for the project");
+		menu = PModel.createTopLevelMenu("File", KeyEvent.VK_F, "This contains basic functions for the project");
 		m_menuBar.add(menu);
 
 		// "File" sub-menus
@@ -100,7 +102,6 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		// "Puzzle" sub-menus	
 		menuItem = createSubMenuItem("Randomize", KeyEvent.VK_R, "Reorder the current puzzle", KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
 		menu.add(menuItem);
-		
 		rbMenuItem = new JRadioButtonMenuItem("Show Solution");
 		rbMenuItem.setSelected(false);
 		rbMenuItem.setMnemonic(KeyEvent.VK_K);
@@ -114,7 +115,6 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		// "Help" sub-menus
 		menuItem = createSubMenuItem("How to Use", KeyEvent.VK_W, "Get help how to use the program", KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
 		menu.add(menuItem);
-		
 		menuItem = createSubMenuItem("About", KeyEvent.VK_A, "Get the current version of the program", KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.CTRL_MASK));
 		menu.add(menuItem);			
 	}
@@ -162,10 +162,7 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		
 		JButton btnWordSearch = new JButton(m_wordSearchIcon);
 		JButton btnCrossWord = new JButton(m_crossWordIcon);
-		
-//		btnWordSearch.addComponentListener(this);
-//		btnCrossWord.addComponentListener(this);
-		
+
 		btnWordSearch.addMouseListener(this);
 		btnCrossWord.addMouseListener(this);
 		
@@ -198,7 +195,9 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		m_puzzleButtonPanel.add(Box.createVerticalGlue());
 	}
 	
-	// Functional methods.
+	/////////////////////////
+	// Functional methods. //
+	/////////////////////////
 	
 	private void updatePuzzlePanel() {
 		m_puzzlePanel.removeAll();
@@ -211,28 +210,22 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		m_puzzlePanel.validate();
 	}
 	
-	private void addWord(String word) {
-		word = filterToLetters(word);
-		if (!word.equals("")) {
-			JLabel newWord = new JLabel(word);
-			m_wordListPanel.add(newWord);
-			m_wordListPanel.validate();
-		}
-	}
+//	private void resizeButtonIcons(ComponentEvent e) {
+//		JPanel sender = (JPanel) e.getComponent();
+//		for (Component c : sender.getComponents()) {
+//			JButton button = (JButton) c;
+//			if (button.getName().equals("btnCrossWord")) {
+//				button.setIcon(new ImageIcon(m_crossWordIcon.getImage().getScaledInstance(button.getWidth() - 10, button.getHeight() - 8, Image.SCALE_SMOOTH)));
+//			}
+//			else if (button.getName().equals("btnWordSearch")) {
+//				button.setIcon(new ImageIcon(m_wordSearchIcon.getImage().getScaledInstance(button.getWidth() - 10, button.getHeight() - 8, Image.SCALE_SMOOTH)));
+//			}
+//		}
+//	}
 	
-	private void resizeButtonIcons(ComponentEvent e) {
-		JPanel sender = (JPanel) e.getComponent();
-		for (Component c : sender.getComponents()) {
-			JButton button = (JButton) c;
-			if (button.getName().equals("btnCrossWord")) {
-				button.setIcon(new ImageIcon(m_crossWordIcon.getImage().getScaledInstance(button.getWidth() - 10, button.getHeight() - 8, Image.SCALE_SMOOTH)));
-			}
-			else if (button.getName().equals("btnWordSearch")) {
-				button.setIcon(new ImageIcon(m_wordSearchIcon.getImage().getScaledInstance(button.getWidth() - 10, button.getHeight() - 8, Image.SCALE_SMOOTH)));
-			}
-		}
-	}
-	// "Get" methods.
+	////////////////////
+	// "Get" methods. //
+	////////////////////
 	
 	public JMenuBar getMenuBar() {
 		
@@ -262,7 +255,9 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		return wordList;
 	}
 	
-	// Helper methods.
+	/////////////////////
+	// Helper methods. //
+	/////////////////////
 	
 	private JMenu createTopLevelMenu(String label, int mnemonic, String description) {
 		JMenu menu = new JMenu(label);
@@ -278,26 +273,14 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		return menuItem;
 	}
 	
- 	private String filterToLetters(String word) {
-		char[] input = word.toCharArray();
-		String output = "";
-		
-		for (char c : input) {
-			if (Character.isLetter(c)) {
-				output = output + c;
-			}
-		}
-		return output;
-	}
-	
- 	// Inherited methods.
+ 	////////////////////////
+ 	// Inherited methods. //
+ 	////////////////////////
  	
 	@Override
 	public void keyPressed(KeyEvent e) {
-		// Add user's typed word to m_wordListPanel.
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-			addWord(m_wordEntryField.getText().trim().toUpperCase());
-			m_wordEntryField.setText("");
+			PModel.addToWordList(m_wordEntryField, m_wordListPanel);
 		}
 	}
 	
@@ -305,12 +288,16 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 	public void mouseClicked(MouseEvent e) {
 		if (e.getComponent().getName().equals("btnWordSearch")) {
 			System.err.println("Make a word search puzzle!");
+			
 			m_puzzle = new WordSearchPuzzle(this.getWordList());
 			updatePuzzlePanel();
 		}
 		else if (e.getComponent().getName().equals("btnCrossWord")) {
 			System.err.println("Make a crossword puzzle!");
-			System.err.println(m_puzzle.toString());
+			
+			if (m_puzzle != null) {
+				System.err.println(m_puzzle.toString());
+			}
 		}
 	}
 	
@@ -319,7 +306,7 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		// If statements could be useful if other components add this class as a listener.
 //		if (e.getComponent() instanceof JPanel) {
 //			if (e.getComponent().getName().equals("innerButtonPanel")) {
-				resizeButtonIcons(e);
+//				resizeButtonIcons(e);
 //			}
 //		}
 	}
@@ -329,7 +316,7 @@ public class PController implements KeyListener, ComponentListener, MouseListene
 		// If statements could be useful if other components add this class as a listener.
 //		if (e.getComponent() instanceof JPanel) {
 //			if (e.getComponent().getName().equals("innerButtonPanel")) {
-				resizeButtonIcons(e);
+//				resizeButtonIcons(e);
 //			}
 //		}
 	}
