@@ -10,6 +10,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
@@ -26,7 +28,7 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 
-public class PController implements KeyListener, ComponentListener {
+public class PController implements KeyListener, ComponentListener, MouseListener {
 	// Puzzle grid.
 	/**
 	 * Contains {@code m_puzzleGrid}'s {@code JLabel}s.
@@ -204,11 +206,17 @@ public class PController implements KeyListener, ComponentListener {
 		
 		btnWordSearch.addComponentListener(this);
 		btnCrossWord.addComponentListener(this);
+		
+		btnWordSearch.addMouseListener(this);
+		btnCrossWord.addMouseListener(this);
+		
 		btnWordSearch.setName("btnWordSearch");
 		btnCrossWord.setName("btnCrossWord");
+		
 		btnWordSearch.setMinimumSize(MIN_BUTTON_DIMENSION);
-		btnWordSearch.setMaximumSize(MAX_BUTTON_DIMENSION);
 		btnCrossWord.setMinimumSize(MIN_BUTTON_DIMENSION);
+
+		btnWordSearch.setMaximumSize(MAX_BUTTON_DIMENSION);
 		btnCrossWord.setMaximumSize(MAX_BUTTON_DIMENSION);
 		
 		JPanel innerPanel = new JPanel();
@@ -333,6 +341,38 @@ public class PController implements KeyListener, ComponentListener {
 
 	@Override
 	public void componentHidden(ComponentEvent e) {
+		
+	}
+
+	
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		if (e.getComponent().getName().equals("btnWordSearch")) {
+			System.err.println("Make a word search puzzle!");
+		}
+		else if (e.getComponent().getName().equals("btnCrossWord")) {
+			System.err.println("Make a crossword puzzle!");
+		}
+	}
+
+	
+	@Override
+	public void mousePressed(MouseEvent e) {
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
 		
 	}
 }
