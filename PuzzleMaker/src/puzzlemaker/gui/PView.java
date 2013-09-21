@@ -15,32 +15,39 @@ public class PView extends JFrame {
 	private JSplitPane m_verticalSplit;
 	private JSplitPane m_horizontalSplit;
 	
+	/**
+	 * Initializes the main {@link javax.swing.JFrame window} and its underlying {@link javax.swing.JSplitPane split pane}. 
+	 * 
+	 * @param controller Passed in to get references to GUI Panels:<br>
+	 * {@linkplain PController#getPuzzlePanel()},<br>
+	 * {@linkplain PController#getWordListPanel()},<br>
+	 * {@linkplain PController#getPuzzleButtonPanel()} 
+	 */
 	public PView(PController controller) {		
 		m_controller = controller;
 		
-        //Create and set up the window.
+        // Initialize the window.
 		this.setTitle("Crossword");
 		this.setSize(new Dimension(640, 640));
 		this.setMinimumSize(new Dimension(480, 480));
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setJMenuBar(m_controller.getMenuBar());
         
-        //Add the ubiquitous "Hello World" label.
-//        JLabel PuzzlePlaceholder = new JLabel("Puzzle PlaceHolder");
-//        JLabel WordlistPlaceholder = new JLabel("Wordlist PlaceHolder");
-//        JLabel ButtonsPlaceholder = new JLabel("Buttons PlaceHolder");
-        //frame.getContentPane().add(label);
-        
+        // Initialize the split pane.
         m_horizontalSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, m_controller.getWordListPanel(), m_controller.getPuzzleButtonPanel());
         m_horizontalSplit.setResizeWeight(0.5f);
+        m_horizontalSplit.getBottomComponent ().setMinimumSize (new Dimension(200, 100)); // Prevents button icons from needing resizing.
         
         m_verticalSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, m_controller.getPuzzlePanel(), m_horizontalSplit);
         m_verticalSplit.setResizeWeight(0.8f);
         
+        // Send notifications to WordList on resize so WordList can update its layout.
+        this.addComponentListener(m_controller.getWordList());
+        m_horizontalSplit.getTopComponent().addComponentListener(m_controller.getWordList());
+        
+        // Add the split pane to the window and show the window.
         this.getContentPane().add(m_verticalSplit);
         this.pack();
-        
-    	// Display the window.
         this.setVisible(true);
 	}
 }

@@ -7,8 +7,7 @@ import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
-
-import puzzlemaker.gui.CharacterField;
+import javax.swing.JTextField;
 
 public abstract class Puzzle {
 	
@@ -22,12 +21,6 @@ public abstract class Puzzle {
 		}
 		
 		m_grid = new ArrayList<ArrayList<CharacterField>>(minSize);
-		m_displayPanel = new JPanel();
-		// This line border still doesn't "hug" the characters..
-		m_displayPanel.setBorder(BorderFactory.createLineBorder(Color.black, 1));
-		m_displayPanel.setLayout(new GridLayout(minSize, minSize));
-		m_displayPanel.setMinimumSize(new Dimension(minSize * 30, minSize * 30));
-		m_displayPanel.setPreferredSize(new Dimension(minSize * 30, minSize * 30));
 
 		ArrayList<CharacterField> tmpColumn;
 		CharacterField tmpField;
@@ -37,11 +30,21 @@ public abstract class Puzzle {
 			for (int j = 0; j < minSize; j++) {
 				tmpField = new CharacterField((char)(j+i));
 				tmpColumn.add(tmpField);
-				
-				m_displayPanel.add(tmpField);
-
 			}
 			m_grid.add(tmpColumn);
+		}
+	}
+	
+	protected void updateDisplayPanel() {
+		m_displayPanel = new JPanel();
+		m_displayPanel.setLayout(new GridLayout(m_grid.size(), m_grid.size()));
+		m_displayPanel.setMinimumSize(new Dimension(m_grid.size() * 30, m_grid.size() * 30));
+		m_displayPanel.setPreferredSize(new Dimension(m_grid.size() * 30, m_grid.size() * 30));
+		
+		for (ArrayList<CharacterField> column : m_grid) {
+			for (CharacterField field : column) {
+				m_displayPanel.add(field);
+			}
 		}
 	}
 	
@@ -61,10 +64,7 @@ public abstract class Puzzle {
 		}
 	}
 	
-	/**
-	 * Do something like clear(), generate()
-	 */
-	public abstract void generate(String[] wordList);
+	public abstract void generate(ArrayList<String> wordList);
 	
 	public abstract void showSolution();
 	
@@ -90,5 +90,26 @@ public abstract class Puzzle {
 		}
 		
 		return out;
+	}
+	
+	protected class CharacterField extends JTextField {
+		private static final long serialVersionUID = 1L;
+		
+		public CharacterField(char chr) {
+			super (Character.toString(Character.toUpperCase(chr)), 1);
+			this.setHorizontalAlignment(JTextField.CENTER);
+			
+			// Changes to JLabel's look and feel (kind of)
+			this.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+			this.setDisabledTextColor(Color.black);
+			this.setForeground(Color.black);
+			
+			this.setEnabled(false);
+		}
+		
+		public void setText(char chr) {
+			this.setText(Character.toString(chr));
+		}
+		
 	}
 }

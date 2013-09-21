@@ -1,5 +1,7 @@
 package puzzlemaker.puzzles;
 
+import java.util.ArrayList;
+
 public class CrossWordPuzzle extends Puzzle {
 
 	public CrossWordPuzzle() {
@@ -7,7 +9,7 @@ public class CrossWordPuzzle extends Puzzle {
 	}
 
 	@Override
-	public void generate(String[] wordList) {
+	public void generate(ArrayList<String> wordList) {
 		
 	}
 
