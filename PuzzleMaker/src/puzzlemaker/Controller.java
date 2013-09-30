@@ -8,11 +8,16 @@ import puzzlemaker.gui.View;
 public class Controller {
 	
 	public static void main(String[] args) {
-		// Set the look and feel of the program to the OS defaults.
-		// TODO: if (os == linux) { getCrossPlatform...} else {systemlookandfeel}
+		// Set the look and feel of the program.
+		String osName = System.getProperty("os.name");
+	                
 		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//			UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+			if (osName.equals("Linux")) { // JSplitPane bars look weird (invisible) on Linux...
+				UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+			}
+			else {
+				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (InstantiationException e) {
