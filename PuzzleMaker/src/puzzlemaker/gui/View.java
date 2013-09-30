@@ -1,4 +1,4 @@
-package puzzlemaker;
+package puzzlemaker.gui;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -8,30 +8,50 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 
+import puzzlemaker.Constants;
+import puzzlemaker.puzzles.Crossword;
 import puzzlemaker.puzzles.Puzzle;
-import puzzlemaker.puzzles.WordSearchPuzzle;
-import puzzlemaker.tools.PModel;
+import puzzlemaker.puzzles.WordSearch;
+import puzzlemaker.tools.Model;
 import puzzlemaker.tools.WordList;
 
-public class PController implements ActionListener, KeyListener, MouseListener {
+public class View extends JFrame implements ActionListener, KeyListener, MouseListener {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3249856252715867854L;
 	
 	/************************************************************
 	 * CLASS VARIABLES.
 	 * 
 	 * Organized by "has-a" relationships (JPanel listed first, followed by what it contains).
 	 ************************************************************/
+	
+	private JSplitPane m_verticalSplit;
+	private JSplitPane m_horizontalSplit;
 	
 	private JMenuBar m_menuBar;
 	
@@ -58,14 +78,43 @@ public class PController implements ActionListener, KeyListener, MouseListener {
 	                      CLASS FUNCTIONS
 	 ************************************************************/
 	
-	public PController() {
-		m_menuBar = PModel.initMenuBar(this);
+	/** Initializes the main {@link javax.swing.JFrame window} and the GUI components therein. */
+	public View() {
+		m_menuBar = Model.initMenuBar(this);
 		m_menuBar.addMouseListener(this);
-		m_puzzlePanel = PModel.createPanel(200, 200, 500, 500, 500, 500, this);
+		m_puzzlePanel = Model.createPanel(200, 200, 500, 500, 500, 500, this);
+//		m_wordListPanel = Model.createPanel(200, 200, 200, 200, 200, 200, this);
 		initWordPanel();
-		initPuzzleButtonPanel();
-		
 		m_wordList = new WordList(m_wordListPanel);
+		initPuzzleButtonPanel();		
+		
+		// Initialize the window.
+		this.setTitle("Crossword");
+		this.setSize(new Dimension(640, 640));
+		this.setMinimumSize(new Dimension(480, 480));
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        // TODO: Might not need to keep track of m_menuBar ?
+        // Initialize the menu bar.
+        
+        this.setJMenuBar(m_menuBar);
+        
+        // Initialize the split pane.   
+        m_horizontalSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, m_wordsPanel, m_puzzleButtonPanel);
+        m_horizontalSplit.setResizeWeight(0.5f);
+        m_horizontalSplit.getBottomComponent ().setMinimumSize (new Dimension(200, 100)); // Prevents button icons from needing resizing.
+        
+        m_verticalSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, m_puzzlePanel, m_horizontalSplit);
+        m_verticalSplit.setResizeWeight(0.8f);
+        
+        // Send notifications to WordList on resize so WordList can update its layout.
+        this.addComponentListener(m_wordList);
+        m_horizontalSplit.getTopComponent().addComponentListener(m_wordList);
+        
+
+        // Add the split pane to the window and show the window.
+        this.getContentPane().add(m_verticalSplit);
+        this.pack();		
 	}
 	
 	/************************************************************
@@ -79,7 +128,7 @@ public class PController implements ActionListener, KeyListener, MouseListener {
 		m_wordsPanel.setLayout(new BoxLayout(m_wordsPanel, BoxLayout.Y_AXIS));
 		
 		// Displays the currently entered words
-		m_wordListPanel = PModel.createPanel(200, 200, 200, 500, 200, 500, this);
+		m_wordListPanel = Model.createPanel(200, 200, 200, 500, 200, 500, this);
 		m_wordListPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));		
 		m_wordListPanel.setLayout(new SpringLayout());		
 		m_wordsPanel.add(m_wordListPanel);
@@ -88,7 +137,7 @@ public class PController implements ActionListener, KeyListener, MouseListener {
 		m_wordEntryField = new JTextField(12);
 		m_wordEntryField.addKeyListener(this);
 		m_wordEntryField.addMouseListener(this);
-		PModel.setComponentSizes(m_wordEntryField, 140, 20, 200, 20, 200, 24);
+		Model.setComponentSizes(m_wordEntryField, 140, 20, 200, 20, 200, 24);
 		m_wordsPanel.add(m_wordEntryField);		
 	}
 	
@@ -138,14 +187,84 @@ public class PController implements ActionListener, KeyListener, MouseListener {
 		m_puzzlePanel.add(Box.createVerticalGlue());
 		m_puzzlePanel.validate();
 	}
+	
+	private void saveFile(ArrayList<String> words)
+	{
+		JFileChooser dlgSave;
+		dlgSave = new JFileChooser ();
+		File file;
+		String path;
+		int value = dlgSave.showSaveDialog(m_wordsPanel);
+		if (value == JFileChooser.APPROVE_OPTION){ 
+             path = dlgSave.getSelectedFile().getAbsolutePath();
+           file = new File(path+".txt"); 
+            
+		//String path = "C:/Users/Kaien/git/pinky-brains-crossword/PuzzleMaker/res/words.txt";
+		 
+		if(!file.exists())
+		{
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} 
+		
+		// Set default file name value as the unused file name we found
+		
+		
+		PrintWriter fileOutput = null;
+		try {
+			fileOutput = new PrintWriter(file);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		if (fileOutput != null) {
+			for(int i = 0; i < words.size(); i++)
+				fileOutput.println(words.get(i));
+			fileOutput.close();
+		}
+		
+	//	dlgSave.setSelectedFile (new File (path));
+		}
+	}
+	
+	private void importFile() {
+//		ArrayList<String> words = new ArrayList<String>();
+		
+		JFileChooser dlgSave;
+		dlgSave = new JFileChooser ();
+		File file;
+		int value = dlgSave.showOpenDialog(m_wordsPanel);
+		if (value == JFileChooser.APPROVE_OPTION){ 
+            file = dlgSave.getSelectedFile();
+		
+			BufferedReader reader = null;
+			try {
+				reader = new BufferedReader(new FileReader(file));
+				String line = null;
+				while ((line = reader.readLine()) != null) {
+					m_wordList.addWord(line);//basic no string tokenizer yet
+				}
+		
+			}
+			catch(IOException e){
+					;
+			}
+		}
+		//return words;
+	}
 
 	/************************************************************
                         GETTER FUNCTIONS
 	 ************************************************************/
 	
-	public JMenuBar getMenuBar() {
-		return m_menuBar;
-	}
+//	public JMenuBar getMenuBar() {
+//		return m_menuBar;
+//	}
 	
 	public JPanel getPuzzlePanel() {
 		return m_puzzlePanel;
@@ -170,14 +289,30 @@ public class PController implements ActionListener, KeyListener, MouseListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
-		System.err.println(command);
-		if (command.equals("WORDLABEL_DELETE")) {
-			// PModel.deleteSelectedWordLabel(m_wordListPanel.getComponents());
-			System.err.println("do_delete");
-			
+		
+		switch (command) {
+		case Constants.DELETE_WORD_LABEL:
 			if (!m_wordList.deleteSelectedWord()) {
-				System.err.println("Failed to delete word");
+				System.err.println("Failed to delete word label");
 			}
+			break;
+		case Constants.IMPORT:
+			importFile();
+			break;
+		case Constants.SAVE_WORDLIST:
+			saveFile(getWordList().getWords());
+			break;
+		case Constants.EXIT:
+			System.exit(0);
+			break;
+		case Constants.ABOUT:
+			Model.showAboutDialog(this, "Iteration 1").setVisible(true);
+			break;
+			
+		default:
+			System.err.println("Unrecognized command: " + command);
+			break;
+	
 		}
 	}
 	
@@ -207,18 +342,15 @@ public class PController implements ActionListener, KeyListener, MouseListener {
 			case WORD_SEARCH_BUTTON:
 				
 				if (m_wordList.getSize() > 0) {
-					m_puzzle = new WordSearchPuzzle(m_wordList.getWords());
+					m_puzzle = new WordSearch(m_wordList.getWords());
 					updatePuzzlePanel();
 				}
 				
 				break;
 			
 			case CROSSWORD_BUTTON:				
-				// m_puzzle = new CrossWordPuzzle(this.getWordList());
+				m_puzzle = new Crossword(m_wordList.getWords());
 				
-				if (m_puzzle != null) {
-					System.err.println(m_puzzle.toString());
-				}
 				break;
 			
 			default:

@@ -16,6 +16,8 @@ import javax.swing.JPopupMenu;
 import javax.swing.Spring;
 import javax.swing.SpringLayout;
 
+import puzzlemaker.Constants;
+
 /** This class manages the list of words, their associated labels,
   * the existence those labels in their display panel}, and all
   * of their mouse-related interactivity.
@@ -27,8 +29,7 @@ public class WordList implements ActionListener, MouseListener, ComponentListene
 	ArrayList<WordListItem> m_data;
 	JPanel m_displayPanel;
 	WordListItem m_selected;
-	
-	private final String WORD_LIST_LABEL = "WORD_LIST_LABEL";
+
 	private JPopupMenu m_popupMenu;
 	
 	// For managing the WordListPanel's layout
@@ -40,8 +41,7 @@ public class WordList implements ActionListener, MouseListener, ComponentListene
 	public WordList(JPanel displayPanel) {
 		m_data = new ArrayList<WordListItem>();
 		m_displayPanel = displayPanel;
-//		m_displayPanel.addComponentListener(this);
-		m_popupMenu = PModel.createPopupMenu("WordLabel", new String[] {"Delete"}, this);
+		m_popupMenu = Model.createPopupMenu("WordLabel", new String[] {"Delete"}, this);
 	}
 	
 	/** @return The word list as an {@code ArrayList<String>}. */
@@ -116,7 +116,7 @@ public class WordList implements ActionListener, MouseListener, ComponentListene
 //			m_label.setBackground(Color.white);
 //			m_label.setOpaque(true);
 
-			m_label.setName(WORD_LIST_LABEL);
+			m_label.setName(Constants.DELETE_WORD_LABEL);
 			m_label.addMouseListener(WordList.this); // refers to owner's (WordList's) instance		
 			
 			m_displayPanel.add(m_label);
@@ -207,6 +207,15 @@ public class WordList implements ActionListener, MouseListener, ComponentListene
 		panelConstraints.setConstraint(SpringLayout.SOUTH, Spring.constant((rows * (ROW_HEIGHT + ROW_GAP)) - ROW_GAP));
 		
 		m_displayPanel.revalidate();
+		
+		/* When the most recently entered word gets deleted, the part of the word that wasn't covered
+		 * by the popup menu hangs around because m_displayPanel shrinks and THEN revalidates its area.
+		 * For this reason, we need to repaint m_displayPanel's parent. */
+		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+			public void run () {
+				m_displayPanel.getParent().repaint();
+			}
+		});
 	}
 	
 	private int getLabelMinimumWidth(JLabel label) {
@@ -246,7 +255,7 @@ public class WordList implements ActionListener, MouseListener, ComponentListene
 	
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		if (e.getComponent().getName().equals(WORD_LIST_LABEL)) {
+		if (e.getComponent().getName().equals(Constants.DELETE_WORD_LABEL)) {
 			// "Select" the label and "deselect" all others.
 			for (WordListItem wll : m_data) {
 				if (wll.getLabel().equals(e.getSource())) {
