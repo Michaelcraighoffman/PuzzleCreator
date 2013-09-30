@@ -155,7 +155,17 @@ public class WordList implements ActionListener, MouseListener, ComponentListene
 			m_data.remove(this);
 			m_label.removeAll();
 			m_word = null;
-			makeLayout();
+			
+			if (!WordList.this.getWords().isEmpty()) {
+				makeLayout();
+			}
+			else {
+				javax.swing.SwingUtilities.invokeLater(new Runnable() {
+					public void run () {
+						m_displayPanel.getParent().repaint();
+					}
+				});
+			}
 		}
 	}
 	

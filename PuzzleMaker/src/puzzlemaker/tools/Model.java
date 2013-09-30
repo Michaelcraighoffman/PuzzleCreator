@@ -24,33 +24,33 @@ public class Model {
 	private Model() {}
 	
 	/** Instantiates and initializes the window's menu bar. */
-	public static JMenuBar initMenuBar(MouseListener mouseListener) {
+	public static JMenuBar initMenuBar(ActionListener actionListener, MouseListener mouseListener) {
 		JMenuBar menuBar = new JMenuBar();		
 		JMenu menu;
 		
 		// "File" 
 		menu = createTopLevelMenu("File", KeyEvent.VK_F, "This contains basic functions for the project");
 		menu.addMouseListener(mouseListener);
-		menu.add(createMenuItem("Open", KeyEvent.VK_O, "Open a preexisting project", KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK), Constants.IMPORT));
-		menu.add(createMenuItem("Save Puzzle", KeyEvent.VK_U, "Save the current puzzle", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK), null));
-		menu.add(createMenuItem("Save Word List", KeyEvent.VK_L, "Save the current word list", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK), Constants.SAVE_WORDLIST));
-		menu.add(createMenuItem("Export...", KeyEvent.VK_E, "Export puzzle or word list to...", KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK), null));
-		menu.add(createMenuItem("Print", KeyEvent.VK_P, "Print current puzzle view", KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK), null));
-		menu.add(createMenuItem("Exit", KeyEvent.VK_X, "Exit", KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK), Constants.EXIT));	
+		menu.add(createMenuItem("Open", KeyEvent.VK_O, "Open a preexisting project", KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK), Constants.IMPORT, actionListener));
+		menu.add(createMenuItem("Save Puzzle", KeyEvent.VK_U, "Save the current puzzle", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK), null, actionListener));
+		menu.add(createMenuItem("Save Word List", KeyEvent.VK_L, "Save the current word list", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK), Constants.SAVE_WORDLIST, actionListener));
+		menu.add(createMenuItem("Export...", KeyEvent.VK_E, "Export puzzle or word list to...", KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK), null, actionListener));
+		menu.add(createMenuItem("Print", KeyEvent.VK_P, "Print current puzzle view", KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK), null, actionListener));
+		menu.add(createMenuItem("Exit", KeyEvent.VK_X, "Exit", KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK), Constants.EXIT, actionListener));	
 		menuBar.add(menu);
 		
 		// "Puzzle"
 		menu = createTopLevelMenu("Puzzle", KeyEvent.VK_Z, "This contains functions to alter the current puzzle");
 		menu.addMouseListener(mouseListener);
-		menu.add(createMenuItem("Randomize", KeyEvent.VK_R, "Reorder the current puzzle", KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK), null));
+		menu.add(createMenuItem("Randomize", KeyEvent.VK_R, "Reorder the current puzzle", KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK), null, actionListener));
 		menu.add(createRadioButtonMenuItem("Show Solution", KeyEvent.VK_K, "Show or hide the puzzle key", false));
 		menuBar.add(menu);
 
 		// "Help"
 		menu = createTopLevelMenu("Help", KeyEvent.VK_H, "Learn about the program");
 		menu.addMouseListener(mouseListener);
-		menu.add(createMenuItem("How to Use", KeyEvent.VK_W, "Get help how to use the program", KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK), null));
-		menu.add(createMenuItem("About", KeyEvent.VK_A, "Get the current version of the program", KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.CTRL_MASK), Constants.ABOUT));
+		menu.add(createMenuItem("How to Use", KeyEvent.VK_W, "Get help how to use the program", KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK), null, actionListener));
+		menu.add(createMenuItem("About", KeyEvent.VK_A, "Get the current version of the program", KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.CTRL_MASK), Constants.ABOUT, actionListener));
 		menuBar.add(menu);
 		
 		return menuBar;
@@ -63,12 +63,13 @@ public class Model {
 		return menu;
 	}
 
-	private static JMenuItem createMenuItem(String label, int mnemonic, String description, KeyStroke shortcut, String actionCommand) {
+	private static JMenuItem createMenuItem(String label, int mnemonic, String description, KeyStroke shortcut, String actionCommand, ActionListener actionListener) {
 		JMenuItem menuItem = new JMenuItem(label, mnemonic);
 		menuItem.setAccelerator(shortcut);
 		menuItem.getAccessibleContext().setAccessibleDescription(description);
 		if (actionCommand != null) {
 			menuItem.setActionCommand(actionCommand);
+			menuItem.addActionListener(actionListener);
 		}
 		return menuItem;
 	}

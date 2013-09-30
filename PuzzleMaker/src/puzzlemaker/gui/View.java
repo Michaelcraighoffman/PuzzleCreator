@@ -80,7 +80,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	
 	/** Initializes the main {@link javax.swing.JFrame window} and the GUI components therein. */
 	public View() {
-		m_menuBar = Model.initMenuBar(this);
+		m_menuBar = Model.initMenuBar(this, this);
 		m_menuBar.addMouseListener(this);
 		m_puzzlePanel = Model.createPanel(200, 200, 500, 500, 500, 500, this);
 //		m_wordListPanel = Model.createPanel(200, 200, 200, 200, 200, 200, this);

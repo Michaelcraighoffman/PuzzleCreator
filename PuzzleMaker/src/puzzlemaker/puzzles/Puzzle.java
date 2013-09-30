@@ -49,7 +49,6 @@ public abstract class Puzzle {
 			m_displayPanel = new JPanel();
 		}
 		
-		
 		return m_displayPanel;
 	}
 	
@@ -217,8 +216,6 @@ public abstract class Puzzle {
 			return true;
 		}
 		
-		// TODO: there's a smarter wawy to write this.. but without the hasNext check it goes out by one.
-		// but we already know tht the placement is valid...
 		public void placeInGrid(Grid grid, int placementIndex) {
 			GridIterator iter = m_validPlacements.get(placementIndex);
 			

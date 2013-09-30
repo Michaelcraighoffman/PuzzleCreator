@@ -1,7 +1,6 @@
 package puzzlemaker.puzzles;
 
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RecursiveTask;
@@ -13,13 +12,13 @@ import puzzlemaker.tools.grid.GridIterator;
 
 public class Crossword extends Puzzle {
 	
-//	static final int[] m_validDirections = new int[]{Constants.LEFT_TO_RIGHT, Constants.TOP_TO_BOTTOM};
 	LinkedBlockingQueue<Grid> m_solutions;
 	ForkJoinPool m_threadPool;
 	
 	public Crossword(ArrayList<String> wordList) {
 		m_grid = new Grid(8, 8);
 		m_wordList = new ArrayList<Word>();
+		
 		m_validDirections = new int[]{Constants.LEFT_TO_RIGHT, Constants.TOP_TO_BOTTOM};
 		for (String s : wordList) {
 			m_wordList.add(new Word(s));
@@ -35,18 +34,17 @@ public class Crossword extends Puzzle {
 		
 //		m_threadPool.shutdown();
 		try {
-			m_threadPool.awaitTermination(20, TimeUnit.SECONDS);
+			m_threadPool.awaitTermination(7, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+			
 		// Print a list of unique, valid solutions.
-		System.err.println("The following grids have been determined to be legal:");
-		for (Grid grid : m_solutions) {
-			System.err.println(grid);
-			System.err.println();
-		}
+//		System.err.println("The following grids have been determined to be legal:");
+//		for (Grid grid : m_solutions) {
+//			System.err.println(grid);
+//			System.err.println();
+//		}
 		
 		System.err.println("End Output");
 		
@@ -57,16 +55,17 @@ public class Crossword extends Puzzle {
 	@Override
 	public void generate() {
 		GridSolver gs = new GridSolver(m_grid, m_wordList);
+		m_threadPool.execute(gs);
+
 		
-		try {
-			System.err.println("Initial submit/get yielded: " + m_threadPool.submit(gs).get());
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+////			System.err.println("Initial submit/get yielded: " + m_threadPool.submit(gs).get());
+////			m_threadPool.submit(gs).get();
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		} catch (ExecutionException e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	@Override
@@ -109,48 +108,65 @@ public class Crossword extends Puzzle {
 				if (gridIsLegal(t_grid, m_wordList)) { // note that we reference the untouched m_wordList
 //					System.err.print("Found a legal grid; checking if unique... ");
 					addWithoutDuplicates(t_grid, m_solutions);
-					dispose();
+					disposeWordList();
 					this.complete(1);
 					return 1;
 				}
 			}
 			// Otherwise, take the next word from the list and fork new solve threads for each legal placement of that word.
 			else {
-				Word currentWord = t_wordList.remove(0);				
-				currentWord.findValidPlacements(t_grid);
-				
-				if (currentWord.hasValidPlacements()) {
-//					System.err.println("Word " + currentWord + " has " + currentWord.getValidPlacements().size() + " valid placements");
-//					int total = 0;
-					GridSolver tmpSolver;
-					Grid tmpGrid;
+				int wordIndex = 0;
+				while (wordIndex < t_wordList.size()) {
+					Word currentWord = t_wordList.get(wordIndex);				
+					currentWord.findValidPlacements(t_grid);
 					
-					for (int i = 0; i < currentWord.getValidPlacements().size(); i++) {
-						tmpGrid = new Grid(t_grid);
-						currentWord.placeInGrid(tmpGrid, i);
-						tmpSolver = new GridSolver(tmpGrid, t_wordList);
-						try {
-							m_threadPool.submit(tmpSolver).get();
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (ExecutionException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+					if (currentWord.hasValidPlacements()) {
+						t_wordList.remove(currentWord);
+						
+	//					System.err.println("Word " + currentWord + " has " + currentWord.getValidPlacements().size() + " valid placements");
+	//					int total = 0;
+						GridSolver tmpSolver;
+						Grid tmpGrid;
+						
+						for (int i = 0; i < currentWord.getValidPlacements().size(); i++) {
+							tmpGrid = new Grid(t_grid);
+							currentWord.placeInGrid(tmpGrid, i);
+							tmpSolver = new GridSolver(tmpGrid, t_wordList);
+							m_threadPool.execute(tmpSolver);
+	//						try {
+	//							m_threadPool.submit(tmpSolver).get();
+	//						} catch (InterruptedException e) {
+	//							e.printStackTrace();
+	//						} catch (ExecutionException e) {
+	//							e.printStackTrace();
+	//						}
 						}
+						disposeWordList();
+						this.complete(0);
+						return 0;
 					}
-					dispose();
-					this.complete(0);
-					return 0;
+					else {
+						wordIndex++;
+					}
 				}
+				
 			}
-			dispose();
+			disposeAll();
 			this.complete(0);
 			return 0;
 		}
 		
-		private void dispose() {
-//			t_grid = null;
+		private void disposeAll() {
+			
+//			System.err.println(Integer.toHexString(this.hashCode()) + " entering dispose.");
+//			System.err.println(Integer.toHexString(this.hashCode()) + " EXITING dispose.");
+			t_grid.dispose();
+			t_grid = null;
+
+			disposeWordList();
+		}
+		
+		private void disposeWordList() {
 			for (Word w : t_wordList) {
 				w.clearValidPlacements();
 				w = null;

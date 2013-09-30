@@ -6,6 +6,7 @@ import puzzlemaker.Constants;
 
 public class Grid {
 	ArrayList<ArrayList<GridCell>> m_data;
+	ArrayList<GridIterator> m_iterators;
 	
 	public Grid(int width, int height) {
 		m_data = new ArrayList<ArrayList<GridCell>>(width);
@@ -43,7 +44,7 @@ public class Grid {
 	/** @return Whether or not the location specified was within bounds. */
 	public boolean setCharAt(int x, int y, char c) {
 		if (x < m_data.size() && y < m_data.get(0).size()) {
-			if (c == ' ') {
+			if (c == ' ' || c == Constants.EMPTY_CELL_CHARACTER) {
 				m_data.get(x).set(y, Constants.EMPTY_CELL);
 			}
 			else {
@@ -105,7 +106,13 @@ public class Grid {
 	
 	/** Do these need to be tracked to prevent memory leaks? */
 	public GridIterator getIterator(int x, int y, int dir) {
-		return new GridIterator(this, x, y, dir);
+		if (m_iterators == null) {
+			m_iterators = new ArrayList<GridIterator>(1);
+		}
+		
+		GridIterator tmpIter = new GridIterator(this, x, y, dir);
+		m_iterators.add(tmpIter);
+		return tmpIter;
 	}
 	
 	public boolean equals(Grid g) {
@@ -139,6 +146,29 @@ public class Grid {
 	
 	/** Set all the ArrayLists in m_data (and possibly also all tracked iterators) to null. */
 	public void dispose() {
+		ArrayList<GridCell> column;
+		GridCell cell;
+
+//		System.err.println(Integer.toHexString(this.hashCode()) + "Emptying m_data...");
+		while (!m_data.isEmpty()) {
+			column = m_data.remove(0);
+			while (!column.isEmpty()) {
+				cell = column.remove(0);
+				cell = null;
+			}
+			column = null;
+		}
 		
+//		System.err.println(Integer.toHexString(this.hashCode()) + "done emptying m_data.");
+		
+		if (m_iterators != null) {
+//			System.err.println(Integer.toHexString(this.hashCode()) + "Emptying m_iterators... ");
+			while (!m_iterators.isEmpty()) {
+				m_iterators.remove(0).dispose();
+			}
+			m_iterators.trimToSize();
+			m_iterators = null;
+//			System.err.println(Integer.toHexString(this.hashCode()) + "done emptying iterators.");
+		}
 	}
 }
