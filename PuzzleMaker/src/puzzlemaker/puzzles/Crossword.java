@@ -1,10 +1,15 @@
 package puzzlemaker.puzzles;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
+
+import javax.swing.BorderFactory;
+import javax.swing.JTextField;
+import javax.swing.border.Border;
 
 import puzzlemaker.Constants;
 import puzzlemaker.tools.grid.Grid;
@@ -12,18 +17,20 @@ import puzzlemaker.tools.grid.GridIterator;
 
 public class Crossword extends Puzzle {
 	
+//	private static final Border m_border = BorderFactory.createEmptyBorder(0, 0, 0, 0);
+	private static final Border m_border = BorderFactory.createLineBorder(Color.black, 2);
+
 	LinkedBlockingQueue<Grid> m_solutions;
 	ForkJoinPool m_threadPool;
 	
 	public Crossword(ArrayList<String> wordList) {
 		m_grid = new Grid(8, 8);
 		m_wordList = new ArrayList<Word>();
-		
-		m_validDirections = new int[]{Constants.LEFT_TO_RIGHT, Constants.TOP_TO_BOTTOM};
 		for (String s : wordList) {
 			m_wordList.add(new Word(s));
 		}
-		
+		m_validDirections = new int[]{Constants.LEFT_TO_RIGHT, Constants.TOP_TO_BOTTOM};
+
 		m_solutions = new LinkedBlockingQueue<Grid>();
 		m_threadPool = new ForkJoinPool();
 		
@@ -34,38 +41,23 @@ public class Crossword extends Puzzle {
 		
 //		m_threadPool.shutdown();
 		try {
-			m_threadPool.awaitTermination(7, TimeUnit.SECONDS);
+			m_threadPool.awaitTermination(3, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-			
-		// Print a list of unique, valid solutions.
-//		System.err.println("The following grids have been determined to be legal:");
-//		for (Grid grid : m_solutions) {
-//			System.err.println(grid);
-//			System.err.println();
-//		}
 		
 		System.err.println("End Output");
 		
+		m_grid = m_solutions.peek();
+		
 		// Add m_grid's CharacterFields to m_displayPanel
-//		updateDisplayPanel();
+		updateDisplayPanel();
 	}
 
 	@Override
 	public void generate() {
 		GridSolver gs = new GridSolver(m_grid, m_wordList);
 		m_threadPool.execute(gs);
-
-		
-//		try {
-////			System.err.println("Initial submit/get yielded: " + m_threadPool.submit(gs).get());
-////			m_threadPool.submit(gs).get();
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		} catch (ExecutionException e) {
-//			e.printStackTrace();
-//		}
 	}
 
 	@Override
@@ -79,7 +71,7 @@ public class Crossword extends Puzzle {
 	}
 
  
-	class GridSolver extends RecursiveTask<Integer> {
+	class GridSolver extends RecursiveTask<Void> {
 		private static final long serialVersionUID = 8591295584899382555L;
 		private Grid t_grid;
 		private ArrayList<Word> t_wordList;
@@ -100,7 +92,7 @@ public class Crossword extends Puzzle {
 		 * @return The number of valid solutions produced by this task.
 		 */
 		@Override
-		protected Integer compute() {
+		protected Void compute() {
 			// If we received a grid with all words already added, then check the grid for legality.
 			if (t_wordList.isEmpty()) {
 				t_grid.trim();
@@ -109,8 +101,8 @@ public class Crossword extends Puzzle {
 //					System.err.print("Found a legal grid; checking if unique... ");
 					addWithoutDuplicates(t_grid, m_solutions);
 					disposeWordList();
-					this.complete(1);
-					return 1;
+					this.complete(null);
+					return null;
 				}
 			}
 			// Otherwise, take the next word from the list and fork new solve threads for each legal placement of that word.
@@ -142,8 +134,8 @@ public class Crossword extends Puzzle {
 	//						}
 						}
 						disposeWordList();
-						this.complete(0);
-						return 0;
+						this.complete(null);
+						return null;
 					}
 					else {
 						wordIndex++;
@@ -152,8 +144,8 @@ public class Crossword extends Puzzle {
 				
 			}
 			disposeAll();
-			this.complete(0);
-			return 0;
+			this.complete(null);
+			return null;
 		}
 		
 		private void disposeAll() {
@@ -262,12 +254,25 @@ public class Crossword extends Puzzle {
 				return;
 			}
 		}
-		
-//		System.err.println("Grid being added: ");
-//		printGrid(grid);
+
 		container.add(grid);
 		System.err.println("New solution found. (" + container.size() + ") unique solutions found so far.");
 		System.err.println(grid);
-//		System.err.println("Finished adding to container");
+	}
+
+	@Override
+	public void applyCellStyle(JTextField cell) {
+		cell.setHorizontalAlignment(JTextField.CENTER);
+		cell.setBorder(m_border);
+		cell.setDisabledTextColor(Color.black);
+		cell.setForeground(Color.black);
+		cell.setEnabled(false);
+		
+		if (cell.getText().equals(Character.toString(Constants.EMPTY_CELL_CHARACTER))) {
+			cell.setBackground(Color.black);
+		}
+		else {
+			cell.setBackground(Color.white);
+		}
 	}
 }

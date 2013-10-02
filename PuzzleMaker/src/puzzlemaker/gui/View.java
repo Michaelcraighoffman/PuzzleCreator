@@ -1,5 +1,6 @@
 package puzzlemaker.gui;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -36,6 +37,7 @@ import puzzlemaker.puzzles.Puzzle;
 import puzzlemaker.puzzles.WordSearch;
 import puzzlemaker.tools.Model;
 import puzzlemaker.tools.WordList;
+import puzzlemaker.tools.grid.Grid;
 
 public class View extends JFrame implements ActionListener, KeyListener, MouseListener {
 	
@@ -183,9 +185,60 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_puzzlePanel.setLayout(new BoxLayout(m_puzzlePanel, BoxLayout.Y_AXIS));
 		
 		m_puzzlePanel.add(Box.createVerticalGlue());
-		m_puzzlePanel.add(m_puzzle.getDisplayComponent());
+		
+		
+//		m_puzzlePanel.add(m_puzzle.getDisplayComponent());
+		
+//		 This works!
+//		if (m_puzzle instanceof Crossword) {
+//			System.err.println("Crossword detected!");
+//		}
+//		else if (m_puzzle instanceof WordSearch) {
+//			System.err.println("Word Search detected!");
+//		}
+//		else
+//		{
+//			System.err.println("ERROR: instanceof matched neither Word Search nor Crossword!");
+//		}
+		
+		m_puzzlePanel.add(createPuzzlePanel());
+		
+		
+		
 		m_puzzlePanel.add(Box.createVerticalGlue());
 		m_puzzlePanel.validate();
+	}
+	
+	private JPanel createPuzzlePanel() {
+		Grid grid = m_puzzle.getGrid();
+		
+		JPanel panel = new JPanel();		
+//		panel.setLayout(new GridLayout(grid.getHeight(), grid.getWidth()));
+		GridLayout layout = new GridLayout(grid.getHeight(), grid.getWidth());
+		if (m_puzzle instanceof Crossword) {
+//			layout.setHgap(2);
+//			layout.setVgap(2);
+			panel.setBorder(BorderFactory.createLineBorder(Color.black, 2));
+			panel.setBackground(Color.black);
+		}
+		panel.setLayout(layout);
+		
+		final int PIXELS_PER_CELL = 40;
+		panel.setMinimumSize(new Dimension(grid.getWidth() * PIXELS_PER_CELL, grid.getHeight() * PIXELS_PER_CELL));
+		panel.setPreferredSize(new Dimension(grid.getWidth() * PIXELS_PER_CELL, grid.getHeight() * PIXELS_PER_CELL));
+		panel.setMaximumSize(new Dimension(grid.getWidth() * PIXELS_PER_CELL, grid.getHeight() * PIXELS_PER_CELL));
+		
+		JTextField cell;
+		
+		for (int y = 0; y < grid.getHeight(); y++) {
+			for (int x = 0; x < grid.getWidth(); x++) {
+				cell = new JTextField(Character.toString(grid.getCharAt(x, y)), 1);
+				m_puzzle.applyCellStyle(cell);
+				panel.add(cell);
+			}
+		}
+		
+		return panel;
 	}
 	
 	private void saveFile(ArrayList<String> words)
@@ -261,10 +314,6 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	/************************************************************
                         GETTER FUNCTIONS
 	 ************************************************************/
-	
-//	public JMenuBar getMenuBar() {
-//		return m_menuBar;
-//	}
 	
 	public JPanel getPuzzlePanel() {
 		return m_puzzlePanel;
@@ -349,8 +398,10 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 				break;
 			
 			case CROSSWORD_BUTTON:				
-				m_puzzle = new Crossword(m_wordList.getWords());
-				
+				if (m_wordList.getSize() > 0) {
+					m_puzzle = new Crossword(m_wordList.getWords());
+					updatePuzzlePanel();
+				}
 				break;
 			
 			default:

@@ -6,7 +6,6 @@ import puzzlemaker.Constants;
 
 public class Grid {
 	ArrayList<ArrayList<GridCell>> m_data;
-	ArrayList<GridIterator> m_iterators;
 	
 	public Grid(int width, int height) {
 		m_data = new ArrayList<ArrayList<GridCell>>(width);
@@ -104,15 +103,8 @@ public class Grid {
 		m_data.remove(x);
 	}
 	
-	/** Do these need to be tracked to prevent memory leaks? */
 	public GridIterator getIterator(int x, int y, int dir) {
-		if (m_iterators == null) {
-			m_iterators = new ArrayList<GridIterator>(1);
-		}
-		
-		GridIterator tmpIter = new GridIterator(this, x, y, dir);
-		m_iterators.add(tmpIter);
-		return tmpIter;
+		return new GridIterator(this, x, y, dir);
 	}
 	
 	public boolean equals(Grid g) {
@@ -134,9 +126,17 @@ public class Grid {
 	@Override
 	public String toString() {
 		String output = "";
+		char cellChar;
 		for (int y = 0; y < this.getHeight(); y++) {
 			for (int x = 0; x < this.getWidth(); x++) {
-				output += m_data.get(x).get(y).toString() + " ";
+				cellChar = m_data.get(x).get(y).getChar();
+				
+				// To make reading console output easier.
+				if (cellChar == Constants.EMPTY_CELL_CHARACTER) {
+					cellChar = '*'; 
+				}
+				
+				output += cellChar + " ";
 			}
 			output += "\n";
 		}
@@ -147,28 +147,13 @@ public class Grid {
 	/** Set all the ArrayLists in m_data (and possibly also all tracked iterators) to null. */
 	public void dispose() {
 		ArrayList<GridCell> column;
-		GridCell cell;
 
-//		System.err.println(Integer.toHexString(this.hashCode()) + "Emptying m_data...");
 		while (!m_data.isEmpty()) {
 			column = m_data.remove(0);
 			while (!column.isEmpty()) {
-				cell = column.remove(0);
-				cell = null;
+				column.remove(0);
 			}
 			column = null;
-		}
-		
-//		System.err.println(Integer.toHexString(this.hashCode()) + "done emptying m_data.");
-		
-		if (m_iterators != null) {
-//			System.err.println(Integer.toHexString(this.hashCode()) + "Emptying m_iterators... ");
-			while (!m_iterators.isEmpty()) {
-				m_iterators.remove(0).dispose();
-			}
-			m_iterators.trimToSize();
-			m_iterators = null;
-//			System.err.println(Integer.toHexString(this.hashCode()) + "done emptying iterators.");
 		}
 	}
 }

@@ -3,6 +3,8 @@ package puzzlemaker.puzzles;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.border.Border;
 
 import puzzlemaker.Constants;
 import puzzlemaker.tools.grid.Grid;
@@ -52,6 +54,12 @@ public abstract class Puzzle {
 		return m_displayPanel;
 	}
 	
+	public Grid getGrid() {
+		return m_grid;
+	}
+	
+	public abstract void applyCellStyle(JTextField cell);
+	
 	public abstract void generate();
 	
 	public abstract void showSolution();
@@ -60,7 +68,7 @@ public abstract class Puzzle {
 	
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + ":\n" + m_grid.toString();
+		return this.getClass().getSimpleName() + ":\n" + m_grid;
 	}
 	
 	protected class Word {
@@ -68,7 +76,6 @@ public abstract class Puzzle {
 		private String m_word;	
 		private ArrayList<GridIterator> m_validPlacements;
 		
-
 		public Word (String word) {
 			m_word = word;
 		}

@@ -3,6 +3,8 @@ package puzzlemaker.puzzles;
 import java.util.ArrayList;
 import java.util.Random;
 
+import javax.swing.JTextField;
+
 import puzzlemaker.tools.grid.Grid;
 
 public class WordSearch extends Puzzle {
@@ -235,5 +237,11 @@ public class WordSearch extends Puzzle {
 	@Override
 	public void hideSolution() {
 
+	}
+
+	@Override
+	public void applyCellStyle(JTextField cell) {
+		// TODO Auto-generated method stub
+		
 	}
 }

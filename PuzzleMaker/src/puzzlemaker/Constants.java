@@ -12,7 +12,7 @@ public class Constants {
 	public static final int BOTTOM_TO_TOP = 6;
 	public static final int BOTTOMLEFT_TO_TOPRIGHT = 7;
 	
-	public static final char EMPTY_CELL_CHARACTER = '*';
+	public static final char EMPTY_CELL_CHARACTER = ' ';
 	public static final GridCell EMPTY_CELL = new GridCell(EMPTY_CELL_CHARACTER);
 	
 	public static final String DELETE_WORD_LABEL = "DELETE_WORD_LABEL";
