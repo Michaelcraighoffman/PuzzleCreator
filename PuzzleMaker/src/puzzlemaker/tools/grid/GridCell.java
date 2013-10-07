@@ -1,6 +1,6 @@
 package puzzlemaker.tools.grid;
 
-import puzzlemaker.Constants;
+import puzzlemaker.model.Constants;
 
 public class GridCell {
 	private char m_char;

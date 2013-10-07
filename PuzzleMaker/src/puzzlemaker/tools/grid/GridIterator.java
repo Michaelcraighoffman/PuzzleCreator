@@ -1,6 +1,6 @@
 package puzzlemaker.tools.grid;
 
-import puzzlemaker.Constants;
+import puzzlemaker.model.Constants;
 
 // TODO: make this a class contained by a Grid class to facilitate object disposal, making memory leak management easier
 public class GridIterator {

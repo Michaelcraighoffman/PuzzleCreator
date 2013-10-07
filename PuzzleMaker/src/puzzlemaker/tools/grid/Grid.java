@@ -2,7 +2,7 @@ package puzzlemaker.tools.grid;
 
 import java.util.ArrayList;
 
-import puzzlemaker.Constants;
+import puzzlemaker.model.Constants;
 
 public class Grid {
 	ArrayList<ArrayList<GridCell>> m_data;
@@ -59,6 +59,39 @@ public class Grid {
 		return false;
 	}
 	
+	public boolean isEmpty() {
+		for (int x = 0; x < this.getWidth(); x++) {
+			for (int y = 0; y < this.getHeight(); y++) {
+				if (this.getCharAt(x, y) != Constants.EMPTY_CELL_CHARACTER) {
+					return false;
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	public void ensureCapacity(int size) {
+		ensureCapacity(size, size);
+	}
+	
+	public void ensureCapacity(int width, int height) {
+		int rowsNeeded = height - this.getHeight();
+		int colsNeeded = width - this.getWidth();
+		
+		if (rowsNeeded > 0) {
+			for (int i = 0; i < rowsNeeded; i++) {
+				this.addRowOnBottom();
+			}
+		}
+		
+		if (colsNeeded > 0) {
+			for (int i = 0; i < colsNeeded; i++) {
+				this.addColumnOnRight();
+			}
+		}
+	}
+	
 	public int getWidth() {
 		return m_data.size();
 	}
@@ -67,6 +100,45 @@ public class Grid {
 		return m_data.get(0).size();
 	}
 	
+	public void addColumnOnLeft() {
+		ArrayList<GridCell> column = new ArrayList<GridCell>(this.getHeight());
+		for (int i = 0; i < this.getHeight(); i++) {
+			column.add(Constants.EMPTY_CELL);
+		}
+		
+		m_data.ensureCapacity(m_data.size() + 1);
+		m_data.add(0, column);
+	}
+	
+	public void addColumnOnRight() {
+		ArrayList<GridCell> column = new ArrayList<GridCell>(this.getHeight());
+		for (int i = 0; i < this.getHeight(); i++) {
+			column.add(Constants.EMPTY_CELL);
+		}
+		
+		m_data.ensureCapacity(m_data.size() + 1);
+		m_data.add(column);
+	}
+	
+	public void addRowOnTop() {
+		ArrayList<GridCell> column;
+		for (int i = 0; i < this.getWidth(); i++) {
+			column = m_data.get(i);
+			column.ensureCapacity(column.size() + 1);
+			column.add(0, Constants.EMPTY_CELL);
+		}
+	}
+	
+	public void addRowOnBottom() {
+		ArrayList<GridCell> column;
+		for (int i = 0; i < this.getWidth(); i++) {
+			column = m_data.get(i);
+			column.ensureCapacity(column.size() + 1);
+			column.add(Constants.EMPTY_CELL);
+		}
+	}
+	
+	/** Removes empty columns and empty rows and trims all ArrayLists' capacities to size. */
 	public void trim() {
 		nextColumn:
 			for (int x = 0; x < this.getWidth();) {
@@ -96,11 +168,13 @@ public class Grid {
 	private void removeRow(int y) {
 		for (int x = 0; x < this.getWidth(); x++) {
 			m_data.get(x).remove(y);
+			m_data.get(x).trimToSize();
 		}
 	}
 	
 	private void removeColumn(int x) {
 		m_data.remove(x);
+		m_data.trimToSize();
 	}
 	
 	public GridIterator getIterator(int x, int y, int dir) {
@@ -141,6 +215,7 @@ public class Grid {
 			output += "\n";
 		}
 		
+		output = output.substring(0, output.length() - 1);
 		return output;
 	}
 	

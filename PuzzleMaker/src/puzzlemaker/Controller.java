@@ -4,6 +4,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import puzzlemaker.gui.View;
+import puzzlemaker.model.Model;
 
 public class Controller {
 	
@@ -28,8 +29,9 @@ public class Controller {
 			e.printStackTrace();
 		}
 				
+		Model data = new Model();
 		 
-		View mainWindow = new View();
+		View mainWindow = new View(data);
 		mainWindow.setVisible(true);
 	}
 }
