@@ -6,7 +6,7 @@ import javax.swing.JTextField;
 
 import puzzlemaker.tools.grid.Grid;
 
-public abstract class Puzzle {
+public abstract class Puzzle implements Comparable<Puzzle> {
 	
 	protected Grid m_grid;
 	protected ArrayList<Word> m_wordList;
@@ -60,5 +60,23 @@ public abstract class Puzzle {
 		}
 		
 		return output;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Puzzle) {
+			Puzzle p = (Puzzle) o;
+			
+			return (this.getGrid().equals(p.getGrid()));
+		}
+		else
+		{
+			return false;
+		}
+	}
+	
+	@Override
+	public int compareTo(Puzzle p) {
+		return (this.getGrid().compareTo(p.getGrid()));
 	}
 }

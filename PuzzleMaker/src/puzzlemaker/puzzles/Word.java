@@ -143,12 +143,25 @@ public class Word implements Comparable<Object> {
 			return ((String) o).compareTo(m_word);
 		}
 		else if (o instanceof Word) {
-			((Word) o).toString().compareTo(m_word);
+			return ((Word) o).toString().compareTo(m_word);
 		}
 		else {
 			System.err.println("Unrecognized compare type: " + o.getClass().getName());
 			System.err.println(Thread.currentThread().getStackTrace());
 		}
 		return 0;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Word) {
+			Word w = (Word) o;
+			if (w.toString().equals(m_word)) {
+				if (w.getX() == m_x && w.getY() == m_y && w.getDirection() == m_direction) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

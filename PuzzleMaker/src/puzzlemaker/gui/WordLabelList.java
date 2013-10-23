@@ -17,7 +17,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.Spring;
 import javax.swing.SpringLayout;
 
-import puzzlemaker.model.Constants;
+import puzzlemaker.Constants;
 import puzzlemaker.model.Model;
 
 /** This class manages the graphical representation of the word list.
@@ -69,7 +69,6 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			if (m_data.add(newLabel)) {
 				m_displayPanel.add(newLabel);
 				doLayout();
-				m_model.addWord(word);
 				return true;
 			} 
 		}
@@ -103,7 +102,9 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 		}
 		
 		m_displayPanel.remove(m_selectedLabel);
-		m_model.removeWord(m_selectedLabel.getText());
+		if (!m_model.removeWord(m_selectedLabel.getText())) {
+			System.err.println("Failed to remove word from model's list.");
+		}
 		m_selectedLabel = null;
 		doLayout();
 		return true;

@@ -1,8 +1,9 @@
-package puzzlemaker.model;
+package puzzlemaker;
 
 import puzzlemaker.tools.grid.GridCell;
 
 public class Constants {
+	
 	public static final int LEFT_TO_RIGHT = 0;
 	public static final int TOPLEFT_TO_BOTTOMRIGHT = 1;
 	public static final int TOP_TO_BOTTOM = 2;
@@ -33,6 +34,7 @@ public class Constants {
 	public static final String DELETE_WORD_LABEL = "DELETE_WORD_LABEL";
 	public static final String IMPORT = "MENU_IMPORT";
 	public static final String SAVE_WORDLIST = "MENU_EXPORT_WORDLIST";
+	public static final String EXPORT = "MENU_EXPORT";
 	public static final String EXIT = "EXIT";
 	public static final String ABOUT = "ABOUT";
 	

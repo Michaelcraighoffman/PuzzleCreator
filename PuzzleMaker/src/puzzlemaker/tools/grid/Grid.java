@@ -2,9 +2,9 @@ package puzzlemaker.tools.grid;
 
 import java.util.ArrayList;
 
-import puzzlemaker.model.Constants;
+import puzzlemaker.Constants;
 
-public class Grid {
+public class Grid implements Comparable<Grid> {
 	ArrayList<ArrayList<GridCell>> m_data;
 	
 	public Grid(int width, int height) {
@@ -181,20 +181,29 @@ public class Grid {
 		return new GridIterator(this, x, y, dir);
 	}
 	
-	public boolean equals(Grid g) {
-		if (this.getWidth() != g.getWidth() || this.getHeight() != g.getHeight()) {
-			return false;
-		}
-		
-		for (int x = 0; x < this.getWidth(); x++) {
-			for (int y = 0; y < this.getHeight(); y++) {
-				if (this.getCharAt(x, y) != g.getCharAt(x, y)) {
-					return false;
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Grid) {
+			Grid g = (Grid) o;
+			
+			if (this.getWidth() != g.getWidth() || this.getHeight() != g.getHeight()) {
+				return false;
+			}
+			
+			for (int x = 0; x < this.getWidth(); x++) {
+				for (int y = 0; y < this.getHeight(); y++) {
+					if (this.getCharAt(x, y) != g.getCharAt(x, y)) {
+						return false;
+					}
 				}
 			}
+			
+			return true;
 		}
-		
-		return true;
+		else
+		{
+			return false;
+		}
 	}
 	
 	@Override
@@ -229,6 +238,28 @@ public class Grid {
 				column.remove(0);
 			}
 			column = null;
+		}
+	}
+
+	@Override
+	public int compareTo(Grid g) {
+		if ((this.getWidth() + this.getHeight()) == (g.getWidth() + g.getHeight())) {
+			if (this.getWidth() == g.getWidth()) {
+				for (int x = 0; x < this.getWidth(); x++) {
+					for (int y = 0; y < this.getHeight(); y++) {
+						if (this.getCharAt(x, y) != g.getCharAt(x, y)) {
+							return (this.getCharAt(x, y) - g.getCharAt(x, y));
+						}
+					}
+				}
+				return 0;
+			}
+			else {
+				return (this.getWidth() - g.getWidth());
+			}
+		}
+		else {
+			return (this.getWidth() + this.getHeight()) - (g.getWidth() + g.getHeight());
 		}
 	}
 }

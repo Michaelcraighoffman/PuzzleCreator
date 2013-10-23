@@ -11,9 +11,11 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -37,7 +39,7 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
 
-import puzzlemaker.model.Constants;
+import puzzlemaker.Constants;
 import puzzlemaker.model.Model;
 import puzzlemaker.puzzles.Crossword;
 import puzzlemaker.puzzles.Puzzle;
@@ -126,7 +128,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		menu.add(createMenuItem("Open", KeyEvent.VK_O, "Open a preexisting project", KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK), Constants.IMPORT));
 		menu.add(createMenuItem("Save Puzzle", KeyEvent.VK_U, "Save the current puzzle", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK), null));
 		menu.add(createMenuItem("Save Word List", KeyEvent.VK_L, "Save the current word list", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK), Constants.SAVE_WORDLIST));
-		menu.add(createMenuItem("Export...", KeyEvent.VK_E, "Export puzzle or word list to...", KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK), null));
+		menu.add(createMenuItem("Export...", KeyEvent.VK_E, "Export puzzle or word list to...", KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK), Constants.EXPORT));
 		menu.add(createMenuItem("Print", KeyEvent.VK_P, "Print current puzzle view", KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK), null));
 		menu.add(createMenuItem("Exit", KeyEvent.VK_X, "Exit", KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK), Constants.EXIT));	
 		m_menuBar.add(menu);
@@ -274,6 +276,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 				file.createNewFile();
 			} catch (IOException e) {
 				e.printStackTrace();
+				return;
 			}
 		} 
 		
@@ -313,6 +316,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 				String line = null;
 				while ((line = reader.readLine()) != null) {
 					m_wordLabelList.addWord(line);//basic no string tokenizer yet
+					m_model.addWord(line);
 				}
 		
 			}
@@ -414,10 +418,11 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
-		
+
 		switch (command) {
-		case Constants.DELETE_WORD_LABEL: // unused?
+		case Constants.DELETE_WORD_LABEL:
 			System.err.println("DELETE_WORD_LABEL NOT UNUSED");
+			// This method also deletes the word from the model's list.
 			if (!m_wordLabelList.deleteSelectedWord()) {
 				System.err.println("Failed to delete word label");
 			}
@@ -427,6 +432,59 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 			break;
 		case Constants.SAVE_WORDLIST:
 			saveFile(m_model.getWordList());
+			break;
+		case Constants.EXPORT:
+			
+			JFileChooser dlgSave;
+			dlgSave = new JFileChooser ();
+			File file;
+			String path;
+			int value = dlgSave.showSaveDialog(m_wordsPanel);
+			if (value == JFileChooser.APPROVE_OPTION){ 
+	            path = dlgSave.getSelectedFile().getAbsolutePath();
+	            file = new File(path+".txt"); 
+	            			 
+				if(!file.exists()) {
+					try {
+						file.createNewFile();
+					} catch (IOException ioe) {
+						ioe.printStackTrace();
+						return;
+					}
+				}
+			
+				BufferedWriter fileOutput = null;
+
+				try {
+					fileOutput = new BufferedWriter(new FileWriter(file));
+				} catch (IOException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				}
+
+				
+				if (fileOutput != null) {
+					ArrayList<Puzzle> solutions = m_model.getSolutions();
+					for (int index = 0; index < solutions.size(); index++) {
+//						fileOutput.println(solutions.get(index));
+						try {
+							fileOutput.write(solutions.get(index).toString());
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+					}
+					
+				}
+				try {
+					fileOutput.close();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+			
+			System.err.println("File written successfully.");
 			break;
 		case Constants.EXIT:
 			System.exit(0);
@@ -441,23 +499,30 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	
 		}
 	}
-	
+
 	@Override
 	public void keyPressed(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 			String word = m_wordEntryField.getText();
-//			if (m_model.addWord(word)) {
 				if (m_wordLabelList.addWord(word)) {
+					m_model.addWord(word);
 					m_wordEntryField.setText("");
 				}
-//			}
+		}
+		else if (e.getKeyCode() == KeyEvent.VK_F7) {
+			System.err.println("Printing model's data tree.");
+			m_model.printTreeMap();
+		}
+		else if (e.getKeyCode() == KeyEvent.VK_F8) {
+			System.err.println("Get new word list.");
+			m_wordLabelList.changeTo(m_model.getNewWordList());
 		}
 		else if (e.getKeyCode() == KeyEvent.VK_F11) {
-			System.err.println("GO LEFT");
+			System.err.println("Get previous word list.");
 			m_wordLabelList.changeTo(m_model.getPreviousWordList());
 		}
 		else if (e.getKeyCode() == KeyEvent.VK_F12) {
-			System.err.println("GO RIGHT");
+			System.err.println("Get next word list.");
 			m_wordLabelList.changeTo(m_model.getNextWordList());
 		}
 	}

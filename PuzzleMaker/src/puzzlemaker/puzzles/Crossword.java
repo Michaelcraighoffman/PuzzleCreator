@@ -4,16 +4,14 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.BorderFactory;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
 
-import puzzlemaker.model.Constants;
+import puzzlemaker.Constants;
 import puzzlemaker.tools.grid.Grid;
-import puzzlemaker.tools.grid.GridIterator;
 
 public class Crossword extends Puzzle {
 	
