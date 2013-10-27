@@ -18,7 +18,9 @@ public class Model {
 	private TreeMap<TimeStampArrayList<String>, ConcurrentSkipListSet<Puzzle>> m_data;
 	private TimeStampArrayList<String> m_selectedWordList;
 	private Puzzle m_selectedPuzzle;
-	
+	private Iterator<TimeStampArrayList<String>>  m_wordIter;
+	private TimeStampArrayList<String> m_wordPrev;
+	//private <TimeStampArrayList<String>> m_wordElement;
 	private ArrayList<JFrame> m_views;
 	
 	private PuzzleGenerator m_generator;
@@ -40,11 +42,13 @@ public class Model {
 		if (m_selectedWordList.size() > 0) {
 			m_generator.setPuzzleType(puzzleType);
 			System.err.println("Starting puzzle generator.");
-			m_generator.start(m_data.get(m_selectedWordList));
+			 m_generator.start(m_data.get(m_selectedWordList));
+			
 		}
 		else {
 			System.err.println("Invalid word list size.");
 		}
+		 m_selectedPuzzle = getSolutions().get(0);
 	}
 
 	public boolean addWord(String word) {
@@ -109,6 +113,6 @@ public class Model {
 
 	public Puzzle getPuzzle() {
 		// TODO Auto-generated method stub
-		return null;
+		return m_selectedPuzzle;
 	}
 }

@@ -38,6 +38,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
+import javax.swing.plaf.basic.BasicArrowButton;
 
 import puzzlemaker.Constants;
 import puzzlemaker.model.Model;
@@ -65,7 +66,9 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	
 	/** Contains and displays the {@link #m_puzzle puzzle}. */
 	private JPanel m_puzzlePanel;
-	
+	/** Arrow Buttons for wordLists */
+	private BasicArrowButton nextWord;
+	private BasicArrowButton prevWord;
 	/** Contains and displays the {@link #m_wordListPanel word list} and the {@link #m_wordEntryField entry field}. */
 	private JPanel m_wordsPanel;
 	/** Contains one {@link JLabel} for each currently entered word. */
@@ -80,7 +83,8 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	private JPanel m_puzzleButtonPanel;
 	private final String WORD_SEARCH_BUTTON = "WORD_SEARCH_BUTTON";
 	private final String CROSSWORD_BUTTON = "CROSSWORD_BUTTON";
-	
+	private final String PREVIOUS_BUTTON = "PREVIOUS_BUTTON";
+	private final String NEXT_BUTTON = "NEXT_BUTTON";
 	/* **********************************************************
 	                      CLASS FUNCTIONS
 	 ************************************************************/
@@ -178,6 +182,19 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_wordLabelList = new WordLabelList(m_model, m_wordListPanel);
 		this.addComponentListener(m_wordLabelList);
         m_wordsPanel.addComponentListener(m_wordLabelList);
+        
+        //Buttons for navigating word lists
+        nextWord = new BasicArrowButton(BasicArrowButton.EAST);
+        prevWord = new BasicArrowButton(BasicArrowButton.WEST);
+        JPanel innerPanel = new JPanel();
+		innerPanel.setLayout(new GridLayout(1, 2, 10, 10));
+		prevWord.setName(PREVIOUS_BUTTON);
+		nextWord.setName(NEXT_BUTTON);
+		prevWord.addMouseListener(this);
+		nextWord.addMouseListener(this);
+		innerPanel.add(prevWord);
+		innerPanel.add(nextWord);
+		m_wordsPanel.add(innerPanel);
 	}
 	
 	private void initPuzzleButtonPanel() {
@@ -225,6 +242,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_puzzlePanel.add(Box.createVerticalGlue());
 		
 		m_puzzlePanel.validate();
+		
 	}
 	
 	private JPanel createPuzzlePanel() {
@@ -268,7 +286,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
              path = dlgSave.getSelectedFile().getAbsolutePath();
            file = new File(path+".txt"); 
             
-		//String path = "C:/Users/Kaien/git/pinky-brains-crossword/PuzzleMaker/res/words.txt";
+		
 		 
 		if(!file.exists())
 		{
@@ -300,8 +318,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		}
 	}
 	
-	private void importFile() {
-//		ArrayList<String> words = new ArrayList<String>();
+private void importFile() {
 		
 		JFileChooser dlgSave;
 		dlgSave = new JFileChooser ();
@@ -314,9 +331,11 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 			try {
 				reader = new BufferedReader(new FileReader(file));
 				String line = null;
+				m_wordLabelList.changeTo(m_model.getNextWordList());
+				
+				
 				while ((line = reader.readLine()) != null) {
 					m_wordLabelList.addWord(line);//basic no string tokenizer yet
-					m_model.addWord(line);
 				}
 		
 			}
@@ -326,7 +345,6 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		}
 		//return words;
 	}
-
 	/* **********************************************************
                         GETTER FUNCTIONS
 	 ************************************************************/
@@ -542,14 +560,23 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		switch (componentName) {
 			
 			case WORD_SEARCH_BUTTON:
+				System.err.println("Crossword button pressed.");
 				m_model.generatePuzzles(Constants.TYPE_WORDSEARCH);
 				break;
 			
 			case CROSSWORD_BUTTON:				
 				System.err.println("Crossword button pressed.");
 				m_model.generatePuzzles(Constants.TYPE_CROSSWORD);
+				updatePuzzlePanel();
 				break;
-			
+				
+			case PREVIOUS_BUTTON:
+				m_wordLabelList.changeTo(m_model.getNextWordList());
+				
+				break;
+			case NEXT_BUTTON:
+				m_wordLabelList.changeTo(m_model.getNextWordList());
+				break;
 			default:
 				System.err.println("Unhandled mouse click: " + e.getComponent().getClass().getName());
 				break;

@@ -67,7 +67,7 @@ public class PuzzleGenerator {
 			return false;
 		}
 
-		m_newSolutions = new ConcurrentSkipListSet<Puzzle>();
+		m_newSolutions = solutionsList;
 		m_inProgressGrids = new ConcurrentSkipListSet<Grid>();
 		
 		ArrayList<Word> wordList = new ArrayList<Word>(m_model.getWordList().size());
