@@ -85,6 +85,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	private JPanel m_puzzleButtonPanel;
 	private final String WORD_SEARCH_BUTTON = "WORD_SEARCH_BUTTON";
 	private final String CROSSWORD_BUTTON = "CROSSWORD_BUTTON";
+	private final String STOP_BUTTON = "STOP_BUTTON";
 	private final String PREVIOUS_BUTTON = "PREVIOUS_BUTTON";
 	private final String NEXT_BUTTON = "NEXT_BUTTON";
 	private final String PREVIOUS_BUTTON_PZL = "PREVIOUS_BUTTON_PZL";
@@ -233,6 +234,11 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		btnCrossWord.addMouseListener(this);
 		btnCrossWord.setName(CROSSWORD_BUTTON);
 		innerPanel.add(btnCrossWord);
+		
+		JButton btnStop = new JButton("Stop");
+		btnStop.addMouseListener(this);
+		btnStop.setName(STOP_BUTTON);
+		innerPanel.add(btnStop);
 		// Minimum and preferred sizes don't need to be set since 
 		// m_horizontalSplit.getBottomComponent()'s minimum size is set.
 		innerPanel.setMaximumSize(new Dimension((MAX_BUTTON_SIZE * 2) + 10, MAX_BUTTON_SIZE));
@@ -582,6 +588,10 @@ private void importFile() {
 				System.err.println("Crossword button pressed.");
 				m_model.generatePuzzles(Constants.TYPE_CROSSWORD);
 				updatePuzzlePanel();
+				break;
+				
+			case STOP_BUTTON:
+				//m_model.stopGeneration();
 				break;
 				
 			case PREVIOUS_BUTTON:

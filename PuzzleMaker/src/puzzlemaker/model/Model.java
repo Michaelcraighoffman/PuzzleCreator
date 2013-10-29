@@ -54,6 +54,9 @@ public class Model {
 		 m_puzzleIter = m_data.get(m_selectedWordList).iterator();
 		 m_puzzlePrev = m_puzzleIter;
 	}
+	public void stopGeneration() {
+		m_generator.stop();
+	}
 	
 	public boolean addWord(String word) {
 		word = Constants.filterWord(word);
