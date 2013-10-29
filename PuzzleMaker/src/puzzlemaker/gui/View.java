@@ -580,8 +580,9 @@ private void importFile() {
 		switch (componentName) {
 			
 			case WORD_SEARCH_BUTTON:
-				System.err.println("Crossword button pressed.");
+				System.err.println("Wordsearch button pressed.");
 				m_model.generatePuzzles(Constants.TYPE_WORDSEARCH);
+				updatePuzzlePanel();
 				break;
 			
 			case CROSSWORD_BUTTON:				

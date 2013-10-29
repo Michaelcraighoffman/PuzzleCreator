@@ -2,10 +2,21 @@ package puzzlemaker.puzzles;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JTextField;
 
+import puzzlemaker.tools.grid.Grid;
+
 public class WordSearch extends Puzzle {
+	
+	LinkedBlockingQueue<Grid> m_solutions;
+	
+	public WordSearch(Grid grid, ArrayList<Word> wordList) {
+		m_grid = grid;
+		m_wordList = wordList;
+	}
 
 	public WordSearch(ArrayList<String> wordList) {
 		// Find out how big the puzzle has to be

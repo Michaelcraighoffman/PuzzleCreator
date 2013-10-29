@@ -9,6 +9,7 @@ import puzzlemaker.model.Model;
 import puzzlemaker.puzzles.Crossword;
 import puzzlemaker.puzzles.Puzzle;
 import puzzlemaker.puzzles.Word;
+import puzzlemaker.puzzles.WordSearch;
 import puzzlemaker.tools.grid.Grid;
 
 public class PuzzleGenerator {
@@ -48,6 +49,7 @@ public class PuzzleGenerator {
 	}
 
 	public void setPuzzleType(byte puzzleType) {
+		m_puzzleType=puzzleType;
 		switch (puzzleType) {
 			case Constants.TYPE_CROSSWORD:
 				m_validDirections = Constants.CROSSWORD_DIRECTIONS;
@@ -155,12 +157,22 @@ public class PuzzleGenerator {
 		protected Void compute() {
 			if (m_wordList.isEmpty()) {
 				m_grid.trim();
-				Puzzle puzzle = gridToPuzzleIfLegal(m_grid);
-				
-				if (puzzle != null) {
-//					startAddSoln = System.currentTimeMillis();
+				if(m_puzzleType==Constants.TYPE_CROSSWORD) {
+					Puzzle puzzle = gridToPuzzleIfLegal(m_grid);
+					
+					if (puzzle != null) {
+	//					startAddSoln = System.currentTimeMillis();
+						addSolutionWithoutDuplicates(puzzle);
+	//					endAddSoln = System.currentTimeMillis();
+					}
+					else {
+						System.err.println("Threw away:  "+m_grid.toString());
+					}
+				}
+				else {
+					//TODO: Have to actually find words in WordSearch 
+					Puzzle puzzle=new WordSearch(m_grid, new ArrayList<Word>());
 					addSolutionWithoutDuplicates(puzzle);
-//					endAddSoln = System.currentTimeMillis();
 				}
 			}
 			else {
@@ -257,7 +269,7 @@ public class PuzzleGenerator {
 							if (word.containsChar(grid.getCharAt(x, y))) {
 								for (int intersection : word.getIntersectionIndices(grid.getCharAt(x, y))) {
 									for (int direction : m_validDirections) {
-										if (!hasIllegalIntersections(grid, word, x, y, direction, intersection)) {
+										if (!hasIllegalCrosswordIntersections(grid, word, x, y, direction, intersection)) {
 											validGrid = new Grid(grid);
 											placeWordInGrid(validGrid, word, x, y, direction, intersection);
 											validGrids.add(validGrid);
@@ -267,11 +279,24 @@ public class PuzzleGenerator {
 							}
 						}
 					}
-					
-					
-					
 					break;
 				case Constants.TYPE_WORDSEARCH:
+					for (int x = 0; x < grid.getWidth(); x++) {
+						for (int y = 0; y < grid.getHeight(); y++) {
+							if (word.containsChar(grid.getCharAt(x, y))) {
+								for (int intersection : word.getIntersectionIndices(grid.getCharAt(x, y))) {
+									for (int direction : m_validDirections) {
+										if (!hasIllegalWordSearchIntersections(grid, word, x, y, direction, intersection)) {
+											validGrid = new Grid(grid);
+											placeWordInGrid(validGrid, word, x, y, direction, intersection);
+											validGrids.add(validGrid);
+											System.err.println(validGrid.toString());
+										}
+									}
+								}							
+							}
+						}
+					}
 					break;
 			}
 			
@@ -561,6 +586,8 @@ public class PuzzleGenerator {
 //					System.err.println(w.toStringDetailed());
 //				}
 				return new Crossword(grid, foundWordList);
+			case Constants.TYPE_WORDSEARCH:
+				return new WordSearch(grid, foundWordList);
 				
 			default:
 				System.err.println("Unrecognized puzzle type: " + m_puzzleType);
@@ -571,7 +598,7 @@ public class PuzzleGenerator {
 	}
 	
 	
-	public boolean hasIllegalIntersections(Grid grid, Word word, int x, int y, int direction, int offset) {
+	public boolean hasIllegalCrosswordIntersections(Grid grid, Word word, int x, int y, int direction, int offset) {
 		while (offset > 0) {
 			switch (direction) {
 				case Constants.LEFT_TO_RIGHT:
@@ -719,6 +746,84 @@ public class PuzzleGenerator {
 		if (x >= 0 && x < grid.getWidth() && y >= 0 && y < grid.getHeight()) {
 			if (grid.getCharAt(x, y) != Constants.EMPTY_CELL_CHARACTER) {
 				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	public boolean hasIllegalWordSearchIntersections(Grid grid, Word word, int x, int y, int direction, int offset) {
+		while (offset > 0) {
+			switch (direction) {
+				case Constants.LEFT_TO_RIGHT:
+					x--;
+					break;
+				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
+					x--;
+					y--;
+					break;
+				case Constants.TOP_TO_BOTTOM:
+					y--;
+					break;
+				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
+					x++;
+					y--;
+					break;
+				case Constants.RIGHT_TO_LEFT:
+					x++;
+					break;
+				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
+					x++;
+					y++;
+					break;
+				case Constants.BOTTOM_TO_TOP:
+					y++;
+					break;
+				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
+					x--;
+					y++;
+					break;
+			}
+			offset--;
+		}
+		
+		// Check the word's placement
+		for (int i = 0; i < word.toString().length(); i++) {
+			if (x >= 0 && x < grid.getWidth() && y >= 0 && y < grid.getHeight()) {
+				if (grid.getCharAt(x, y) != Constants.EMPTY_CELL_CHARACTER && grid.getCharAt(x, y) != word.toString().charAt(i)) {
+					return true;
+				}
+			}
+			
+			switch (direction) {
+				case Constants.LEFT_TO_RIGHT:
+					x++;
+					break;
+				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
+					x++;
+					y++;
+					break;
+				case Constants.TOP_TO_BOTTOM:
+					y++;
+					break;
+				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
+					x--;
+					y++;
+					break;
+				case Constants.RIGHT_TO_LEFT:
+					x--;
+					break;
+				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
+					x--;
+					y--;
+					break;
+				case Constants.BOTTOM_TO_TOP:
+					y--;
+					break;
+				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
+					x++;
+					y--;
+					break;
 			}
 		}
 		
