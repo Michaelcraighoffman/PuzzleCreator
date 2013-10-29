@@ -255,11 +255,11 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_puzzlePanel.add(Box.createVerticalGlue());
 		m_puzzlePanel.add(createPuzzlePanel());
 		m_puzzlePanel.add(Box.createVerticalGlue());
-		prevWordPZL.addMouseListener(this);
+	/*	prevWordPZL.addMouseListener(this);
 		nextWordPZL.addMouseListener(this);
 		m_puzzlePanel.add(nextWordPZL);
 		m_puzzlePanel.add(prevWordPZL);
-		m_puzzlePanel.validate();
+	*/	m_puzzlePanel.validate();
 		
 	}
 	

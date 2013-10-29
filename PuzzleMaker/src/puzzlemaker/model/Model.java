@@ -72,6 +72,7 @@ public class Model {
 	}
 	public Puzzle getNextPuzzle(){
 		m_selectedPuzzle = m_data.get(m_selectedWordList).higher(getPuzzle());
+		
 		return m_selectedPuzzle;
 	}
 	
