@@ -69,6 +69,8 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	/** Arrow Buttons for wordLists */
 	private BasicArrowButton nextWord;
 	private BasicArrowButton prevWord;
+	private BasicArrowButton nextWordPZL;
+	private BasicArrowButton prevWordPZL;
 	/** Contains and displays the {@link #m_wordListPanel word list} and the {@link #m_wordEntryField entry field}. */
 	private JPanel m_wordsPanel;
 	/** Contains one {@link JLabel} for each currently entered word. */
@@ -85,6 +87,8 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	private final String CROSSWORD_BUTTON = "CROSSWORD_BUTTON";
 	private final String PREVIOUS_BUTTON = "PREVIOUS_BUTTON";
 	private final String NEXT_BUTTON = "NEXT_BUTTON";
+	private final String PREVIOUS_BUTTON_PZL = "PREVIOUS_BUTTON_PZL";
+	private final String NEXT_BUTTON_PZL = "NEXT_BUTTON_PZL";
 	/* **********************************************************
 	                      CLASS FUNCTIONS
 	 ************************************************************/
@@ -209,6 +213,17 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new GridLayout(1, 2, 10, 10));
 		
+		//Buttons for navigating word lists
+        nextWordPZL = new BasicArrowButton(BasicArrowButton.EAST);
+        prevWordPZL = new BasicArrowButton(BasicArrowButton.WEST);
+       
+		prevWordPZL.setName(PREVIOUS_BUTTON_PZL);
+		nextWordPZL.setName(NEXT_BUTTON_PZL);
+		prevWordPZL.addMouseListener(this);
+		nextWordPZL.addMouseListener(this);
+		m_puzzlePanel.add(prevWordPZL);
+		m_puzzlePanel.add(nextWordPZL);
+		
 		JButton btnWordSearch = new JButton(new ImageIcon("res/wordsearch.png"));
 		btnWordSearch.addMouseListener(this);
 		btnWordSearch.setName(WORD_SEARCH_BUTTON);
@@ -240,7 +255,10 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_puzzlePanel.add(Box.createVerticalGlue());
 		m_puzzlePanel.add(createPuzzlePanel());
 		m_puzzlePanel.add(Box.createVerticalGlue());
-		
+		prevWordPZL.addMouseListener(this);
+		nextWordPZL.addMouseListener(this);
+		m_puzzlePanel.add(nextWordPZL);
+		m_puzzlePanel.add(prevWordPZL);
 		m_puzzlePanel.validate();
 		
 	}
@@ -575,7 +593,21 @@ private void importFile() {
 				
 				break;
 			case NEXT_BUTTON:
+				if(m_model.hasNext())
+					m_wordLabelList.changeTo(m_model.getNextWordList());
+				else
+					m_wordLabelList.changeTo(m_model.getNewWordList());
+				break;
+				
+			case PREVIOUS_BUTTON_PZL:
 				m_wordLabelList.changeTo(m_model.getNextWordList());
+				
+				break;
+			case NEXT_BUTTON_PZL:
+				if(m_model.hasNext())
+					m_wordLabelList.changeTo(m_model.getNextWordList());
+				else
+					m_wordLabelList.changeTo(m_model.getNewWordList());
 				break;
 			default:
 				System.err.println("Unhandled mouse click: " + e.getComponent().getClass().getName());

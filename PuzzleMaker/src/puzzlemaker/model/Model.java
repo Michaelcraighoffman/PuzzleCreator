@@ -19,6 +19,7 @@ public class Model {
 	private TimeStampArrayList<String> m_selectedWordList;
 	private Puzzle m_selectedPuzzle;
 	private Iterator<TimeStampArrayList<String>>  m_wordIter;
+	private Iterator m_puzzleIter;
 	private TimeStampArrayList<String> m_wordPrev;
 	//private <TimeStampArrayList<String>> m_wordElement;
 	private ArrayList<JFrame> m_views;
@@ -48,9 +49,10 @@ public class Model {
 		else {
 			System.err.println("Invalid word list size.");
 		}
-		 m_selectedPuzzle = getSolutions().get(0);
+		 m_selectedPuzzle = m_data.get(m_selectedWordList).first();
+		 m_puzzleIter = m_data.get(m_selectedWordList).iterator();
 	}
-
+	
 	public boolean addWord(String word) {
 		word = Constants.filterWord(word);
 		
@@ -68,6 +70,10 @@ public class Model {
 	public ArrayList<String> getWordList() {
 		return (ArrayList<String>) m_selectedWordList;
 	}
+	public Puzzle getNextPuzzle(){
+		m_selectedPuzzle = m_data.get(m_selectedWordList).higher(getPuzzle());
+		return m_selectedPuzzle;
+	}
 	
 	// TODO: Do I have to update the word list
 	public ArrayList<String> getNextWordList() {
@@ -78,7 +84,16 @@ public class Model {
 		System.err.println(m_selectedWordList.toString());
 		return m_selectedWordList;
 	}
-	
+	/**
+	 * This and a few other things not sure if I'm keeping, still wrapping 
+	 * my head around things
+	*/
+	public boolean hasNext(){
+		if(m_data.higherKey(m_selectedWordList) == null)
+			return true;
+		else 
+			return false;
+	}
 	public ArrayList<String> getPreviousWordList() {
 		m_selectedWordList = m_data.lowerKey(m_selectedWordList);
 		if (m_selectedWordList == null) {
@@ -94,6 +109,8 @@ public class Model {
 		return m_selectedWordList;
 	}
 	
+	
+	
 	@Deprecated
 	/**
 	 * I'm just using this right now for the Export function (which prints all of the solutions to a text file).
@@ -106,6 +123,7 @@ public class Model {
 	public ArrayList<Puzzle> getSolutions() {
 		return new ArrayList<Puzzle>(m_data.get(m_selectedWordList));
 	}
+	
 	
 	public void printTreeMap() {
 		System.err.println(m_data.toString());
