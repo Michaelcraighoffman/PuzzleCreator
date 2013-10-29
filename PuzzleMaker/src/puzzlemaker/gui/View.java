@@ -221,8 +221,8 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		nextWordPZL.setName(NEXT_BUTTON_PZL);
 		prevWordPZL.addMouseListener(this);
 		nextWordPZL.addMouseListener(this);
-		m_puzzlePanel.add(prevWordPZL);
-		m_puzzlePanel.add(nextWordPZL);
+		innerPanel.add(prevWordPZL);
+		innerPanel.add(nextWordPZL);
 		
 		JButton btnWordSearch = new JButton(new ImageIcon("res/wordsearch.png"));
 		btnWordSearch.addMouseListener(this);
@@ -255,11 +255,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_puzzlePanel.add(Box.createVerticalGlue());
 		m_puzzlePanel.add(createPuzzlePanel());
 		m_puzzlePanel.add(Box.createVerticalGlue());
-	/*	prevWordPZL.addMouseListener(this);
-		nextWordPZL.addMouseListener(this);
-		m_puzzlePanel.add(nextWordPZL);
-		m_puzzlePanel.add(prevWordPZL);
-	*/	m_puzzlePanel.validate();
+		m_puzzlePanel.validate();
 		
 	}
 	
@@ -600,14 +596,13 @@ private void importFile() {
 				break;
 				
 			case PREVIOUS_BUTTON_PZL:
-				m_wordLabelList.changeTo(m_model.getNextWordList());
+				//m_wordLabelList.changeTo(m_model.getNextWordList());
 				
 				break;
 			case NEXT_BUTTON_PZL:
-				if(m_model.hasNext())
-					m_wordLabelList.changeTo(m_model.getNextWordList());
-				else
-					m_wordLabelList.changeTo(m_model.getNewWordList());
+				m_model.getNextPuzzle();
+				
+				updatePuzzlePanel();
 				break;
 			default:
 				System.err.println("Unhandled mouse click: " + e.getComponent().getClass().getName());

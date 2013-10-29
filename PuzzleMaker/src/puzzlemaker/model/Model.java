@@ -19,7 +19,8 @@ public class Model {
 	private TimeStampArrayList<String> m_selectedWordList;
 	private Puzzle m_selectedPuzzle;
 	private Iterator<TimeStampArrayList<String>>  m_wordIter;
-	private Iterator m_puzzleIter;
+	private Iterator<Puzzle> m_puzzleIter;
+	private Iterator<Puzzle> m_puzzlePrev;
 	private TimeStampArrayList<String> m_wordPrev;
 	//private <TimeStampArrayList<String>> m_wordElement;
 	private ArrayList<JFrame> m_views;
@@ -51,6 +52,7 @@ public class Model {
 		}
 		 m_selectedPuzzle = m_data.get(m_selectedWordList).first();
 		 m_puzzleIter = m_data.get(m_selectedWordList).iterator();
+		 m_puzzlePrev = m_puzzleIter;
 	}
 	
 	public boolean addWord(String word) {
@@ -71,8 +73,12 @@ public class Model {
 		return (ArrayList<String>) m_selectedWordList;
 	}
 	public Puzzle getNextPuzzle(){
-		m_selectedPuzzle = m_data.get(m_selectedWordList).higher(getPuzzle());
-		
+		if(m_puzzleIter.hasNext())
+			m_selectedPuzzle = m_puzzleIter.next();
+		else{
+			m_selectedPuzzle = m_data.get(m_selectedWordList).first();
+			m_puzzleIter = m_data.get(m_selectedWordList).iterator();
+		}
 		return m_selectedPuzzle;
 	}
 	
