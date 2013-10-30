@@ -16,6 +16,7 @@ public class WordSearch extends Puzzle {
 	public WordSearch(Grid grid, ArrayList<Word> wordList) {
 		m_grid = grid;
 		m_wordList = wordList;
+		//fillIn();
 	}
 
 	public WordSearch(ArrayList<String> wordList) {

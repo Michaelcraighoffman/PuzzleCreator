@@ -1,6 +1,7 @@
 package puzzlemaker.tools;
 
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
@@ -283,18 +284,30 @@ public class PuzzleGenerator {
 				case Constants.TYPE_WORDSEARCH:
 					for (int x = 0; x < grid.getWidth(); x++) {
 						for (int y = 0; y < grid.getHeight(); y++) {
-							if (word.containsChar(grid.getCharAt(x, y))) {
-								for (int intersection : word.getIntersectionIndices(grid.getCharAt(x, y))) {
+							if (word.containsChar(grid.getCharAt(x, y)) || grid.getCharAt(x, y)==' ') {
+								for (int intersection=0; intersection<5; intersection++) {
 									for (int direction : m_validDirections) {
 										if (!hasIllegalWordSearchIntersections(grid, word, x, y, direction, intersection)) {
 											validGrid = new Grid(grid);
 											placeWordInGrid(validGrid, word, x, y, direction, intersection);
 											validGrids.add(validGrid);
-											System.err.println(validGrid.toString());
 										}
 									}
 								}							
 							}
+						}
+					}
+					//generating ALL the possible solutions for wordsearch is impossible
+					//Instead, pick a few random points and try all a direction
+					Random rand=new Random();
+					for(int points=0; points<5; points++) {
+						int x=rand.nextInt(grid.getWidth()+2)-1;
+						int y=rand.nextInt(grid.getHeight()+2)-1;
+						int direction=rand.nextInt(m_validDirections.length-1);
+						if (!hasIllegalWordSearchIntersections(grid, word, x, y, m_validDirections[direction], 0)) {
+							validGrid = new Grid(grid);
+							placeWordInGrid(validGrid, word, x, y, m_validDirections[direction], 0);
+							validGrids.add(validGrid);
 						}
 					}
 					break;
