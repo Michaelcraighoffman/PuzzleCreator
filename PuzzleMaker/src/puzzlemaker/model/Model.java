@@ -52,12 +52,11 @@ public class Model {
 		}
 		 m_selectedPuzzle = m_data.get(m_selectedWordList).first();
 		 m_puzzleIter = m_data.get(m_selectedWordList).iterator();
-		 m_puzzlePrev = m_puzzleIter;
+		 m_puzzlePrev = m_data.get(m_selectedWordList).descendingIterator();
 	}
 	public void stopGeneration() {
-		m_generator.stop();
-	}
-	
+		     m_generator.stop();
+		   }
 	public boolean addWord(String word) {
 		word = Constants.filterWord(word);
 		
@@ -75,13 +74,31 @@ public class Model {
 	public ArrayList<String> getWordList() {
 		return (ArrayList<String>) m_selectedWordList;
 	}
-	public Puzzle getNextPuzzle(){
-		if(m_puzzleIter.hasNext())
-			m_selectedPuzzle = m_puzzleIter.next();
-		else{
+/**
+ * 
+ * @param currentPuzzle
+ * @return nextPuzzle in list
+ */
+	public Puzzle getNextPuzzle() 
+	{	
+		m_selectedPuzzle = m_data.get(m_selectedWordList).higher(m_selectedPuzzle);
+		if (m_selectedPuzzle == null) {
 			m_selectedPuzzle = m_data.get(m_selectedWordList).first();
-			m_puzzleIter = m_data.get(m_selectedWordList).iterator();
 		}
+		return m_selectedPuzzle;
+	}
+	
+	public Puzzle getPreviousPuzzle() 
+	{
+		m_selectedPuzzle = m_data.get(m_selectedWordList).lower(m_selectedPuzzle);
+		if (m_selectedPuzzle == null) {
+			m_selectedPuzzle = m_data.get(m_selectedWordList).last();
+		}
+		return m_selectedPuzzle;
+	}
+	
+	public Puzzle getCurrentWordPuzzle(){
+		m_selectedPuzzle = m_data.get(m_selectedWordList).first();
 		return m_selectedPuzzle;
 	}
 	

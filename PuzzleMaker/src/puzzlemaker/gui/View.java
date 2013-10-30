@@ -1,5 +1,6 @@
 package puzzlemaker.gui;
 
+import java.awt.Button;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -69,6 +70,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	/** Arrow Buttons for wordLists */
 	private BasicArrowButton nextWord;
 	private BasicArrowButton prevWord;
+	private JButton newWord;
 	private BasicArrowButton nextWordPZL;
 	private BasicArrowButton prevWordPZL;
 	/** Contains and displays the {@link #m_wordListPanel word list} and the {@link #m_wordEntryField entry field}. */
@@ -78,7 +80,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	/** @see WordLabelList */
 	private WordLabelList m_wordLabelList;
 	private JTextField m_wordEntryField;
-	
+
 	
    /** Belongs to {@code m_wordsPanel}.<br>
 	 * Contains one button for each type of puzzle (e.g.: word search, crossword, etc.). */
@@ -90,6 +92,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	private final String NEXT_BUTTON = "NEXT_BUTTON";
 	private final String PREVIOUS_BUTTON_PZL = "PREVIOUS_BUTTON_PZL";
 	private final String NEXT_BUTTON_PZL = "NEXT_BUTTON_PZL";
+	private final String NEW_WORDBUTTON = "NEW_WORDBUTTON";
 	/* **********************************************************
 	                      CLASS FUNCTIONS
 	 ************************************************************/
@@ -197,8 +200,12 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		nextWord.setName(NEXT_BUTTON);
 		prevWord.addMouseListener(this);
 		nextWord.addMouseListener(this);
+		newWord = new JButton("+");
+		newWord.setName(NEW_WORDBUTTON);
+		newWord.addMouseListener(this);
 		innerPanel.add(prevWord);
 		innerPanel.add(nextWord);
+		innerPanel.add(newWord);
 		m_wordsPanel.add(innerPanel);
 	}
 	
@@ -351,7 +358,7 @@ private void importFile() {
 			try {
 				reader = new BufferedReader(new FileReader(file));
 				String line = null;
-				m_wordLabelList.changeTo(m_model.getNextWordList());
+				m_wordLabelList.changeTo(m_model.getNewWordList());
 				
 				
 				while ((line = reader.readLine()) != null) {
@@ -449,6 +456,13 @@ private void importFile() {
 		c.setMaximumSize(new Dimension(maxWidth, maxHeight));
 	}
 	
+	private void updateWordList(){
+		m_wordsPanel.remove(m_wordListPanel);
+		/*setComponentSizes(m_wordListPanel, 200, 200, 200, 500, 200, 500);
+		m_wordListPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));		
+		m_wordListPanel.setLayout(new SpringLayout());	
+		*/m_wordsPanel.add(m_wordListPanel);
+	}
 	/* **********************************************************
     					  LISTENER FUNCTIONS
 	 ************************************************************/
@@ -580,9 +594,9 @@ private void importFile() {
 		switch (componentName) {
 			
 			case WORD_SEARCH_BUTTON:
-				System.err.println("Wordsearch button pressed.");
-				m_model.generatePuzzles(Constants.TYPE_WORDSEARCH);
-				updatePuzzlePanel();
+				  System.err.println("Wordsearch button pressed.");
+		          m_model.generatePuzzles(Constants.TYPE_WORDSEARCH);
+		          updatePuzzlePanel();
 				break;
 			
 			case CROSSWORD_BUTTON:				
@@ -590,29 +604,30 @@ private void importFile() {
 				m_model.generatePuzzles(Constants.TYPE_CROSSWORD);
 				updatePuzzlePanel();
 				break;
-				
-			case STOP_BUTTON:
-				//m_model.stopGeneration();
-				break;
-				
+			 case STOP_BUTTON:
+				// m_model.stopGeneration();
+				 break;
 			case PREVIOUS_BUTTON:
 				m_wordLabelList.changeTo(m_model.getNextWordList());
-				
+				if(m_model.getCurrentWordPuzzle() != null)
+					updatePuzzlePanel();
 				break;
 			case NEXT_BUTTON:
-				if(m_model.hasNext())
-					m_wordLabelList.changeTo(m_model.getNextWordList());
-				else
-					m_wordLabelList.changeTo(m_model.getNewWordList());
+				m_wordLabelList.changeTo(m_model.getNextWordList());
+				if(m_model.getCurrentWordPuzzle() != null)
+					updatePuzzlePanel();
 				break;
 				
 			case PREVIOUS_BUTTON_PZL:
-				//m_wordLabelList.changeTo(m_model.getNextWordList());
+				m_model.getPreviousPuzzle();
+				updatePuzzlePanel();
+				break;
 				
+			case NEW_WORDBUTTON:
+				m_wordLabelList.changeTo(m_model.getNewWordList());
 				break;
 			case NEXT_BUTTON_PZL:
 				m_model.getNextPuzzle();
-				
 				updatePuzzlePanel();
 				break;
 			default:
