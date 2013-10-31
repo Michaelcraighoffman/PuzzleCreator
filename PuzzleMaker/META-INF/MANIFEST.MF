@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: PuzzleMaker
+Bundle-SymbolicName: PuzzleMaker
+Bundle-Version: 1.0.0.qualifier
+Export-Package: puzzlemaker,
+ puzzlemaker.gui,
+ puzzlemaker.model,
+ puzzlemaker.puzzles,
+ puzzlemaker.tools,
+ puzzlemaker.tools.grid
