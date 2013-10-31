@@ -74,11 +74,11 @@ public class Model {
 	public ArrayList<String> getWordList() {
 		return (ArrayList<String>) m_selectedWordList;
 	}
-/**
- * 
- * @param currentPuzzle
- * @return nextPuzzle in list
- */
+	
+	/**
+	 * Moves the selected puzzle up the tree
+	 * @return m_selectedPuzzle
+	 */
 	public Puzzle getNextPuzzle() 
 	{	
 		m_selectedPuzzle = m_data.get(m_selectedWordList).higher(m_selectedPuzzle);
@@ -87,7 +87,10 @@ public class Model {
 		}
 		return m_selectedPuzzle;
 	}
-	
+	/**
+	 * Moves the selected Puzzle down the tree
+	 * @return m_selectedPuzzle
+	 */
 	public Puzzle getPreviousPuzzle() 
 	{
 		m_selectedPuzzle = m_data.get(m_selectedWordList).lower(m_selectedPuzzle);
@@ -97,6 +100,10 @@ public class Model {
 		return m_selectedPuzzle;
 	}
 	
+	/**
+	 * Obtains the first puzzle of the current wordList
+	 * @return m_selectedPuzzle
+	 */
 	public Puzzle getCurrentWordPuzzle(){
 		m_selectedPuzzle = m_data.get(m_selectedWordList).first();
 		return m_selectedPuzzle;

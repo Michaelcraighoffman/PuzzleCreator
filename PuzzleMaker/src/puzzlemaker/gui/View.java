@@ -301,7 +301,10 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		
 		return panel;
 	}
-	
+	/**
+	 * Saves a wordList to a txt file
+	 * @param words
+	 */
 	private void saveFile(ArrayList<String> words)
 	{
 		JFileChooser dlgSave;
@@ -344,7 +347,9 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	//	dlgSave.setSelectedFile (new File (path));
 		}
 	}
-	
+/**
+ * Takes a txt file and outputs the filtered contents as a wordList
+ */
 private void importFile() {
 		
 		JFileChooser dlgSave;
@@ -358,11 +363,9 @@ private void importFile() {
 			try {
 				reader = new BufferedReader(new FileReader(file));
 				String line = null;
-				m_wordLabelList.changeTo(m_model.getNewWordList());
-				
-				
 				while ((line = reader.readLine()) != null) {
 					m_wordLabelList.addWord(line);//basic no string tokenizer yet
+					m_model.addWord(line);
 				}
 		
 			}
@@ -370,7 +373,7 @@ private void importFile() {
 					;
 			}
 		}
-		//return words;
+		
 	}
 	/* **********************************************************
                         GETTER FUNCTIONS
@@ -433,7 +436,9 @@ private void importFile() {
 		rbMenuItem.setSelected(selected);
 		return rbMenuItem;
 	}
-	
+	/**
+	 * Shows about dialog box.
+	 */
 	private void showAboutDialog(){
 		if (m_aboutDialog == null) {
 			final String aboutMessage = "Iteration 2";
@@ -455,14 +460,15 @@ private void importFile() {
 		c.setPreferredSize(new Dimension(prefWidth, prefHeight));
 		c.setMaximumSize(new Dimension(maxWidth, maxHeight));
 	}
-	
+	/*
 	private void updateWordList(){
 		m_wordsPanel.remove(m_wordListPanel);
-		/*setComponentSizes(m_wordListPanel, 200, 200, 200, 500, 200, 500);
+		setComponentSizes(m_wordListPanel, 200, 200, 200, 500, 200, 500);
 		m_wordListPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));		
 		m_wordListPanel.setLayout(new SpringLayout());	
-		*/m_wordsPanel.add(m_wordListPanel);
+		m_wordsPanel.add(m_wordListPanel);
 	}
+	*/
 	/* **********************************************************
     					  LISTENER FUNCTIONS
 	 ************************************************************/
@@ -480,6 +486,7 @@ private void importFile() {
 			}
 			break;
 		case Constants.IMPORT:
+			m_wordLabelList.changeTo(m_model.getNewWordList());
 			importFile();
 			break;
 		case Constants.SAVE_WORDLIST:
