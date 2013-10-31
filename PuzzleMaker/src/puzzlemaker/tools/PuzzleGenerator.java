@@ -173,8 +173,12 @@ public class PuzzleGenerator {
 				else {
 					if(m_grid.getWidth()>5 && m_grid.getHeight()>5)
 					{
+						ArrayList<Word> words=new ArrayList<Word>();
+						for(String s : m_model.getWordList()) {
+							words.add(new Word(s));
+						}
 						//TODO: Have to actually find words in WordSearch 
-						Puzzle puzzle=new WordSearch(m_grid, new ArrayList<Word>());
+						Puzzle puzzle=new WordSearch(m_grid, words);
 						addSolutionWithoutDuplicates(puzzle);
 					}
 				}

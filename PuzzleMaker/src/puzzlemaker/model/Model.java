@@ -167,4 +167,9 @@ public class Model {
 		// TODO Auto-generated method stub
 		return m_selectedPuzzle;
 	}
+
+	public void clearSelected() {
+		m_selectedPuzzle=null;
+		
+	}
 }
