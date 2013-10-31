@@ -156,6 +156,9 @@ public class PuzzleGenerator {
 		
 		@Override
 		protected Void compute() {
+			//Limit ourselves to 1,000 solutions.
+			if(m_newSolutions.size()>1000) { return null; }
+			
 			if (m_wordList.isEmpty()) {
 				m_grid.trim();
 				if(m_puzzleType==Constants.TYPE_CROSSWORD) {
@@ -166,14 +169,14 @@ public class PuzzleGenerator {
 						addSolutionWithoutDuplicates(puzzle);
 	//					endAddSoln = System.currentTimeMillis();
 					}
-					else {
-						System.err.println("Threw away:  "+m_grid.toString());
-					}
 				}
 				else {
-					//TODO: Have to actually find words in WordSearch 
-					Puzzle puzzle=new WordSearch(m_grid, new ArrayList<Word>());
-					addSolutionWithoutDuplicates(puzzle);
+					if(m_grid.getWidth()>5 && m_grid.getHeight()>5)
+					{
+						//TODO: Have to actually find words in WordSearch 
+						Puzzle puzzle=new WordSearch(m_grid, new ArrayList<Word>());
+						addSolutionWithoutDuplicates(puzzle);
+					}
 				}
 			}
 			else {
@@ -265,6 +268,16 @@ public class PuzzleGenerator {
 			
 			switch (m_puzzleType) {
 				case Constants.TYPE_CROSSWORD:
+					if (grid.isEmpty()) {
+						for (int direction : m_validDirections) {
+							validGrid = new Grid(grid);
+							placeWordInGrid(validGrid, word, 0, 0, direction, 0);
+							validGrids.ensureCapacity(validGrids.size() + 1);
+							validGrids.add(validGrid);
+						}
+						return validGrids;
+					}
+					
 					for (int x = 0; x < grid.getWidth(); x++) {
 						for (int y = 0; y < grid.getHeight(); y++) {
 							if (word.containsChar(grid.getCharAt(x, y))) {
@@ -282,23 +295,15 @@ public class PuzzleGenerator {
 					}
 					break;
 				case Constants.TYPE_WORDSEARCH:
-					for (int x = 0; x < grid.getWidth(); x++) {
-						for (int y = 0; y < grid.getHeight(); y++) {
-							if (word.containsChar(grid.getCharAt(x, y)) || grid.getCharAt(x, y)==' ') {
-								for (int intersection=0; intersection<5; intersection++) {
-									for (int direction : m_validDirections) {
-										if (!hasIllegalWordSearchIntersections(grid, word, x, y, direction, intersection)) {
-											validGrid = new Grid(grid);
-											placeWordInGrid(validGrid, word, x, y, direction, intersection);
-											validGrids.add(validGrid);
-										}
-									}
-								}							
-							}
+					if (grid.isEmpty()) {
+						for (int direction : m_validDirections) {
+							validGrid = new Grid(10,10);
+							placeWordInGrid(validGrid, word, 5, 5, direction, 0);
+							validGrids.ensureCapacity(validGrids.size() + 1);
+							validGrids.add(validGrid);
 						}
+						return validGrids;
 					}
-					//generating ALL the possible solutions for wordsearch is impossible
-					//Instead, pick a few random points and try all a direction
 					Random rand=new Random();
 					for(int points=0; points<5; points++) {
 						int x=rand.nextInt(grid.getWidth()+2)-1;
