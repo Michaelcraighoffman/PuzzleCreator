@@ -40,6 +40,9 @@ public class Model {
 	 * @see Constants#TYPE_CROSSWORD
 	 * @see Constants#TYPE_WORDSEARCH
 	 */
+	public int getNumPuzzles(){
+		return m_data.get(m_selectedWordList).size();
+	}
 	public void generatePuzzles(byte puzzleType) {
 		if (m_selectedWordList.size() > 0) {
 			m_generator.setPuzzleType(puzzleType);

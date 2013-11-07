@@ -80,6 +80,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	/** @see WordLabelList */
 	private WordLabelList m_wordLabelList;
 	private JTextField m_wordEntryField;
+	private int m_index = 1;
 
 	
    /** Belongs to {@code m_wordsPanel}.<br>
@@ -105,6 +106,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		initPuzzlePanel();
 		initWordPanel();
 		initPuzzleButtonPanel();
+		
         
         // Initialize the split pane.
         m_horizontalSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -161,9 +163,24 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	}
 	
 	private void initPuzzlePanel() {
+		final int MAX_BUTTON_SIZE = 82;
 		m_puzzlePanel = new JPanel();
-		setComponentSizes(m_puzzlePanel, 200, 200, 500, 500, 500, 500);
+		setComponentSizes(m_puzzlePanel, 200, 190, 500, 490, 500, 490);
 		m_puzzlePanel.addMouseListener(this);
+		JPanel innerPanel = new JPanel();
+		innerPanel.setLayout(new GridLayout(1, 2, 10, 10));
+		nextWordPZL = new BasicArrowButton(BasicArrowButton.EAST);
+        prevWordPZL = new BasicArrowButton(BasicArrowButton.WEST);
+        JLabel index = new JLabel("0/0");
+		prevWordPZL.setName(PREVIOUS_BUTTON_PZL);
+		nextWordPZL.setName(NEXT_BUTTON_PZL);
+		prevWordPZL.addMouseListener(this);
+		nextWordPZL.addMouseListener(this);
+		innerPanel.add(prevWordPZL);
+		innerPanel.add(index);
+		innerPanel.add(nextWordPZL);
+		innerPanel.setMaximumSize(new Dimension((MAX_BUTTON_SIZE * 2) + 10, MAX_BUTTON_SIZE));
+		m_puzzlePanel.add(innerPanel);
 	}
 	
 	private void initWordPanel() {
@@ -221,17 +238,6 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new GridLayout(1, 2, 10, 10));
 		
-		//Buttons for navigating word lists
-        nextWordPZL = new BasicArrowButton(BasicArrowButton.EAST);
-        prevWordPZL = new BasicArrowButton(BasicArrowButton.WEST);
-       
-		prevWordPZL.setName(PREVIOUS_BUTTON_PZL);
-		nextWordPZL.setName(NEXT_BUTTON_PZL);
-		prevWordPZL.addMouseListener(this);
-		nextWordPZL.addMouseListener(this);
-		innerPanel.add(prevWordPZL);
-		innerPanel.add(nextWordPZL);
-		
 		JButton btnWordSearch = new JButton(new ImageIcon("res/wordsearch.png"));
 		btnWordSearch.addMouseListener(this);
 		btnWordSearch.setName(WORD_SEARCH_BUTTON);
@@ -255,16 +261,25 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_puzzleButtonPanel.add(Box.createVerticalGlue());
 	}
 	
+	
 	/* **********************************************************
               seems weird calling this from anywhere else
 	 ************************************************************/
 	
 	/** Resets {@code m_puzzlePanel}'s contents, border, and layout. */
 	private void updatePuzzlePanel() {
+		final int MAX_BUTTON_SIZE = 82;
 		m_puzzlePanel.removeAll();
 		m_puzzlePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		m_puzzlePanel.setLayout(new BoxLayout(m_puzzlePanel, BoxLayout.Y_AXIS));
-		
+		JPanel innerPanel = new JPanel();
+		innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.X_AXIS));
+		JLabel index = new JLabel(m_index + "/" + m_model.getNumPuzzles());
+		innerPanel.add(prevWordPZL);
+		innerPanel.add(index);
+		innerPanel.add(nextWordPZL);
+		innerPanel.setMaximumSize(new Dimension((MAX_BUTTON_SIZE * 2) + 10, MAX_BUTTON_SIZE));
+		m_puzzlePanel.add(innerPanel);
 		m_puzzlePanel.add(Box.createVerticalGlue());
 		m_puzzlePanel.add(createPuzzlePanel());
 		m_puzzlePanel.add(Box.createVerticalGlue());
@@ -460,15 +475,7 @@ private void importFile() {
 		c.setPreferredSize(new Dimension(prefWidth, prefHeight));
 		c.setMaximumSize(new Dimension(maxWidth, maxHeight));
 	}
-	/*
-	private void updateWordList(){
-		m_wordsPanel.remove(m_wordListPanel);
-		setComponentSizes(m_wordListPanel, 200, 200, 200, 500, 200, 500);
-		m_wordListPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));		
-		m_wordListPanel.setLayout(new SpringLayout());	
-		m_wordsPanel.add(m_wordListPanel);
-	}
-	*/
+	
 	/* **********************************************************
     					  LISTENER FUNCTIONS
 	 ************************************************************/
@@ -644,17 +651,25 @@ private void importFile() {
 				 break;
 			case PREVIOUS_BUTTON:
 				m_wordLabelList.changeTo(m_model.getNextWordList());
-				if(m_model.getCurrentWordPuzzle() != null)
+				if(m_model.getCurrentWordPuzzle() != null){
+					m_index = 1;
 					updatePuzzlePanel();
+				}
 				break;
 			case NEXT_BUTTON:
 				m_wordLabelList.changeTo(m_model.getNextWordList());
-				if(m_model.getCurrentWordPuzzle() != null)
+				if(m_model.getCurrentWordPuzzle() != null){
+					m_index = 1;
 					updatePuzzlePanel();
+				}
 				break;
 				
 			case PREVIOUS_BUTTON_PZL:
 				m_model.getPreviousPuzzle();
+				if(m_index != 1)
+					m_index--;
+				else
+					m_index = m_model.getNumPuzzles();
 				updatePuzzlePanel();
 				break;
 				
@@ -664,6 +679,10 @@ private void importFile() {
 				break;
 			case NEXT_BUTTON_PZL:
 				m_model.getNextPuzzle();
+				if(m_index >= m_model.getNumPuzzles())
+					m_index = 1;
+				else
+					m_index++;
 				updatePuzzlePanel();
 				break;
 			default:
