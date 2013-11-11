@@ -40,7 +40,11 @@ public class Model {
 	 * @see Constants#TYPE_CROSSWORD
 	 * @see Constants#TYPE_WORDSEARCH
 	 */
-	public void generatePuzzles(byte puzzleType) {
+	public int getNumPuzzles(){
+		return m_data.get(m_selectedWordList).size();
+	}
+	
+	public void startPuzzleGenerator(byte puzzleType) {
 		if (m_selectedWordList.size() > 0) {
 			m_generator.setPuzzleType(puzzleType);
 			System.err.println("Starting puzzle generator.");
@@ -50,13 +54,16 @@ public class Model {
 		else {
 			System.err.println("Invalid word list size.");
 		}
-		 m_selectedPuzzle = m_data.get(m_selectedWordList).first();
-		 m_puzzleIter = m_data.get(m_selectedWordList).iterator();
-		 m_puzzlePrev = m_data.get(m_selectedWordList).descendingIterator();
+		
+		m_selectedPuzzle = m_data.get(m_selectedWordList).first();
+		m_puzzleIter = m_data.get(m_selectedWordList).iterator();
+		m_puzzlePrev = m_data.get(m_selectedWordList).descendingIterator();
 	}
-	public void stopGeneration() {
-		     m_generator.stop();
-		   }
+	
+	public void stopPuzzleGenerator() {
+		m_generator.stop();
+	}
+	
 	public boolean addWord(String word) {
 		word = Constants.filterWord(word);
 		
@@ -74,11 +81,11 @@ public class Model {
 	public ArrayList<String> getWordList() {
 		return (ArrayList<String>) m_selectedWordList;
 	}
-/**
- * 
- * @param currentPuzzle
- * @return nextPuzzle in list
- */
+	
+	/**
+	 * Moves the selected puzzle up the tree
+	 * @return m_selectedPuzzle
+	 */
 	public Puzzle getNextPuzzle() 
 	{	
 		m_selectedPuzzle = m_data.get(m_selectedWordList).higher(m_selectedPuzzle);
@@ -87,7 +94,10 @@ public class Model {
 		}
 		return m_selectedPuzzle;
 	}
-	
+	/**
+	 * Moves the selected Puzzle down the tree
+	 * @return m_selectedPuzzle
+	 */
 	public Puzzle getPreviousPuzzle() 
 	{
 		m_selectedPuzzle = m_data.get(m_selectedWordList).lower(m_selectedPuzzle);
@@ -97,6 +107,10 @@ public class Model {
 		return m_selectedPuzzle;
 	}
 	
+	/**
+	 * Obtains the first puzzle of the current wordList
+	 * @return m_selectedPuzzle
+	 */
 	public Puzzle getCurrentWordPuzzle(){
 		m_selectedPuzzle = m_data.get(m_selectedWordList).first();
 		return m_selectedPuzzle;
@@ -136,7 +150,17 @@ public class Model {
 		return m_selectedWordList;
 	}
 	
+	public void setMinPuzzleSize(boolean enabled, int x, int y) {
+		m_generator.setMinPuzzleSize(enabled, x, y);
+	}
 	
+	public void setMaxPuzzleSize(boolean enabled, int x, int y) {
+		m_generator.setMaxPuzzleSize(enabled, x, y);
+	}
+
+	public void setExactlPuzzleSize(boolean enabled, int x, int y) {
+		m_generator.setExactlPuzzleSize(enabled, x, y);
+	}
 	
 	@Deprecated
 	/**
@@ -159,5 +183,10 @@ public class Model {
 	public Puzzle getPuzzle() {
 		// TODO Auto-generated method stub
 		return m_selectedPuzzle;
+	}
+
+	public void clearSelected() {
+		m_selectedPuzzle=null;
+		
 	}
 }

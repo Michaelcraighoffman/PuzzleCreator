@@ -4,59 +4,54 @@ import java.util.ArrayList;
 
 import puzzlemaker.Constants;
 
+/** A Grid is a 2D ArrayList of Characters.<br>
+ * A grid's dimensions can range (0, 128) or [1, 127].
+ * 
+ * @author Sam
+ *
+ */
 public class Grid implements Comparable<Grid> {
-	ArrayList<ArrayList<GridCell>> m_data;
+	ArrayList<ArrayList<Character>> m_data;
 	
 	public Grid(int width, int height) {
-		m_data = new ArrayList<ArrayList<GridCell>>(width);
-		ArrayList<GridCell> gridColumn;
+		m_data = new ArrayList<ArrayList<Character>>(width);
+		ArrayList<Character> gridColumn;
 		for (int x = 0; x < width; x++) {
-			gridColumn = new ArrayList<GridCell>(height);
+			gridColumn = new ArrayList<Character>(height);
 			for (int y = 0; y < height; y++) {
-				gridColumn.add(Constants.EMPTY_CELL);
+				gridColumn.add(Constants.EMPTY_CELL_CHARACTER);
 			}
 			m_data.add(gridColumn);
 		}
 	}
 	
 	public Grid(Grid g) {
-		m_data = new ArrayList<ArrayList<GridCell>>(g.getWidth());
-		ArrayList<GridCell> gridColumn;
+		m_data = new ArrayList<ArrayList<Character>>(g.getWidth());
+		ArrayList<Character> gridColumn;
 		for (int x = 0; x < g.getWidth(); x++) {
-			gridColumn = new ArrayList<GridCell>(g.getHeight());
+			gridColumn = new ArrayList<Character>(g.getHeight());
 			for (int y = 0; y < g.getHeight(); y++) {
-				if (g.getCharAt(x, y) == ' ') {
-					gridColumn.add(Constants.EMPTY_CELL);
-				}
-				else {
-					gridColumn.add(new GridCell(g.getCharAt(x, y)));
-				}
+				gridColumn.add(g.getCharAt(x, y));
 			}
 			m_data.add(gridColumn);
 		}
 	}
 	
 	public char getCharAt(int x, int y) {
-		return m_data.get(x).get(y).getChar();
+		return m_data.get(x).get(y);
 	}
 	
-	/** @return Whether or not the location specified was within bounds. */
-	public boolean setCharAt(int x, int y, char c) {
-		if (x < m_data.size() && y < m_data.get(0).size()) {
-			if (c == ' ' || c == Constants.EMPTY_CELL_CHARACTER) {
-				m_data.get(x).set(y, Constants.EMPTY_CELL);
-			}
-			else {
-				if (m_data.get(x).get(y) == Constants.EMPTY_CELL) {
-					m_data.get(x).set(y, new GridCell(c));
-				}
-				else {
-					m_data.get(x).get(y).setChar(c);
-				}
-			}
-			return true;
-		}
-		return false;
+//	/** @return Whether or not the location specified was within bounds. */
+//	public boolean setCharAt(int x, int y, char c) {
+//		if (x < m_data.size() && y < m_data.get(0).size()) {
+//			m_data.get(x).set(y, c);
+//			return true;
+//		}
+//		return false;
+//	}
+	
+	public void setCharAt (int x, int y, char c) {
+		m_data.get(x).set(y, c);
 	}
 	
 	public boolean isEmpty() {
@@ -101,9 +96,9 @@ public class Grid implements Comparable<Grid> {
 	}
 	
 	public void addColumnOnLeft() {
-		ArrayList<GridCell> column = new ArrayList<GridCell>(this.getHeight());
+		ArrayList<Character> column = new ArrayList<Character>(this.getHeight());
 		for (int i = 0; i < this.getHeight(); i++) {
-			column.add(Constants.EMPTY_CELL);
+			column.add(Constants.EMPTY_CELL_CHARACTER);
 		}
 		
 		m_data.ensureCapacity(m_data.size() + 1);
@@ -111,9 +106,9 @@ public class Grid implements Comparable<Grid> {
 	}
 	
 	public void addColumnOnRight() {
-		ArrayList<GridCell> column = new ArrayList<GridCell>(this.getHeight());
+		ArrayList<Character> column = new ArrayList<Character>(this.getHeight());
 		for (int i = 0; i < this.getHeight(); i++) {
-			column.add(Constants.EMPTY_CELL);
+			column.add(Constants.EMPTY_CELL_CHARACTER);
 		}
 		
 		m_data.ensureCapacity(m_data.size() + 1);
@@ -121,20 +116,20 @@ public class Grid implements Comparable<Grid> {
 	}
 	
 	public void addRowOnTop() {
-		ArrayList<GridCell> column;
+		ArrayList<Character> column;
 		for (int i = 0; i < this.getWidth(); i++) {
 			column = m_data.get(i);
 			column.ensureCapacity(column.size() + 1);
-			column.add(0, Constants.EMPTY_CELL);
+			column.add(0, Constants.EMPTY_CELL_CHARACTER);
 		}
 	}
 	
 	public void addRowOnBottom() {
-		ArrayList<GridCell> column;
+		ArrayList<Character> column;
 		for (int i = 0; i < this.getWidth(); i++) {
 			column = m_data.get(i);
 			column.ensureCapacity(column.size() + 1);
-			column.add(Constants.EMPTY_CELL);
+			column.add(Constants.EMPTY_CELL_CHARACTER);
 		}
 	}
 	
@@ -212,7 +207,7 @@ public class Grid implements Comparable<Grid> {
 		char cellChar;
 		for (int y = 0; y < this.getHeight(); y++) {
 			for (int x = 0; x < this.getWidth(); x++) {
-				cellChar = m_data.get(x).get(y).getChar();
+				cellChar = m_data.get(x).get(y);
 				
 				// To make reading console output easier.
 				if (cellChar == Constants.EMPTY_CELL_CHARACTER) {
@@ -228,9 +223,9 @@ public class Grid implements Comparable<Grid> {
 		return output;
 	}
 	
-	/** Set all the ArrayLists in m_data (and possibly also all tracked iterators) to null. */
+	/** Set all the ArrayLists in m_data to null. */
 	public void dispose() {
-		ArrayList<GridCell> column;
+		ArrayList<Character> column;
 
 		while (!m_data.isEmpty()) {
 			column = m_data.remove(0);
@@ -239,6 +234,8 @@ public class Grid implements Comparable<Grid> {
 			}
 			column = null;
 		}
+		
+		m_data = null;
 	}
 
 	@Override

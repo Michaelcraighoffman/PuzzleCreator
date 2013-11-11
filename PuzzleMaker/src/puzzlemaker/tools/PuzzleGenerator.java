@@ -1,10 +1,13 @@
 package puzzlemaker.tools;
 
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
+
 import puzzlemaker.Constants;
+import puzzlemaker.Constants.ProgramDefault;
 import puzzlemaker.model.Model;
 import puzzlemaker.puzzles.Crossword;
 import puzzlemaker.puzzles.Puzzle;
@@ -21,14 +24,16 @@ public class PuzzleGenerator {
 	private ForkJoinPool m_threadPool;
 	private ConcurrentSkipListSet<Puzzle> m_newSolutions;
 	private ConcurrentSkipListSet<Grid> m_inProgressGrids;
-	
-	private boolean m_debugBool;
-	
+		
 	private SyncObj m_findLock = new SyncObj(true);
 	private long m_totalFind = 0;
 	private SyncObj m_addLock = new SyncObj(true);
 	private long m_totalAdd = 0;
 	private long m_debugStart, m_debugEnd;
+	
+	// Size constraints
+	private boolean m_hasMinimumSize = ProgramDefault.PUZZLE_SIZE_MIN_CONSTRAINED, m_hasMaximumSize = ProgramDefault.PUZZLE_SIZE_MAX_CONSTRAINED, m_hasExactSize = ProgramDefault.PUZZLE_SIZE_EXACT_CONSTRAINED;
+	private int m_minSizeX = ProgramDefault.PUZZLE_SIZE_MIN_X, m_minSizeY = ProgramDefault.PUZZLE_SIZE_MIN_Y, m_maxSizeX = ProgramDefault.PUZZLE_SIZE_MAX_X, m_maxSizeY = ProgramDefault.PUZZLE_SIZE_MAX_Y, m_exactSizeX = ProgramDefault.PUZZLE_SIZE_EXACT_X, m_exactSizeY = ProgramDefault.PUZZLE_SIZE_EXACT_Y;
 	
 	public PuzzleGenerator(Model model) {
 		m_model = model;
@@ -64,6 +69,33 @@ public class PuzzleGenerator {
 		}
 	}
 	
+	public void setMinPuzzleSize(boolean enabled, int x, int y) {
+		m_hasMinimumSize = enabled;
+		
+		if (m_hasMinimumSize) {
+			m_minSizeX = x;
+			m_minSizeY = y;
+		}
+	}
+	
+	public void setMaxPuzzleSize(boolean enabled, int x, int y) {
+		m_hasMaximumSize = enabled;
+		
+		if (m_hasMaximumSize) {
+			m_maxSizeX = x;
+			m_maxSizeY = y;
+		}
+	}
+
+	public void setExactlPuzzleSize(boolean enabled, int x, int y) {
+		m_hasExactSize = enabled;
+		
+		if (m_hasExactSize) {
+			m_exactSizeX = x;
+			m_exactSizeY = y;
+		}
+	}
+	
 	public boolean start(ConcurrentSkipListSet<Puzzle> solutionsList) {
 		if (m_validDirections == null) {
 			return false;
@@ -79,7 +111,6 @@ public class PuzzleGenerator {
 
 		PuzzleTask tmpTask = new PuzzleTask(new Grid(1, 1), wordList);
 //		long start = System.currentTimeMillis();
-		m_debugBool = true;
 		m_debugStart = System.currentTimeMillis();
 		tmpTask.quietlyInvoke();
 		
@@ -99,30 +130,32 @@ public class PuzzleGenerator {
 //		System.err.println("Time elapsed: " + (end - start) + "ms");
 		
 		
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		while (!m_threadPool.isQuiescent()) {
-			m_findLock.doAcquire();
-			m_addLock.doAcquire();
-			System.err.println("Total find: " + (m_totalFind / 1000) + "s; Total add: " + (m_totalAdd / 1000) + "s; Unique solutions: " + m_newSolutions.size() + "; In progress grids: " + m_inProgressGrids.size() + "; Queued tasks: " + m_threadPool.getQueuedTaskCount());
-			m_findLock.doRelease();
-			m_addLock.doRelease();
-			try {
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		Thread statusReporter = new Thread() {
+			
+			@Override
+			public void run() {
+				while (!m_threadPool.isQuiescent()) {
+					m_findLock.doAcquire();
+					m_addLock.doAcquire();
+					System.err.println("Total find: " + (m_totalFind / 1000) + "s; Total add: " + (m_totalAdd / 1000) + "s; Unique solutions: " + m_newSolutions.size() + "; In progress grids: " + m_inProgressGrids.size() + "; Queued tasks: " + m_threadPool.getQueuedTaskCount());
+					m_findLock.doRelease();
+					m_addLock.doRelease();
+					try {
+						Thread.sleep(5000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				
+				m_debugEnd = System.currentTimeMillis();
+				System.err.println("Final count: " + m_newSolutions.size() + " unique, " + m_inProgressGrids.size() + " in progress.  Time elapsed: " + ((m_debugEnd - m_debugStart) / 1000) + " seconds.");
+				m_inProgressGrids.clear();
+				System.err.println("In-progress grids cleared.");
 			}
-		}
-		
-		System.err.println("Final count: " + m_newSolutions.size() + " unique, " + m_inProgressGrids.size() + " in progress.");
-		m_inProgressGrids.clear();
-		System.err.println("In-progress grids cleared.");
+		};
+
+		statusReporter.run();
 
 		return true;
 	}
@@ -141,8 +174,8 @@ public class PuzzleGenerator {
 		private ArrayList<Word> m_wordList;
 		private ArrayList<Grid> m_validPlacements;
 		
-//		private long startAddSoln = 0, endAddSoln = 0, startFindValid = 0, endFindValid = 0, totalFind = 0;
-		
+//		private int startFindValid, endFindValid, totalFindValid;
+				
 		public PuzzleTask(Grid grid, ArrayList<Word> wordList) {
 			m_grid = grid;
 
@@ -155,28 +188,28 @@ public class PuzzleGenerator {
 		
 		@Override
 		protected Void compute() {
+			
 			if (m_wordList.isEmpty()) {
 				m_grid.trim();
-				if(m_puzzleType==Constants.TYPE_CROSSWORD) {
+				
+				if (m_puzzleType==Constants.TYPE_CROSSWORD) {
 					Puzzle puzzle = gridToPuzzleIfLegal(m_grid);
 					
 					if (puzzle != null) {
-	//					startAddSoln = System.currentTimeMillis();
-						addSolutionWithoutDuplicates(puzzle);
-	//					endAddSoln = System.currentTimeMillis();
+						addSolution(puzzle);
 					}
-					else {
-						System.err.println("Threw away:  "+m_grid.toString());
-					}
+//					else {
+//						System.err.println("Threw away:  "+m_grid.toString());
+//					}
 				}
-				else {
+				else if (m_puzzleType == Constants.TYPE_WORDSEARCH) {
 					//TODO: Have to actually find words in WordSearch 
 					Puzzle puzzle=new WordSearch(m_grid, new ArrayList<Word>());
-					addSolutionWithoutDuplicates(puzzle);
+					addSolution(puzzle);
 				}
 			}
 			else {
-//				Controls the size of the "in progress" grids.
+//				Limits the size of the "in progress" grids, which otherwise can get out of control.
 				if (m_wordList.size() >= (m_model.getWordList().size() / 2)) {
 					if (!m_inProgressGrids.add(m_grid)) {
 						return null;
@@ -188,8 +221,7 @@ public class PuzzleGenerator {
 //					startFindValid = System.currentTimeMillis();
 					m_validPlacements = findValidPlacements(m_grid, m_wordList.get(wordIndex));
 //					endFindValid = System.currentTimeMillis();
-					
-//					totalFind += endFindValid - startFindValid;
+//					totalFindValid += endFindValid - startFindValid;
 					
 					if (m_validPlacements.isEmpty()) {
 						wordIndex++;
@@ -225,26 +257,8 @@ public class PuzzleGenerator {
 //			Useful for seeing if a given section is taking up a lot of time.
 //			if (totalFind > 1) {
 //				m_findLock.doAcquire();
-//				m_totalFind += (totalFind - 1);
+//				m_totalFind += (totalFindValid - 1);
 //				m_findLock.doRelease();
-//			}
-//			
-//			if ((endAddSoln - startAddSoln) > 1) {
-//				m_addLock.doAcquire();
-//				m_totalAdd += ((endAddSoln - startAddSoln) - 1);
-//				m_addLock.doRelease();
-//			}
-			
-//			if (!m_threadPool.hasQueuedSubmissions()) {
-//				if (m_debugBool) {
-//					m_debugBool = false;
-//					m_debugEnd = System.currentTimeMillis();
-//					System.err.println("No queued submissions.");
-//					System.err.println("Active thread count: " + m_threadPool.getActiveThreadCount() + " (might be overestimate)");
-//					System.err.println("Pool size: " + m_threadPool.getPoolSize());
-//					System.err.println("Queued task count: " + m_threadPool.getQueuedTaskCount());
-//					System.err.println("Elapsed time: " + ((m_debugEnd - m_debugStart) / 1000) + "s");
-//				}
 //			}
 			return null;
 		}	
@@ -252,18 +266,29 @@ public class PuzzleGenerator {
 		public ArrayList<Grid> findValidPlacements(Grid grid, Word word) {
 			ArrayList<Grid> validGrids = new ArrayList<Grid>(0);
 			Grid validGrid;
-			if (grid.isEmpty()) {
-				for (int direction : m_validDirections) {
-					validGrid = new Grid(grid);
-					placeWordInGrid(validGrid, word, 0, 0, direction, 0);
-					validGrids.ensureCapacity(validGrids.size() + 1);
-					validGrids.add(validGrid);
-				}
-				return validGrids;
-			}
+//			if (grid.isEmpty()) {
+//				for (int direction : m_validDirections) {
+//					validGrid = new Grid(grid);
+//					if (placeWordInGrid(validGrid, word, 0, 0, direction, 0)) {
+//						validGrids.ensureCapacity(validGrids.size() + 1);
+//						validGrids.add(validGrid);
+//					}
+//				}
+//				return validGrids;
+//			}
 			
 			switch (m_puzzleType) {
 				case Constants.TYPE_CROSSWORD:
+					if (grid.isEmpty()) {
+						for (int direction : m_validDirections) {
+							validGrid = new Grid(grid);
+							placeWordInGrid(validGrid, word, 0, 0, direction, 0);
+							validGrids.ensureCapacity(validGrids.size() + 1);
+							validGrids.add(validGrid);
+						}
+						return validGrids;
+					}
+					
 					for (int x = 0; x < grid.getWidth(); x++) {
 						for (int y = 0; y < grid.getHeight(); y++) {
 							if (word.containsChar(grid.getCharAt(x, y))) {
@@ -271,8 +296,10 @@ public class PuzzleGenerator {
 									for (int direction : m_validDirections) {
 										if (!hasIllegalCrosswordIntersections(grid, word, x, y, direction, intersection)) {
 											validGrid = new Grid(grid);
-											placeWordInGrid(validGrid, word, x, y, direction, intersection);
-											validGrids.add(validGrid);
+											if (placeWordInGrid(validGrid, word, x, y, direction, intersection)) {
+												validGrids.ensureCapacity(validGrids.size() + 1);
+												validGrids.add(validGrid);
+											}
 										}
 									}
 								}							
@@ -281,20 +308,24 @@ public class PuzzleGenerator {
 					}
 					break;
 				case Constants.TYPE_WORDSEARCH:
-					for (int x = 0; x < grid.getWidth(); x++) {
-						for (int y = 0; y < grid.getHeight(); y++) {
-							if (word.containsChar(grid.getCharAt(x, y))) {
-								for (int intersection : word.getIntersectionIndices(grid.getCharAt(x, y))) {
-									for (int direction : m_validDirections) {
-										if (!hasIllegalWordSearchIntersections(grid, word, x, y, direction, intersection)) {
-											validGrid = new Grid(grid);
-											placeWordInGrid(validGrid, word, x, y, direction, intersection);
-											validGrids.add(validGrid);
-											System.err.println(validGrid.toString());
-										}
-									}
-								}							
-							}
+					if (grid.isEmpty()) {
+						for (int direction : m_validDirections) {
+							validGrid = new Grid(10,10);
+							placeWordInGrid(validGrid, word, 5, 5, direction, 0);
+							validGrids.ensureCapacity(validGrids.size() + 1);
+							validGrids.add(validGrid);
+						}
+						return validGrids;
+					}
+					Random rand=new Random();
+					for(int points=0; points<5; points++) {
+						int x=rand.nextInt(grid.getWidth()+2)-1;
+						int y=rand.nextInt(grid.getHeight()+2)-1;
+						int direction=rand.nextInt(m_validDirections.length-1);
+						if (!hasIllegalWordSearchIntersections(grid, word, x, y, m_validDirections[direction], 0)) {
+							validGrid = new Grid(grid);
+							placeWordInGrid(validGrid, word, x, y, m_validDirections[direction], 0);
+							validGrids.add(validGrid);
 						}
 					}
 					break;
@@ -597,7 +628,6 @@ public class PuzzleGenerator {
 		}
 	}
 	
-	
 	public boolean hasIllegalCrosswordIntersections(Grid grid, Word word, int x, int y, int direction, int offset) {
 		while (offset > 0) {
 			switch (direction) {
@@ -831,8 +861,21 @@ public class PuzzleGenerator {
 	}
 	
 	/** Places the word in the grid at the given starting point in the given direction.<br>
-	 * Resizes the grid if necessary. */
-	public void placeWordInGrid(Grid grid, Word word, int x, int y, int direction, int offset) {
+	 * Resizes the grid if necessary. 
+	 * Assumes placement is legal (will not illegally change letters already on grid).
+	 * 
+	 * @param grid The grid to be modified.
+	 * @param word The word to be placed in the grid.
+	 * @param x The word's starting position's "x" value.
+	 * @param y The word's starting position's "y" value.
+	 * @param direction The direction that the word will be placed in.
+	 * @param offset How much to adjust the starting x and y in the direction that is the opposite of the "direction" parameter.
+	 * 
+	 * @return {@code true} if the puzzle is a legal size after placement.
+	 * 
+	 * @author szeren
+	 */
+	public boolean placeWordInGrid(Grid grid, Word word, int x, int y, int direction, int offset) {
 		while (offset > 0) {
 			switch (direction) {
 			case Constants.LEFT_TO_RIGHT:
@@ -869,16 +912,56 @@ public class PuzzleGenerator {
 		
 		while (x >= grid.getWidth()) {
 			grid.addColumnOnRight();
+			if (m_hasMaximumSize) {
+				if (grid.getWidth() > m_maxSizeX) {
+					return false;
+				}
+			}
+			if (m_hasExactSize) {
+				if (grid.getWidth() > m_exactSizeX) {
+					return false;
+				}
+			}
 		}
 		while (y >= grid.getHeight()) {
 			grid.addRowOnBottom();
+			if (m_hasMaximumSize) {
+				if (grid.getHeight() > m_maxSizeY) {
+					return false;
+				}
+			}
+			if (m_hasExactSize) {
+				if (grid.getHeight() > m_exactSizeY) {
+					return false;
+				}
+			}
 		}
 		while (x < 0) {
 			grid.addColumnOnLeft();
+			if (m_hasMaximumSize) {
+				if (grid.getWidth() > m_maxSizeX) {
+					return false;
+				}
+			}
+			if (m_hasExactSize) {
+				if (grid.getWidth() > m_exactSizeX) {
+					return false;
+				}
+			}
 			x++;
 		}
 		while (y < 0) {
 			grid.addRowOnTop();
+			if (m_hasMaximumSize) {
+				if (grid.getHeight() > m_maxSizeY) {
+					return false;
+				}
+			}
+			if (m_hasExactSize) {
+				if (grid.getHeight() > m_exactSizeY) {
+					return false;
+				}
+			}
 			y++;
 		}
 
@@ -887,20 +970,60 @@ public class PuzzleGenerator {
 			// Expand grid if necessary
 			if (x < 0) {
 				grid.addColumnOnLeft();
+				if (m_hasMaximumSize) {
+					if (grid.getWidth() > m_maxSizeX) {
+						return false;
+					}
+				}
+				if (m_hasExactSize) {
+					if (grid.getWidth() > m_exactSizeX) {
+						return false;
+					}
+				}
 				x++;
 			}
 			else if (x >= grid.getWidth()) {
 				grid.addColumnOnRight();
+				if (m_hasMaximumSize) {
+					if (grid.getWidth() > m_maxSizeX) {
+						return false;
+					}
+				}
+				if (m_hasExactSize) {
+					if (grid.getWidth() > m_exactSizeX) {
+						return false;
+					}
+				}
 			}
 			if (y < 0) {
 				grid.addRowOnTop();
+				if (m_hasMaximumSize) {
+					if (grid.getHeight() > m_maxSizeY) {
+						return false;
+					}
+				}
+				if (m_hasExactSize) {
+					if (grid.getHeight() > m_exactSizeY) {
+						return false;
+					}
+				}
 				y++;
 			}
 			else if (y >= grid.getHeight()) {
 				grid.addRowOnBottom();
+				if (m_hasMaximumSize) {
+					if (grid.getHeight() > m_maxSizeY) {
+						return false;
+					}
+				}
+				if (m_hasExactSize) {
+					if (grid.getHeight() > m_exactSizeY) {
+						return false;
+					}
+				}
 			}
 			
-			// Set grid cell to character
+			// Set grid cell's value to character of our word
 			grid.setCharAt(x, y, word.toString().charAt(i));
 			
 			// Move the (x, y) coordinate based on direction
@@ -935,105 +1058,34 @@ public class PuzzleGenerator {
 					break;
 			}
 		}
+		
+		return true;
 	}	
 	
-	
-	
-	private void addSolutionWithoutDuplicates (Puzzle newPuzzle) {
-
-//		************** CONCURRENT SKIP LIST SET *************************
+	/** Adds {@code newPuzzle} to the set of generated solutions if its size is legal.
+	 * 
+	 * @see #setMinPuzzleSize(boolean, int, int)
+	 * @see #setMaxPuzzleSize(boolean, int, int)
+	 * @see #setExactlPuzzleSize(boolean, int, int)
+	 * 
+	 * @author szeren
+	 */
+	private void addSolution (Puzzle newPuzzle) {
+		if (m_hasExactSize) {
+			if (newPuzzle.getGrid().getWidth() != m_exactSizeX || newPuzzle.getGrid().getHeight() != m_exactSizeY) {
+				return;
+			}
+		}
+		
+		if (m_hasMinimumSize) {
+			if (newPuzzle.getGrid().getWidth() < m_minSizeX || newPuzzle.getGrid().getHeight() != m_minSizeY) {
+				return;
+			}
+		}
+		
+		// Note: maximum size gets checked as the puzzle gets resized in placeWordInGrid.
+		
 		m_newSolutions.add(newPuzzle);
-		
-		
-////		************** UNRESTRICTED SIZE ******************
-//		int newPuzzleSize = newPuzzle.getGrid().getWidth() + newPuzzle.getGrid().getHeight();
-//		
-//		m_solutionLock.doAcquire();
-//		
-//		
-//		if (m_solutions.isEmpty()) {
-//			m_solutions.ensureCapacity(m_solutions.size() + 1);
-//			m_solutions.add(newPuzzle);
-//			m_solutionLock.doRelease();
-//			return;
-//		}
-//		else {
-//			int tmpSize;
-//			for (int index = m_solutions.size() - 1; index >= 0; index--) {
-//				tmpSize = m_solutions.get(index).getGrid().getWidth() + m_solutions.get(index).getGrid().getHeight();
-//				if (newPuzzleSize > tmpSize) {
-//					continue;
-//				}
-//				else if (newPuzzleSize == tmpSize) {
-//					if (newPuzzle.getGrid().equals(m_solutions.get(index).getGrid())) {
-//						m_solutionLock.doRelease();
-//						return;
-//					}
-//				}
-//				else {
-//					m_solutions.ensureCapacity(m_solutions.size() + 1);
-//					m_solutions.add(index, newPuzzle);
-//					m_solutionLock.doRelease();
-//					return;
-//				}
-//			}
-//			
-//			m_solutions.ensureCapacity(m_solutions.size() + 1);
-//			m_solutions.add(0, newPuzzle);
-//			m_solutionLock.doRelease();
-//			return;
-//		}
-		
-//		*********** RESTRICTING TO 50 PUZZLES *************
-//		int newPuzzleSize = newPuzzle.getGrid().getWidth() + newPuzzle.getGrid().getHeight();
-//		
-//		m_solutionLock.doAcquire();
-//		if (m_solutions.isEmpty()) {
-//			m_solutions.add(newPuzzle);
-//			m_solutionLock.doRelease();
-//			return;
-//		}
-//		else if (m_solutions.size() == 50 && newPuzzleSize >= (m_solutions.get(49).getGrid().getWidth() + m_solutions.get(49).getGrid().getHeight())) {
-//			m_solutionLock.doRelease();
-//			return;
-//		}
-//		else {	
-//			int index, tmpPuzzleSize = 0;
-//			for (index = m_solutions.size() - 1; index >= 0; index--) {
-//				tmpPuzzleSize = m_solutions.get(index).getGrid().getWidth() + m_solutions.get(index).getGrid().getHeight();				
-//				if (newPuzzleSize > tmpPuzzleSize) {
-//					m_solutions.ensureCapacity(m_solutions.size() + 1);
-//					m_solutions.add(newPuzzle);
-//					m_solutionLock.doRelease();
-//					return;
-//				}
-//				else if (newPuzzleSize == tmpPuzzleSize) {
-//					if (newPuzzle.getGrid().equals(m_solutions.get(index).getGrid())) {
-//						m_solutionLock.doRelease();
-//						return;
-//					}
-//				}
-//				else {
-//					if (m_solutions.size() == 50) {
-//						m_solutions.remove(49);
-//					}
-//					
-//					m_solutions.ensureCapacity(m_solutions.size() + 1);
-//					m_solutions.add(index, newPuzzle);
-////					System.err.println("Found a puzzle! (" + (m_solutions.size()) + ")");
-//					m_solutionLock.doRelease();
-//					return;
-//				}
-//			}
-//			if (m_solutions.size() == 50) {
-//				m_solutions.remove(49);
-//			}
-//			m_solutions.ensureCapacity(m_solutions.size() + 1);
-//			m_solutions.add(0, newPuzzle);
-////			System.err.println("Found a puzzle! (" + (m_solutions.size()) + ")");
-//			m_solutionLock.doRelease();
-//			return;
-//		}
-		
 	}
+	
 }
