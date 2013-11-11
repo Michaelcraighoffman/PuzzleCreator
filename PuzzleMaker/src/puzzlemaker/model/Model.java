@@ -43,7 +43,8 @@ public class Model {
 	public int getNumPuzzles(){
 		return m_data.get(m_selectedWordList).size();
 	}
-	public void generatePuzzles(byte puzzleType) {
+	
+	public void startPuzzleGenerator(byte puzzleType) {
 		if (m_selectedWordList.size() > 0) {
 			m_generator.setPuzzleType(puzzleType);
 			System.err.println("Starting puzzle generator.");
@@ -53,13 +54,16 @@ public class Model {
 		else {
 			System.err.println("Invalid word list size.");
 		}
-		 m_selectedPuzzle = m_data.get(m_selectedWordList).first();
-		 m_puzzleIter = m_data.get(m_selectedWordList).iterator();
-		 m_puzzlePrev = m_data.get(m_selectedWordList).descendingIterator();
+		
+		m_selectedPuzzle = m_data.get(m_selectedWordList).first();
+		m_puzzleIter = m_data.get(m_selectedWordList).iterator();
+		m_puzzlePrev = m_data.get(m_selectedWordList).descendingIterator();
 	}
-	public void stopGeneration() {
-		     m_generator.stop();
-		   }
+	
+	public void stopPuzzleGenerator() {
+		m_generator.stop();
+	}
+	
 	public boolean addWord(String word) {
 		word = Constants.filterWord(word);
 		
@@ -146,7 +150,17 @@ public class Model {
 		return m_selectedWordList;
 	}
 	
+	public void setMinPuzzleSize(boolean enabled, int x, int y) {
+		m_generator.setMinPuzzleSize(enabled, x, y);
+	}
 	
+	public void setMaxPuzzleSize(boolean enabled, int x, int y) {
+		m_generator.setMaxPuzzleSize(enabled, x, y);
+	}
+
+	public void setExactlPuzzleSize(boolean enabled, int x, int y) {
+		m_generator.setExactlPuzzleSize(enabled, x, y);
+	}
 	
 	@Deprecated
 	/**
