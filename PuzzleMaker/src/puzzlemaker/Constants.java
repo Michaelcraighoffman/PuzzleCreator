@@ -37,6 +37,7 @@ public class Constants {
 		public static final String EXIT = "EXIT";
 		
 		public static final String PUZZLE_SIZE = "PUZZLE_SIZE";
+		public static final String PUZZLE_NON_SQUARE = "PUZZLE_NON_SQUARE";
 		
 		public static final String ABOUT = "ABOUT";
 	}

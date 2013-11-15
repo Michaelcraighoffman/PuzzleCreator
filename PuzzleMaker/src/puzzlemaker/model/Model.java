@@ -7,6 +7,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 import puzzlemaker.Constants;
 import puzzlemaker.puzzles.Puzzle;
@@ -47,21 +48,26 @@ public class Model {
 	public void startPuzzleGenerator(byte puzzleType) {
 		if (m_selectedWordList.size() > 0) {
 			m_generator.setPuzzleType(puzzleType);
-			System.err.println("Starting puzzle generator.");
+//			System.err.println("Starting puzzle generator.");
 			 m_generator.start(m_data.get(m_selectedWordList));
 			
 		}
 		else {
 			System.err.println("Invalid word list size.");
+			JOptionPane.showMessageDialog(null, "Invalid word list size.");
 		}
 		
-		m_selectedPuzzle = m_data.get(m_selectedWordList).first();
-		m_puzzleIter = m_data.get(m_selectedWordList).iterator();
-		m_puzzlePrev = m_data.get(m_selectedWordList).descendingIterator();
+//		m_selectedPuzzle = m_data.get(m_selectedWordList).first(); // This threw a NoSuchElementException for me. -Sam
+//		m_puzzleIter = m_data.get(m_selectedWordList).iterator();
+//		m_puzzlePrev = m_data.get(m_selectedWordList).descendingIterator();
 	}
 	
 	public void stopPuzzleGenerator() {
 		m_generator.stop();
+	}
+	
+	public boolean isPuzzleGeneratorRunning() {
+		return m_generator.isRunning();
 	}
 	
 	public boolean addWord(String word) {
@@ -112,8 +118,13 @@ public class Model {
 	 * @return m_selectedPuzzle
 	 */
 	public Puzzle getCurrentWordPuzzle(){
-		m_selectedPuzzle = m_data.get(m_selectedWordList).first();
-		return m_selectedPuzzle;
+		if (!m_data.get(m_selectedWordList).isEmpty()) {
+			m_selectedPuzzle = m_data.get(m_selectedWordList).first();
+			return m_selectedPuzzle;
+		}
+		else {
+			return null;
+		}
 	}
 	
 	// TODO: Do I have to update the word list
@@ -168,8 +179,7 @@ public class Model {
 	 * Feel free to repurpose it, but it would be nice not to have to clone a solution list with (potentially)
 	 * tens of thousands of objects.
 	 * 
-	 * @author Sam
-	 * @return
+	 * @author szeren
 	 */
 	public ArrayList<Puzzle> getSolutions() {
 		return new ArrayList<Puzzle>(m_data.get(m_selectedWordList));
@@ -188,5 +198,9 @@ public class Model {
 	public void clearSelected() {
 		m_selectedPuzzle=null;
 		
+	}
+
+	public void setAllowNonSquare(boolean allowed) {
+		m_generator.setAllowNonSquare(allowed);
 	}
 }

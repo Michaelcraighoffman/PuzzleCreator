@@ -34,6 +34,7 @@ public class PuzzleGenerator {
 	// Size constraints
 	private boolean m_hasMinimumSize = ProgramDefault.PUZZLE_SIZE_MIN_CONSTRAINED, m_hasMaximumSize = ProgramDefault.PUZZLE_SIZE_MAX_CONSTRAINED, m_hasExactSize = ProgramDefault.PUZZLE_SIZE_EXACT_CONSTRAINED;
 	private int m_minSizeX = ProgramDefault.PUZZLE_SIZE_MIN_X, m_minSizeY = ProgramDefault.PUZZLE_SIZE_MIN_Y, m_maxSizeX = ProgramDefault.PUZZLE_SIZE_MAX_X, m_maxSizeY = ProgramDefault.PUZZLE_SIZE_MAX_Y, m_exactSizeX = ProgramDefault.PUZZLE_SIZE_EXACT_X, m_exactSizeY = ProgramDefault.PUZZLE_SIZE_EXACT_Y;
+	private boolean m_allowNonSquare = false;
 	
 	public PuzzleGenerator(Model model) {
 		m_model = model;
@@ -128,8 +129,10 @@ public class PuzzleGenerator {
 //		System.err.println("Original task returned.");
 //		System.err.println("Unique solutions found: " + m_newSolutions.size());
 //		System.err.println("Time elapsed: " + (end - start) + "ms");
+		final Runtime runtime = Runtime.getRuntime();
 		
-		
+//		System.err.println("Memory usage: " + ((runtime.maxMemory() - runtime.freeMemory()) / 1048576) + "/" + (runtime.maxMemory() / 1048576) + "MB; Time elapsed: " + ((System.currentTimeMillis() - m_debugStart) / 1000) + "s");
+
 		Thread statusReporter = new Thread() {
 			
 			@Override
@@ -137,26 +140,39 @@ public class PuzzleGenerator {
 				while (!m_threadPool.isQuiescent()) {
 					m_findLock.doAcquire();
 					m_addLock.doAcquire();
-					System.err.println("Total find: " + (m_totalFind / 1000) + "s; Total add: " + (m_totalAdd / 1000) + "s; Unique solutions: " + m_newSolutions.size() + "; In progress grids: " + m_inProgressGrids.size() + "; Queued tasks: " + m_threadPool.getQueuedTaskCount());
+//					System.err.println("Total find: " + (m_totalFind / 1000) + "s; Total add: " + (m_totalAdd / 1000) + "s; Unique solutions: " + m_newSolutions.size() + "; In progress grids: " + m_inProgressGrids.size() + "; Queued tasks: " + m_threadPool.getQueuedTaskCount());
 					m_findLock.doRelease();
 					m_addLock.doRelease();
+//					System.err.println("Memory usage: " + ((runtime.maxMemory() - runtime.freeMemory()) / 1048576) + "/" + (runtime.maxMemory() / 1048576) + "MB; Time elapsed: " + ((System.currentTimeMillis() - m_debugStart) / 1000) + "s");
 					try {
-						Thread.sleep(5000);
+						Thread.sleep(1000);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
 				
 				m_debugEnd = System.currentTimeMillis();
 				System.err.println("Final count: " + m_newSolutions.size() + " unique, " + m_inProgressGrids.size() + " in progress.  Time elapsed: " + ((m_debugEnd - m_debugStart) / 1000) + " seconds.");
+//				System.err.println("Memory usage: " + ((runtime.maxMemory() - runtime.freeMemory()) / 1048576) + "/" + (runtime.maxMemory() / 1048576) + "MB; Time elapsed: " + ((System.currentTimeMillis() - m_debugStart) / 1000) + "s");
+//				System.err.println("Clearing \"in progress\" grids.");
 				m_inProgressGrids.clear();
-				System.err.println("In-progress grids cleared.");
+//				System.err.println("Waiting...");
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+//				System.err.println("Memory usage: " + ((runtime.maxMemory() - runtime.freeMemory()) / 1048576) + "/" + (runtime.maxMemory() / 1048576) + "MB; Time elapsed: " + ((System.currentTimeMillis() - m_debugStart) / 1000) + "s");
+//				System.err.println("Calling garbage collector...");
+				runtime.gc();
+//				System.err.println("Returned from calling the garbage collector.");
+//				System.err.println("Memory usage: " + ((runtime.maxMemory() - runtime.freeMemory()) / 1048576) + "/" + (runtime.maxMemory() / 1048576) + "MB; Time elapsed: " + ((System.currentTimeMillis() - m_debugStart) / 1000) + "s");
 			}
 		};
+//		System.err.println("Running status reporter.");
+		statusReporter.start();
 
-		statusReporter.run();
-
+//		System.out.println("Returning from PuzzleGenerator.start()");
 		return true;
 	}
 	
@@ -191,6 +207,12 @@ public class PuzzleGenerator {
 			
 			if (m_wordList.isEmpty()) {
 				m_grid.trim();
+				
+				if (!m_allowNonSquare) {
+					if (m_grid.getWidth() != m_grid.getHeight()) {
+						return null;
+					}
+				}
 				
 				if (m_puzzleType==Constants.TYPE_CROSSWORD) {
 					Puzzle puzzle = gridToPuzzleIfLegal(m_grid);
@@ -1086,6 +1108,14 @@ public class PuzzleGenerator {
 		// Note: maximum size gets checked as the puzzle gets resized in placeWordInGrid.
 		
 		m_newSolutions.add(newPuzzle);
+	}
+
+	public void setAllowNonSquare(boolean allowed) {
+		m_allowNonSquare = allowed;
+	}
+
+	public boolean isRunning() {
+		return !(m_threadPool.isQuiescent() || m_threadPool.isShutdown());
 	}
 	
 }
