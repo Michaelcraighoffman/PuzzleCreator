@@ -412,7 +412,8 @@ public class PuzzleGenerator {
 								currentWord = "";
 							}
 							else {
-								if (!unfoundWordList.remove(currentWord)) {
+								Boolean validWord=unfoundWordList.remove(currentWord);
+								if (!validWord) {
 									//We only care about illegal words in a crossword
 									if(m_puzzleType==Constants.TYPE_CROSSWORD) {
 										return null;
@@ -453,8 +454,9 @@ public class PuzzleGenerator {
 										wordStartY = y + currentWord.length();
 										break;
 								}
-									
-								foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
+								if(validWord) {	
+									foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
+								}
 								currentWord = "";
 							}
 						}
@@ -499,7 +501,8 @@ public class PuzzleGenerator {
 						currentWord = "";
 					}
 					else {
-						if (!unfoundWordList.remove(currentWord)) {
+						Boolean validWord=unfoundWordList.remove(currentWord);
+						if (!validWord) {
 							//We only care about illegal words in a crossword
 							if(m_puzzleType==Constants.TYPE_CROSSWORD) {
 								return null;
@@ -540,8 +543,9 @@ public class PuzzleGenerator {
 								wordStartY = y + currentWord.length();
 								break;
 						}
-						
-						foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
+						if(validWord) {
+							foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
+						}
 						currentWord = "";
 					}
 
@@ -597,7 +601,8 @@ public class PuzzleGenerator {
 					currentWord = "";
 				}
 				else {
-					if (!unfoundWordList.remove(currentWord)) {
+					Boolean validWord=unfoundWordList.remove(currentWord);
+					if (!validWord) {
 						//We only care about illegal words in a crossword
 						if(m_puzzleType==Constants.TYPE_CROSSWORD) {
 							return null;
@@ -640,7 +645,9 @@ public class PuzzleGenerator {
 					}
 					
 					System.err.println("PuzzleGenerator: case 3");
-					foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
+					if(validWord) {
+						foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
+					}
 					currentWord = "";
 					
 				}
