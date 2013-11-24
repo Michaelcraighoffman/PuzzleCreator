@@ -46,12 +46,8 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 		return m_wordList;
 	}
 	
-	public abstract void applyCellStyle(JTextField cell);
+	public abstract void applyCellStyle(JTextField cell,Boolean showSolution);
 		
-	public abstract void showSolution();
-	
-	public abstract void hideSolution();
-	
 	public abstract void makeSquare();
 	
 	@Override

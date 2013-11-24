@@ -1,5 +1,6 @@
 package puzzlemaker.puzzles;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.ForkJoinPool;
@@ -12,11 +13,11 @@ import puzzlemaker.tools.grid.Grid;
 public class WordSearch extends Puzzle {
 	
 	LinkedBlockingQueue<Grid> m_solutions;
+	Random rand = new Random();
 	
 	public WordSearch(Grid grid, ArrayList<Word> wordList) {
 		m_grid = grid;
 		m_wordList = wordList;
-		fillIn();
 	}
 
 	public WordSearch(ArrayList<String> wordList) {
@@ -46,17 +47,17 @@ public class WordSearch extends Puzzle {
 	//}
 	
 	/** Fill in remaining grid spaces with random letters. */
-	private void fillIn(){
-		Random rand = new Random();
-		
-		for(int x = 0; x < m_grid.getWidth(); ++x){
-			for(int y = 0; y < m_grid.getHeight(); ++y){
-				if (m_grid.getCharAt(x, y) == ' '){
-					m_grid.setCharAt(x, y, (char) (rand.nextInt(26) + 65));
-				}
-			}
-		}
-	}
+//	private void fillIn(){
+//		
+//		
+//		for(int x = 0; x < m_grid.getWidth(); ++x){
+//			for(int y = 0; y < m_grid.getHeight(); ++y){
+//				if (m_grid.getCharAt(x, y) == ' '){
+//					m_grid.setCharAt(x, y, (char) ();
+//				}
+//			}
+//		}
+//	}
 	
 	
 	private void placeWord(String word , int caseDirection, int x , int y){
@@ -100,16 +101,6 @@ public class WordSearch extends Puzzle {
 	}
 
 	@Override
-	public void showSolution() {
-
-	}
-
-	@Override
-	public void hideSolution() {
-
-	}
-	
-	@Override
 	public void makeSquare() {
 		int difference = m_grid.getWidth()-m_grid.getHeight();
 		if(difference==0) return;
@@ -125,7 +116,6 @@ public class WordSearch extends Puzzle {
 			difference--;
 		}
 		if(difference==0) {
-			fillIn();
 			return;
 		}
 		while(difference < 0) {
@@ -139,12 +129,21 @@ public class WordSearch extends Puzzle {
 			}
 			difference++;
 		}
-		fillIn();
 	}
 
 	@Override
-	public void applyCellStyle(JTextField cell) {
-		// TODO Auto-generated method stub
+	public void applyCellStyle(JTextField cell, Boolean showSolution) {
+		cell.setHorizontalAlignment(JTextField.CENTER);
+		if(showSolution) {
+			if(!cell.getText().equals(" "))
+			{
+				cell.setBackground(Color.yellow);
+			}
+		}
+		if(cell.getText().equals(" "))
+		{
+			cell.setText(Character.toString((char)(rand.nextInt(26) + 65)));
+		}
 		
 	}
 }

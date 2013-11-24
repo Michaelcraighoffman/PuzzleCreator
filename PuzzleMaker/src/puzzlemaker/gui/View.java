@@ -88,6 +88,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	private JTextField m_txtSizeAtLeastX, m_txtSizeAtLeastY, m_txtSizeAtMostX, m_txtSizeAtMostY, m_txtSizeExactlyX, m_txtSizeExactlyY;
 	private int m_puzzleSizeMinX = ProgramDefault.PUZZLE_SIZE_MIN_X, m_puzzleSizeMinY = ProgramDefault.PUZZLE_SIZE_MIN_Y, m_puzzleSizeMaxX = ProgramDefault.PUZZLE_SIZE_MAX_X, m_puzzleSizeMaxY = ProgramDefault.PUZZLE_SIZE_MAX_Y, m_puzzleSizeExactlyX = ProgramDefault.PUZZLE_SIZE_EXACT_X, m_puzzleSizeExactlyY = ProgramDefault.PUZZLE_SIZE_EXACT_Y;
 	private JCheckBoxMenuItem m_chkBoxNonSquare;
+	private JCheckBoxMenuItem m_chkBoxShowSolutions;
 	private JDialog m_aboutDialog;
 	
 	/** Contains and displays the {@link #m_puzzle puzzle}. */
@@ -177,7 +178,15 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_chkBoxNonSquare.getAccessibleContext().setAccessibleDescription("Allow puzzles to have a width different from their height");
 		m_chkBoxNonSquare.setSelected(false);
 		menu.add(m_chkBoxNonSquare);
-		menu.add(createRadioButtonMenuItem("Show Solution", KeyEvent.VK_K, "Show or hide the puzzle key", false));
+		
+		m_chkBoxShowSolutions = new JCheckBoxMenuItem("Show Solutions");
+		m_chkBoxShowSolutions.addActionListener(this);
+		m_chkBoxShowSolutions.setActionCommand(MenuCommand.PUZZLE_SHOW_SOLUTIONS);
+		m_chkBoxShowSolutions.setMnemonic(KeyEvent.VK_K);
+		m_chkBoxShowSolutions.getAccessibleContext().setAccessibleDescription("Show or hide the puzzle key");
+		m_chkBoxShowSolutions.setSelected(false);
+		menu.add(m_chkBoxShowSolutions);
+		
 		m_menuBar.add(menu);
 
 		// "Help"
@@ -439,7 +448,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		for (int y = 0; y < grid.getHeight(); y++) {
 			for (int x = 0; x < grid.getWidth(); x++) {
 				cell = new JTextField(Character.toString(grid.getCharAt(x, y)), 1);
-				puzzle.applyCellStyle(cell);
+				puzzle.applyCellStyle(cell,m_chkBoxShowSolutions.isSelected());
 				panel.add(cell);
 			}
 		}

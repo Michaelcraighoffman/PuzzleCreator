@@ -55,27 +55,18 @@ public class Crossword extends Puzzle {
 	}
 
 	@Override
-	public void showSolution() {
-		
-	}
-
-	@Override
-	public void hideSolution() {
-		
-	}
-	
-	@Override
 	public void makeSquare() {
 	
 	}
 
 	@Override
-	public void applyCellStyle(JTextField cell) {
+	public void applyCellStyle(JTextField cell,Boolean showSolution) {
 		cell.setHorizontalAlignment(JTextField.CENTER);
 		cell.setBorder(m_border);
 		cell.setDisabledTextColor(Color.black);
 		cell.setForeground(Color.black);
 		cell.setEnabled(false);
+			
 		
 		if (cell.getText().equals(Character.toString(Constants.EMPTY_CELL_CHARACTER))) {
 			cell.setBackground(Color.black);
@@ -83,5 +74,9 @@ public class Crossword extends Puzzle {
 		else {
 			cell.setBackground(Color.white);
 		}
+		if(!showSolution) {
+			cell.setText("");
+		}
+		
 	}
 }
