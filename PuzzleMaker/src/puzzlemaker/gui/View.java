@@ -1127,6 +1127,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 					}
 					m_model.startPuzzleGenerator(Constants.TYPE_WORDSEARCH);
 					updatePuzzlePanel();
+					runSolutionMonitor();
 				}
 			break;
 			

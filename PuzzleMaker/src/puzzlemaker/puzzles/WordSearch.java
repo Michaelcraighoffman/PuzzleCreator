@@ -108,6 +108,39 @@ public class WordSearch extends Puzzle {
 	public void hideSolution() {
 
 	}
+	
+	@Override
+	public void makeSquare() {
+		int difference = m_grid.getWidth()-m_grid.getHeight();
+		if(difference==0) return;
+		while(difference > 0) {
+			switch(difference%2){
+				case 0:
+					m_grid.addRowOnBottom();
+					break;
+				case 1:
+					m_grid.addRowOnTop();
+					break;
+			}
+			difference--;
+		}
+		if(difference==0) {
+			fillIn();
+			return;
+		}
+		while(difference < 0) {
+			switch(Math.abs(difference%2)){
+				case 0:
+					m_grid.addColumnOnLeft();
+					break;
+				case 1:
+					m_grid.addColumnOnRight();
+					break;
+			}
+			difference++;
+		}
+		fillIn();
+	}
 
 	@Override
 	public void applyCellStyle(JTextField cell) {

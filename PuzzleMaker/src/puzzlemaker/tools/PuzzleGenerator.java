@@ -140,7 +140,7 @@ public class PuzzleGenerator {
 				while (!m_threadPool.isQuiescent()) {
 					m_findLock.doAcquire();
 					m_addLock.doAcquire();
-//					System.err.println("Total find: " + (m_totalFind / 1000) + "s; Total add: " + (m_totalAdd / 1000) + "s; Unique solutions: " + m_newSolutions.size() + "; In progress grids: " + m_inProgressGrids.size() + "; Queued tasks: " + m_threadPool.getQueuedTaskCount());
+					System.err.println("Total find: " + (m_totalFind / 1000) + "s; Total add: " + (m_totalAdd / 1000) + "s; Unique solutions: " + m_newSolutions.size() + "; In progress grids: " + m_inProgressGrids.size() + "; Queued tasks: " + m_threadPool.getQueuedTaskCount());
 					m_findLock.doRelease();
 					m_addLock.doRelease();
 //					System.err.println("Memory usage: " + ((runtime.maxMemory() - runtime.freeMemory()) / 1048576) + "/" + (runtime.maxMemory() / 1048576) + "MB; Time elapsed: " + ((System.currentTimeMillis() - m_debugStart) / 1000) + "s");
@@ -208,13 +208,12 @@ public class PuzzleGenerator {
 			if (m_wordList.isEmpty()) {
 				m_grid.trim();
 				
-				if (!m_allowNonSquare) {
-					if (m_grid.getWidth() != m_grid.getHeight()) {
-						return null;
-					}
-				}
-				
 				if (m_puzzleType==Constants.TYPE_CROSSWORD) {
+					if (!m_allowNonSquare) {
+						if (m_grid.getWidth() != m_grid.getHeight()) {
+							return null;
+						}
+					}
 					Puzzle puzzle = gridToPuzzleIfLegal(m_grid);
 					
 					if (puzzle != null) {
@@ -225,9 +224,19 @@ public class PuzzleGenerator {
 //					}
 				}
 				else if (m_puzzleType == Constants.TYPE_WORDSEARCH) {
-					//TODO: Have to actually find words in WordSearch 
-					Puzzle puzzle=new WordSearch(m_grid, new ArrayList<Word>());
-					addSolution(puzzle);
+					Puzzle puzzle = gridToPuzzleIfLegal(m_grid);
+					
+					if (puzzle != null) {
+						if (!m_allowNonSquare) {
+							puzzle.makeSquare();
+						}
+						addSolution(puzzle);
+					}
+					else {
+						//System.err.println("Threw away:  \n"+m_grid.toString());
+					}
+//					Puzzle puzzle=new WordSearch(m_grid, new ArrayList<Word>());
+//					addSolution(puzzle);
 				}
 			}
 			else {
@@ -261,7 +270,7 @@ public class PuzzleGenerator {
 //							In Parallel:
 //							Might be useful here to check the threadPool's queued task size.. 
 //							because if that number is sufficiently large, we could do something like:
-//							while (m_threadPool.getQueuedSubmissionCount() > 200) {
+//							while (m_threadPool.getQueuedSubmissionCount() > 100) {
 //								helpQuiesce();
 //							}
 //							This would help us start getting solutions for larger word sets faster (I think.. but I'm not sure) -SBW
@@ -355,7 +364,7 @@ public class PuzzleGenerator {
 			
 			return validGrids;
 		}
-	
+
 		/** Ensures that the grid contains exactly the word list.<br>
 		 * @return <b>null</b> if the grid is illegal.*/
 		private Puzzle gridToPuzzleIfLegal(Grid grid) {
@@ -373,20 +382,23 @@ public class PuzzleGenerator {
 				switch (direction) {
 					case Constants.LEFT_TO_RIGHT: // then top to bottom
 					case Constants.TOP_TO_BOTTOM: // then left to right
-					case Constants.TOPRIGHT_TO_BOTTOMLEFT: // from top-left corner to bot-right corner 
-					case Constants.BOTTOMLEFT_TO_TOPRIGHT: // from top-left corner to bot-right corner
+					case Constants.TOPLEFT_TO_BOTTOMRIGHT: // from bot-left corner to top-right corner
 						startX = 0;
 						startY = 0;
 						break;
-					case Constants.TOPLEFT_TO_BOTTOMRIGHT: // from bot-left corner to top-right corner
 					case Constants.BOTTOM_TO_TOP: // then left to right
+					case Constants.BOTTOMLEFT_TO_TOPRIGHT: // from top-left corner to bot-right corner
 						startX = 0;
 						startY = grid.getHeight() - 1;
 						break;
 					case Constants.RIGHT_TO_LEFT: // then top to bottom
-					case Constants.BOTTOMRIGHT_TO_TOPLEFT: // from top-right corner to bot-left corner
+					case Constants.TOPRIGHT_TO_BOTTOMLEFT: // from top-left corner to bot-right corner 
 						startX = grid.getWidth() - 1;
 						startY = 0;
+						break;
+					case Constants.BOTTOMRIGHT_TO_TOPLEFT: // from top-right corner to bot-left corner
+						startX = grid.getWidth() - 1;
+						startY = grid.getHeight() - 1;
 						break;
 				}
 				
@@ -400,50 +412,50 @@ public class PuzzleGenerator {
 								currentWord = "";
 							}
 							else {
-								if (unfoundWordList.remove(currentWord)) {
-									int wordStartX = -1, wordStartY = -1;
-									switch (direction) {
-										case Constants.LEFT_TO_RIGHT:
-											wordStartX = x - currentWord.length();
-											wordStartY = y;
-											break;
-										case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-											wordStartX = x - currentWord.length();
-											wordStartY = y - currentWord.length();
-											break;
-										case Constants.TOP_TO_BOTTOM:
-											wordStartX = x;
-											wordStartY = y - currentWord.length();
-											break;
-										case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-											wordStartX = x + currentWord.length();
-											wordStartY = y - currentWord.length();
-											break;
-										case Constants.RIGHT_TO_LEFT:
-											wordStartX = x + currentWord.length();
-											wordStartY = y;
-											break;
-										case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-											wordStartX = x + currentWord.length();
-											wordStartY = y + currentWord.length();
-											break;
-										case Constants.BOTTOM_TO_TOP:
-											wordStartX = x;
-											wordStartY = y + currentWord.length();
-											break;
-										case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-											wordStartX = x - currentWord.length();
-											wordStartY = y + currentWord.length();
-											break;
+								if (!unfoundWordList.remove(currentWord)) {
+									//We only care about illegal words in a crossword
+									if(m_puzzleType==Constants.TYPE_CROSSWORD) {
+										return null;
 									}
+								}
+								int wordStartX = -1, wordStartY = -1;
+								switch (direction) {
+									case Constants.LEFT_TO_RIGHT:
+										wordStartX = x - currentWord.length();
+										wordStartY = y;
+										break;
+									case Constants.TOPLEFT_TO_BOTTOMRIGHT:
+										wordStartX = x - currentWord.length();
+										wordStartY = y - currentWord.length();
+										break;
+									case Constants.TOP_TO_BOTTOM:
+										wordStartX = x;
+										wordStartY = y - currentWord.length();
+										break;
+									case Constants.TOPRIGHT_TO_BOTTOMLEFT:
+										wordStartX = x + currentWord.length();
+										wordStartY = y - currentWord.length();
+										break;
+									case Constants.RIGHT_TO_LEFT:
+										wordStartX = x + currentWord.length();
+										wordStartY = y;
+										break;
+									case Constants.BOTTOMRIGHT_TO_TOPLEFT:
+										wordStartX = x + currentWord.length();
+										wordStartY = y + currentWord.length();
+										break;
+									case Constants.BOTTOM_TO_TOP:
+										wordStartX = x;
+										wordStartY = y + currentWord.length();
+										break;
+									case Constants.BOTTOMLEFT_TO_TOPRIGHT:
+										wordStartX = x - currentWord.length();
+										wordStartY = y + currentWord.length();
+										break;
+								}
 									
-									foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
-									currentWord = "";
-								}
-								else
-								{
-									return null;
-								}
+								foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
+								currentWord = "";
 							}
 						}
 						else {
@@ -487,51 +499,52 @@ public class PuzzleGenerator {
 						currentWord = "";
 					}
 					else {
-						if (unfoundWordList.remove(currentWord)) {
-							int wordStartX = -1, wordStartY = -1;
-							switch (direction) {
-								case Constants.LEFT_TO_RIGHT:
-									wordStartX = x - currentWord.length();
-									wordStartY = y;
-									break;
-								case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-									wordStartX = x - currentWord.length();
-									wordStartY = y - currentWord.length();
-									break;
-								case Constants.TOP_TO_BOTTOM:
-									wordStartX = x;
-									wordStartY = y - currentWord.length();
-									break;
-								case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-									wordStartX = x + currentWord.length();
-									wordStartY = y - currentWord.length();
-									break;
-								case Constants.RIGHT_TO_LEFT:
-									wordStartX = x + currentWord.length();
-									wordStartY = y;
-									break;
-								case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-									wordStartX = x + currentWord.length();
-									wordStartY = y + currentWord.length();
-									break;
-								case Constants.BOTTOM_TO_TOP:
-									wordStartX = x;
-									wordStartY = y + currentWord.length();
-									break;
-								case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-									wordStartX = x - currentWord.length();
-									wordStartY = y + currentWord.length();
-									break;
+						if (!unfoundWordList.remove(currentWord)) {
+							//We only care about illegal words in a crossword
+							if(m_puzzleType==Constants.TYPE_CROSSWORD) {
+								return null;
 							}
-							
-							foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
-							currentWord = "";
 						}
-						else
-						{
-							return null;
+						int wordStartX = -1, wordStartY = -1;
+						switch (direction) {
+							case Constants.LEFT_TO_RIGHT:
+								wordStartX = x - currentWord.length();
+								wordStartY = y;
+								break;
+							case Constants.TOPLEFT_TO_BOTTOMRIGHT:
+								wordStartX = x - currentWord.length();
+								wordStartY = y - currentWord.length();
+								break;
+							case Constants.TOP_TO_BOTTOM:
+								wordStartX = x;
+								wordStartY = y - currentWord.length();
+								break;
+							case Constants.TOPRIGHT_TO_BOTTOMLEFT:
+								wordStartX = x + currentWord.length();
+								wordStartY = y - currentWord.length();
+								break;
+							case Constants.RIGHT_TO_LEFT:
+								wordStartX = x + currentWord.length();
+								wordStartY = y;
+								break;
+							case Constants.BOTTOMRIGHT_TO_TOPLEFT:
+								wordStartX = x + currentWord.length();
+								wordStartY = y + currentWord.length();
+								break;
+							case Constants.BOTTOM_TO_TOP:
+								wordStartX = x;
+								wordStartY = y + currentWord.length();
+								break;
+							case Constants.BOTTOMLEFT_TO_TOPRIGHT:
+								wordStartX = x - currentWord.length();
+								wordStartY = y + currentWord.length();
+								break;
 						}
+						
+						foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
+						currentWord = "";
 					}
+
 					
 					switch (direction) {
 						case Constants.LEFT_TO_RIGHT:
@@ -584,51 +597,52 @@ public class PuzzleGenerator {
 					currentWord = "";
 				}
 				else {
-					if (unfoundWordList.remove(currentWord)) {
-						int wordStartX = -1, wordStartY = -1;
-						switch (direction) {
-							case Constants.LEFT_TO_RIGHT:
-								wordStartX = x - currentWord.length();
-								wordStartY = y;
-								break;
-							case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-								wordStartX = x - currentWord.length();
-								wordStartY = y - currentWord.length();
-								break;
-							case Constants.TOP_TO_BOTTOM:
-								wordStartX = x;
-								wordStartY = y - currentWord.length();
-								break;
-							case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-								wordStartX = x + currentWord.length();
-								wordStartY = y - currentWord.length();
-								break;
-							case Constants.RIGHT_TO_LEFT:
-								wordStartX = x + currentWord.length();
-								wordStartY = y;
-								break;
-							case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-								wordStartX = x + currentWord.length();
-								wordStartY = y + currentWord.length();
-								break;
-							case Constants.BOTTOM_TO_TOP:
-								wordStartX = x;
-								wordStartY = y + currentWord.length();
-								break;
-							case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-								wordStartX = x - currentWord.length();
-								wordStartY = y + currentWord.length();
-								break;
+					if (!unfoundWordList.remove(currentWord)) {
+						//We only care about illegal words in a crossword
+						if(m_puzzleType==Constants.TYPE_CROSSWORD) {
+							return null;
 						}
-						
-						System.err.println("PuzzleGenerator: case 3");
-						foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
-						currentWord = "";
 					}
-					else
-					{
-						return null;
+					int wordStartX = -1, wordStartY = -1;
+					switch (direction) {
+						case Constants.LEFT_TO_RIGHT:
+							wordStartX = x - currentWord.length();
+							wordStartY = y;
+							break;
+						case Constants.TOPLEFT_TO_BOTTOMRIGHT:
+							wordStartX = x - currentWord.length();
+							wordStartY = y - currentWord.length();
+							break;
+						case Constants.TOP_TO_BOTTOM:
+							wordStartX = x;
+							wordStartY = y - currentWord.length();
+							break;
+						case Constants.TOPRIGHT_TO_BOTTOMLEFT:
+							wordStartX = x + currentWord.length();
+							wordStartY = y - currentWord.length();
+							break;
+						case Constants.RIGHT_TO_LEFT:
+							wordStartX = x + currentWord.length();
+							wordStartY = y;
+							break;
+						case Constants.BOTTOMRIGHT_TO_TOPLEFT:
+							wordStartX = x + currentWord.length();
+							wordStartY = y + currentWord.length();
+							break;
+						case Constants.BOTTOM_TO_TOP:
+							wordStartX = x;
+							wordStartY = y + currentWord.length();
+							break;
+						case Constants.BOTTOMLEFT_TO_TOPRIGHT:
+							wordStartX = x - currentWord.length();
+							wordStartY = y + currentWord.length();
+							break;
 					}
+					
+					System.err.println("PuzzleGenerator: case 3");
+					foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
+					currentWord = "";
+					
 				}
 			}
 			
@@ -640,6 +654,10 @@ public class PuzzleGenerator {
 //				}
 				return new Crossword(grid, foundWordList);
 			case Constants.TYPE_WORDSEARCH:
+				if(unfoundWordList.size()>0) {
+					//System.err.println("Could not find: "+unfoundWordList.toString());
+					return null; 
+				}
 				return new WordSearch(grid, foundWordList);
 				
 			default:

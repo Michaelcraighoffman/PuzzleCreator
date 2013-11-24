@@ -63,6 +63,11 @@ public class Crossword extends Puzzle {
 	public void hideSolution() {
 		
 	}
+	
+	@Override
+	public void makeSquare() {
+	
+	}
 
 	@Override
 	public void applyCellStyle(JTextField cell) {

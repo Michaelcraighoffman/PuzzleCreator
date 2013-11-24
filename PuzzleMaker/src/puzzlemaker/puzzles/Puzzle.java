@@ -52,6 +52,8 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 	
 	public abstract void hideSolution();
 	
+	public abstract void makeSquare();
+	
 	@Override
 	public String toString() {
 		String output = this.getClass().getSimpleName() + ":\n" + m_grid.toString();
