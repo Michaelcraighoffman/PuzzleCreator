@@ -62,11 +62,11 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	private final String WORD_SEARCH_BUTTON = "WORD_SEARCH_BUTTON";
 	private final String CROSSWORD_BUTTON = "CROSSWORD_BUTTON";
 	private final String STOP_BUTTON = "STOP_BUTTON";
-	private final String PREVIOUS_BUTTON = "PREVIOUS_BUTTON";
-	private final String NEXT_BUTTON = "NEXT_BUTTON";
-	private final String PREVIOUS_BUTTON_PZL = "PREVIOUS_BUTTON_PZL";
-	private final String NEXT_BUTTON_PZL = "NEXT_BUTTON_PZL";
-	private final String NEW_WORDBUTTON = "NEW_WORDBUTTON";
+	private final String PREVIOUS_WORDLIST_BUTTON = "PREVIOUS_BUTTON";
+	private final String NEXT_WORDLIST_BUTTON = "NEXT_BUTTON";
+	private final String PREVIOUS_PUZZLE_BUTTON = "PREVIOUS_PUZZLE_BUTTON";
+	private final String NEXT_PUZZLE_BUTTON = "NEXT_PUZZLE_BUTTON";
+	private final String NEW_WORDLIST_BUTTON = "NEW_WORDLIST_BUTTON";
 	private final String CHK_SIZE_EXACTLY = "CHK_SIZE_EXACTLY";
 	private final String PUZZLE_SIZE_OK = "PUZZLE_SIZE_OK";
 	private final String PUZZLE_SIZE_CANCEL = "PUZZLE_SIZE_CANCEL";
@@ -100,8 +100,8 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	/** For displaying which puzzle is currently selected of the solution set. */
 	private JLabel m_lblPuzzleIndex;
 	/** Arrow Buttons for wordLists */
-	private BasicArrowButton nextWord, prevWord;
-	private JButton newWord;
+	private BasicArrowButton m_nextWordList, m_prevWordList;
+	private JButton m_newWordList;
 	private BasicArrowButton nextWordPZL, prevWordPZL;
 	/** Contains and displays the {@link #m_wordListPanel word list} and the {@link #m_wordEntryField entry field}. */
 	private JPanel m_wordsPanel;
@@ -110,7 +110,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	/** @see WordLabelList */
 	private WordLabelList m_wordLabelList;
 	private JTextField m_wordEntryField;
-	private int m_index = 1;
+	private int m_puzzleIndex = 1;
 
 	
    /** Belongs to {@code m_wordsPanel}.<br>
@@ -204,8 +204,8 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		nextWordPZL = new BasicArrowButton(BasicArrowButton.EAST);
         prevWordPZL = new BasicArrowButton(BasicArrowButton.WEST);
         m_lblPuzzleIndex = new JLabel("0/0");
-		prevWordPZL.setName(PREVIOUS_BUTTON_PZL);
-		nextWordPZL.setName(NEXT_BUTTON_PZL);
+		prevWordPZL.setName(PREVIOUS_PUZZLE_BUTTON);
+		nextWordPZL.setName(NEXT_PUZZLE_BUTTON);
 		prevWordPZL.addMouseListener(this);
 		nextWordPZL.addMouseListener(this);
 		innerPanel.add(prevWordPZL);
@@ -243,20 +243,20 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
         m_wordsPanel.addComponentListener(m_wordLabelList);
         
         //Buttons for navigating word lists
-        nextWord = new BasicArrowButton(BasicArrowButton.EAST);
-        prevWord = new BasicArrowButton(BasicArrowButton.WEST);
+        m_nextWordList = new BasicArrowButton(BasicArrowButton.EAST);
+        m_prevWordList = new BasicArrowButton(BasicArrowButton.WEST);
         JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new GridLayout(1, 2, 10, 10));
-		prevWord.setName(PREVIOUS_BUTTON);
-		nextWord.setName(NEXT_BUTTON);
-		prevWord.addMouseListener(this);
-		nextWord.addMouseListener(this);
-		newWord = new JButton("+");
-		newWord.setName(NEW_WORDBUTTON);
-		newWord.addMouseListener(this);
-		innerPanel.add(prevWord);
-		innerPanel.add(nextWord);
-		innerPanel.add(newWord);
+		m_prevWordList.setName(PREVIOUS_WORDLIST_BUTTON);
+		m_nextWordList.setName(NEXT_WORDLIST_BUTTON);
+		m_prevWordList.addMouseListener(this);
+		m_nextWordList.addMouseListener(this);
+		m_newWordList = new JButton("+");
+		m_newWordList.setName(NEW_WORDLIST_BUTTON);
+		m_newWordList.addMouseListener(this);
+		innerPanel.add(m_prevWordList);
+		innerPanel.add(m_nextWordList);
+		innerPanel.add(m_newWordList);
 		m_wordsPanel.add(innerPanel);
 	}
 	
@@ -408,7 +408,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_puzzlePanel.setLayout(new BoxLayout(m_puzzlePanel, BoxLayout.Y_AXIS));
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.X_AXIS));
-		m_lblPuzzleIndex.setText(m_index + "/" + m_model.getNumPuzzles());
+		m_lblPuzzleIndex.setText(m_puzzleIndex + "/" + m_model.getNumPuzzles());
 		innerPanel.add(prevWordPZL);
 		innerPanel.add(m_lblPuzzleIndex);
 		innerPanel.add(nextWordPZL);
@@ -423,7 +423,12 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	
 	private JPanel createPuzzlePanel() {
 		JPanel panel = new JPanel();
-		Puzzle puzzle = m_model.getPuzzle();
+		Puzzle puzzle = m_model.getCurrentWordPuzzle();
+		if (puzzle == null) {
+			m_puzzleIndex = 0;
+			m_lblPuzzleIndex.setText("0/0");
+			return panel;
+		}
 		Grid grid = puzzle.getGrid();
 		
 		GridLayout layout = new GridLayout(grid.getHeight(), grid.getWidth());
@@ -1062,7 +1067,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 					  m_model.addWord(s);
 				  }
 				  m_wordLabelList.changeToWordList(m_model.getWordList());
-				  m_model.clearSelected();
+				  m_model.clearSelectedPuzzle();
 			}
 			if (m_wordLabelList.addWord(word)) {
 				m_model.addWord(word);
@@ -1099,7 +1104,6 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		switch (componentName) {
 			
 			case WORD_SEARCH_BUTTON:
-				System.err.println("Wordsearch button pressed.");
 				if (!m_model.getWordList().isEmpty()) { // all of this code should be in Model
 					if(m_model.getPuzzle()!=null) {
 						ArrayList<String> old=m_model.getWordList();
@@ -1117,7 +1121,6 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 			break;
 			
 			case CROSSWORD_BUTTON:				
-				System.err.println("Crossword button pressed.");
 				if (!m_model.getWordList().isEmpty()) {
 					if(m_model.getPuzzle()!=null) {
 						  ArrayList<String> old=m_model.getWordList();
@@ -1135,40 +1138,41 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 			case STOP_BUTTON:
 				// m_model.stopGeneration();
 				 break;
-			case PREVIOUS_BUTTON:
+			case PREVIOUS_WORDLIST_BUTTON:
 				m_wordLabelList.changeToWordList(m_model.getNextWordList());
-				if(m_model.getCurrentWordPuzzle() != null){
-					m_index = 1;
+//				if(m_model.getCurrentWordPuzzle() != null){
+					m_puzzleIndex = 1;
 					updatePuzzlePanel();
-				}
+//				}
 				break;
-			case NEXT_BUTTON:
+			case NEXT_WORDLIST_BUTTON:
 				m_wordLabelList.changeToWordList(m_model.getNextWordList());
-				if(m_model.getCurrentWordPuzzle() != null){
-					m_index = 1;
+//				if(m_model.getCurrentWordPuzzle() != null){
+					m_puzzleIndex = 1;
 					updatePuzzlePanel();
-				}
+//				}
 				break;
 				
-			case PREVIOUS_BUTTON_PZL:
+			case PREVIOUS_PUZZLE_BUTTON:
 				m_model.getPreviousPuzzle();
-				if(m_index != 1)
-					m_index--;
+				if(m_puzzleIndex != 1)
+					m_puzzleIndex--;
 				else
-					m_index = m_model.getNumPuzzles();
+					m_puzzleIndex = m_model.getNumPuzzles();
 				updatePuzzlePanel();
 				break;
 				
-			case NEW_WORDBUTTON:
+			case NEW_WORDLIST_BUTTON:
 				m_wordLabelList.changeToWordList(m_model.getNewWordList());
-				m_model.clearSelected();
+				m_model.clearSelectedPuzzle();
+				updatePuzzlePanel();
 				break;
-			case NEXT_BUTTON_PZL:
+			case NEXT_PUZZLE_BUTTON:
 				m_model.getNextPuzzle();
-				if(m_index >= m_model.getNumPuzzles())
-					m_index = 1;
+				if(m_puzzleIndex >= m_model.getNumPuzzles())
+					m_puzzleIndex = 1;
 				else
-					m_index++;
+					m_puzzleIndex++;
 				updatePuzzlePanel();
 				break;	
 			default:
@@ -1178,7 +1182,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	}
 	
 	private void runSolutionMonitor() {
-		m_index = 1;
+		m_puzzleIndex = 1;
 		Thread puzzlePanelUpdater = new Thread() {
 			@Override
 			public void run() {
@@ -1193,7 +1197,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 						}
 					}
 					else if (displayPuzzle != null && solutionsSize != m_model.getNumPuzzles()) {
-						m_lblPuzzleIndex.setText(m_index + "/" + m_model.getNumPuzzles());
+						m_lblPuzzleIndex.setText(m_puzzleIndex + "/" + m_model.getNumPuzzles());
 					}
 					
 					
@@ -1211,7 +1215,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 					}
 				}
 				else if (displayPuzzle != null && solutionsSize != m_model.getNumPuzzles()) {
-					m_lblPuzzleIndex.setText(m_index + "/" + m_model.getNumPuzzles());
+					m_lblPuzzleIndex.setText(m_puzzleIndex + "/" + m_model.getNumPuzzles());
 				}
 			}
 		};

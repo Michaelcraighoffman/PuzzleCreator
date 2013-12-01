@@ -117,13 +117,12 @@ public class Model {
 		}
 	}
 	
-	// TODO: Do I have to update the word list
 	public ArrayList<String> getNextWordList() {
 		m_selectedWordList = m_data.higherKey(m_selectedWordList);
 		if (m_selectedWordList == null) {
 			m_selectedWordList = m_data.firstKey();
 		}
-		System.err.println(m_selectedWordList.toString());
+//		System.err.println(m_selectedWordList.toString());
 		return m_selectedWordList;
 	}
 	/**
@@ -141,7 +140,7 @@ public class Model {
 		if (m_selectedWordList == null) {
 			m_selectedWordList = m_data.lastKey();
 		}
-		System.err.println(m_selectedWordList.toString());
+//		System.err.println(m_selectedWordList.toString());
 		return m_selectedWordList;
 	}
 	
@@ -182,7 +181,7 @@ public class Model {
 		return m_selectedPuzzle;
 	}
 
-	public void clearSelected() {
+	public void clearSelectedPuzzle() {
 		m_selectedPuzzle=null;		
 	}
 
