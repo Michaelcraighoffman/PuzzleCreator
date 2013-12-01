@@ -383,154 +383,36 @@ public class PuzzleGenerator {
 	}
 	
 	public boolean hasIllegalCrosswordIntersections(Grid grid, Word word, int x, int y, int direction, int offset) {
+		GridWalker walker = new GridWalker(grid, x, y, direction);
 		
+		walker.moveForward(-offset);
 		
-		while (offset > 0) {
-			switch (direction) {
-				case Constants.LEFT_TO_RIGHT:
-					x--;
-					break;
-				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-					x--;
-					y--;
-					break;
-				case Constants.TOP_TO_BOTTOM:
-					y--;
-					break;
-				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-					x++;
-					y--;
-					break;
-				case Constants.RIGHT_TO_LEFT:
-					x++;
-					break;
-				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-					x++;
-					y++;
-					break;
-				case Constants.BOTTOM_TO_TOP:
-					y++;
-					break;
-				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-					x--;
-					y++;
-					break;
-			}
-			offset--;
-		}
+		// Start by checking behind the letter.
+		walker.moveForward(-1);
 		
-		// Check behind the first letter
-		switch (direction) {
-			case Constants.LEFT_TO_RIGHT:
-				x--;
-				break;
-			case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-				x--;
-				y--;
-				break;
-			case Constants.TOP_TO_BOTTOM:
-				y--;
-				break;
-			case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-				x++;
-				y--;
-				break;
-			case Constants.RIGHT_TO_LEFT:
-				x++;
-				break;
-			case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-				x++;
-				y++;
-				break;
-			case Constants.BOTTOM_TO_TOP:
-				y++;
-				break;
-			case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-				x--;
-				y++;
-				break;
-		}
-		
-		if (x >= 0 && x < grid.getWidth() && y >= 0 && y < grid.getHeight()) {
-			if (grid.getCharAt(x, y) != Constants.EMPTY_CELL_CHARACTER) {
+		if (walker.isInBounds()) {
+			if (grid.getCharAt(walker.x, walker.y) != Constants.EMPTY_CELL_CHARACTER) {
 				return true;
 			}
 		}
 		
-		switch (direction) {
-			case Constants.LEFT_TO_RIGHT:
-				x++;
-				break;
-			case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-				x++;
-				y++;
-				break;
-			case Constants.TOP_TO_BOTTOM:
-				y++;
-				break;
-			case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-				x--;
-				y++;
-				break;
-			case Constants.RIGHT_TO_LEFT:
-				x--;
-				break;
-			case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-				x--;
-				y--;
-				break;
-			case Constants.BOTTOM_TO_TOP:
-				y--;
-				break;
-			case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-				x++;
-				y--;
-				break;
-		}
+		// Go back to the start of the word.
+		walker.moveForward(1);
 		
 		// Check the word's placement
 		for (int i = 0; i < word.toString().length(); i++) {
-			if (x >= 0 && x < grid.getWidth() && y >= 0 && y < grid.getHeight()) {
-				if (grid.getCharAt(x, y) != Constants.EMPTY_CELL_CHARACTER && grid.getCharAt(x, y) != word.toString().charAt(i)) {
+			if (walker.isInBounds()) {
+				if (grid.getCharAt(walker.x, walker.y) != Constants.EMPTY_CELL_CHARACTER && grid.getCharAt(walker.x, walker.y) != word.toString().charAt(i)) {
 					return true;
 				}
 			}
 			
-			switch (direction) {
-				case Constants.LEFT_TO_RIGHT:
-					x++;
-					break;
-				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-					x++;
-					y++;
-					break;
-				case Constants.TOP_TO_BOTTOM:
-					y++;
-					break;
-				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-					x--;
-					y++;
-					break;
-				case Constants.RIGHT_TO_LEFT:
-					x--;
-					break;
-				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-					x--;
-					y--;
-					break;
-				case Constants.BOTTOM_TO_TOP:
-					y--;
-					break;
-				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-					x++;
-					y--;
-					break;
-			}
+			walker.moveForward(1);
 		}
 		
 		// And check after the word
-		if (x >= 0 && x < grid.getWidth() && y >= 0 && y < grid.getHeight()) {
-			if (grid.getCharAt(x, y) != Constants.EMPTY_CELL_CHARACTER) {
+		if (walker.isInBounds()) {
+			if (grid.getCharAt(walker.x, walker.y) != Constants.EMPTY_CELL_CHARACTER) {
 				return true;
 			}
 		}
@@ -539,78 +421,19 @@ public class PuzzleGenerator {
 	}
 	
 	public boolean hasIllegalWordSearchIntersections(Grid grid, Word word, int x, int y, int direction, int offset) {
-		while (offset > 0) {
-			switch (direction) {
-				case Constants.LEFT_TO_RIGHT:
-					x--;
-					break;
-				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-					x--;
-					y--;
-					break;
-				case Constants.TOP_TO_BOTTOM:
-					y--;
-					break;
-				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-					x++;
-					y--;
-					break;
-				case Constants.RIGHT_TO_LEFT:
-					x++;
-					break;
-				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-					x++;
-					y++;
-					break;
-				case Constants.BOTTOM_TO_TOP:
-					y++;
-					break;
-				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-					x--;
-					y++;
-					break;
-			}
-			offset--;
-		}
+		GridWalker walker = new GridWalker(grid, x, y, direction);
+		
+		walker.moveForward(-offset);
 		
 		// Check the word's placement
 		for (int i = 0; i < word.toString().length(); i++) {
-			if (x >= 0 && x < grid.getWidth() && y >= 0 && y < grid.getHeight()) {
-				if (grid.getCharAt(x, y) != Constants.EMPTY_CELL_CHARACTER && grid.getCharAt(x, y) != word.toString().charAt(i)) {
+			if (walker.isInBounds()) {
+				if (grid.getCharAt(walker.x, walker.y) != Constants.EMPTY_CELL_CHARACTER && grid.getCharAt(walker.x, walker.y) != word.toString().charAt(i)) {
 					return true;
 				}
 			}
 			
-			switch (direction) {
-				case Constants.LEFT_TO_RIGHT:
-					x++;
-					break;
-				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-					x++;
-					y++;
-					break;
-				case Constants.TOP_TO_BOTTOM:
-					y++;
-					break;
-				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-					x--;
-					y++;
-					break;
-				case Constants.RIGHT_TO_LEFT:
-					x--;
-					break;
-				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-					x--;
-					y--;
-					break;
-				case Constants.BOTTOM_TO_TOP:
-					y--;
-					break;
-				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-					x++;
-					y--;
-					break;
-			}
+			walker.moveForward(1);
 		}
 		
 		return false;
@@ -632,187 +455,58 @@ public class PuzzleGenerator {
 	 * @author szeren
 	 */
 	public boolean placeWordInGrid(Grid grid, Word word, int x, int y, int direction, int offset) {
-		while (offset > 0) {
-			switch (direction) {
-			case Constants.LEFT_TO_RIGHT:
-				x--;
-				break;
-			case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-				x--;
-				y--;
-				break;
-			case Constants.TOP_TO_BOTTOM:
-				y--;
-				break;
-			case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-				x++;
-				y--;
-				break;
-			case Constants.RIGHT_TO_LEFT:
-				x++;
-				break;
-			case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-				x++;
-				y++;
-				break;
-			case Constants.BOTTOM_TO_TOP:
-				y++;
-				break;
-			case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-				x--;
-				y++;
-				break;
-			}
-			offset--;
-		}
+		GridWalker walker = new GridWalker(grid, x, y, direction);
 		
-		while (x >= grid.getWidth()) {
-			grid.addColumnOnRight();
-			if (m_hasMaximumSize) {
-				if (grid.getWidth() > m_maxSizeX) {
-					return false;
-				}
+		walker.moveForward(-offset);
+		
+		// Expand grid to accommodate walker's current position.
+		if (!walker.isInBounds()) {
+			// Check to see if the additions will exceed size restrictions. (Expanding is costly, cycle-wise.)
+			if (m_hasMaximumSize && (walker.x > m_maxSizeX || walker.y > m_maxSizeY || (grid.getWidth() - walker.x) > m_maxSizeX || (grid.getHeight() - walker.y) > m_maxSizeY)) {
+				return false;
 			}
-			if (m_hasExactSize) {
-				if (grid.getWidth() > m_exactSizeX) {
-					return false;
-				}
+			if (m_hasExactSize && (walker.x > m_exactSizeX || walker.y > m_exactSizeY || (grid.getWidth() - walker.x) > m_exactSizeX || (grid.getHeight() - walker.y) > m_exactSizeY)) {
+				return false;
 			}
-		}
-		while (y >= grid.getHeight()) {
-			grid.addRowOnBottom();
-			if (m_hasMaximumSize) {
-				if (grid.getHeight() > m_maxSizeY) {
-					return false;
-				}
+			
+			while (walker.x >= grid.getWidth()) {
+				grid.addColumnOnRight();
 			}
-			if (m_hasExactSize) {
-				if (grid.getHeight() > m_exactSizeY) {
-					return false;
-				}
+			while (walker.x < 0) {
+				grid.addColumnOnLeft();
+				walker.x++;
 			}
-		}
-		while (x < 0) {
-			grid.addColumnOnLeft();
-			if (m_hasMaximumSize) {
-				if (grid.getWidth() > m_maxSizeX) {
-					return false;
-				}
+			while (walker.y >= grid.getHeight()) {
+				grid.addRowOnBottom();
 			}
-			if (m_hasExactSize) {
-				if (grid.getWidth() > m_exactSizeX) {
-					return false;
-				}
+			while (walker.y < 0) {
+				grid.addRowOnTop();
+				walker.y++;
 			}
-			x++;
-		}
-		while (y < 0) {
-			grid.addRowOnTop();
-			if (m_hasMaximumSize) {
-				if (grid.getHeight() > m_maxSizeY) {
-					return false;
-				}
-			}
-			if (m_hasExactSize) {
-				if (grid.getHeight() > m_exactSizeY) {
-					return false;
-				}
-			}
-			y++;
 		}
 
 		
 		for (int i = 0; i < word.toString().length(); i++) {
 			// Expand grid if necessary
-			if (x < 0) {
-				grid.addColumnOnLeft();
-				if (m_hasMaximumSize) {
-					if (grid.getWidth() > m_maxSizeX) {
-						return false;
-					}
-				}
-				if (m_hasExactSize) {
-					if (grid.getWidth() > m_exactSizeX) {
-						return false;
-					}
-				}
-				x++;
-			}
-			else if (x >= grid.getWidth()) {
+			if (walker.x >= grid.getWidth()) {
 				grid.addColumnOnRight();
-				if (m_hasMaximumSize) {
-					if (grid.getWidth() > m_maxSizeX) {
-						return false;
-					}
-				}
-				if (m_hasExactSize) {
-					if (grid.getWidth() > m_exactSizeX) {
-						return false;
-					}
-				}
 			}
-			if (y < 0) {
-				grid.addRowOnTop();
-				if (m_hasMaximumSize) {
-					if (grid.getHeight() > m_maxSizeY) {
-						return false;
-					}
-				}
-				if (m_hasExactSize) {
-					if (grid.getHeight() > m_exactSizeY) {
-						return false;
-					}
-				}
-				y++;
+			else if (walker.x < 0) {
+				grid.addColumnOnLeft();
+				walker.x++;
 			}
-			else if (y >= grid.getHeight()) {
+			if (walker.y >= grid.getHeight()) {
 				grid.addRowOnBottom();
-				if (m_hasMaximumSize) {
-					if (grid.getHeight() > m_maxSizeY) {
-						return false;
-					}
-				}
-				if (m_hasExactSize) {
-					if (grid.getHeight() > m_exactSizeY) {
-						return false;
-					}
-				}
+			}
+			else if (walker.y < 0) {
+				grid.addRowOnTop();
+				walker.y++;
 			}
 			
 			// Set grid cell's value to character of our word
-			grid.setCharAt(x, y, word.toString().charAt(i));
+			grid.setCharAt(walker.x, walker.y, word.toString().charAt(i));
 			
-			// Move the (x, y) coordinate based on direction
-			switch (direction) {
-				case Constants.LEFT_TO_RIGHT:
-					x++;
-					break;
-				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-					x++;
-					y++;
-					break;
-				case Constants.TOP_TO_BOTTOM:
-					y++;
-					break;
-				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-					x--;
-					y++;
-					break;
-				case Constants.RIGHT_TO_LEFT:
-					x--;
-					break;
-				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-					x--;
-					y--;
-					break;
-				case Constants.BOTTOM_TO_TOP:
-					y--;
-					break;
-				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-					x++;
-					y--;
-					break;
-			}
+			walker.moveForward(1);
 		}
 		
 		return true;

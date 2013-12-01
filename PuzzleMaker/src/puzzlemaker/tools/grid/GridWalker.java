@@ -14,10 +14,11 @@ public class GridWalker {
 	private static final int[][] m_offset = new int[][] {{1,0}, {1,1}, {0,1}, {-1,1}, {-1,0}, {-1,-1}, {0,-1}, {1,-1}};
 	
 	private int m_width, m_height, lineStartX, lineStartY;
-	public int x, y, dir;
 	/** For diagonal traversal, when starting new lines, whether or not
 	 * we have passed the corner, thus changing our "direction" to find new lines in.*/
 	private boolean diagonal_flag = false;
+	
+	public int x, y, dir;
 	
 	public GridWalker(Grid grid) {
 		m_width = grid.getWidth();
