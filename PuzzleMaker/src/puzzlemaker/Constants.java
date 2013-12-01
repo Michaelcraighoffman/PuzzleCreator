@@ -28,7 +28,7 @@ public class Constants {
 	
 	public static final char EMPTY_CELL_CHARACTER = ' ';
 	
-	public static final String DELETE_WORD_LABEL = "DELETE_WORD_LABEL";
+	public static final String POPUP_PUZZLE_SHOW_SOLUTIONS = "POPUP_PUZZLE_SHOW_SOLUTIONS";
 	
 	public final class MenuCommand {
 		public static final String IMPORT = "IMPORT";
@@ -43,7 +43,8 @@ public class Constants {
 		public static final String ABOUT = "ABOUT";
 	}
 	
-	public final class ProgramDefaultOptions {
+	public final class DefaultOptions {
+		public static final boolean PUZZLE_SHOW_SOLUTIONS = true;
 		public static final boolean PUZZLE_ALLOW_NON_SQUARE = true;
 		public static final boolean PUZZLE_SIZE_MIN_CONSTRAINED = false;
 		public static final boolean PUZZLE_SIZE_MAX_CONSTRAINED = false;
@@ -55,7 +56,7 @@ public class Constants {
 		public static final int PUZZLE_SIZE_EXACT_X = -1;
 		public static final int PUZZLE_SIZE_EXACT_Y = -1;
 	}
-	
+
 //	public static final String IMPORT = "MENU_IMPORT";
 //	public static final String SAVE_WORDLIST = "MENU_EXPORT_WORDLIST";
 //	public static final String EXPORT = "MENU_EXPORT";

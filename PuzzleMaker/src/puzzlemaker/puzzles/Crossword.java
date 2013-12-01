@@ -1,6 +1,7 @@
 package puzzlemaker.puzzles;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -11,7 +12,6 @@ import javax.swing.border.Border;
 
 import puzzlemaker.Constants;
 import puzzlemaker.tools.grid.Grid;
-import puzzlemaker.tools.grid.GridWalker;
 
 public class Crossword extends Puzzle {
 	
@@ -40,7 +40,11 @@ public class Crossword extends Puzzle {
 		else {
 			cell.setBackground(Color.white);
 		}
-		if(!showSolution) {
+		
+		if(showSolution) {
+			cell.setFont(cell.getFont().deriveFont(Font.BOLD));
+		}
+		else {
 			cell.setText("");
 		}
 		

@@ -7,7 +7,6 @@ import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JTextField;
-import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
 import puzzlemaker.Constants;

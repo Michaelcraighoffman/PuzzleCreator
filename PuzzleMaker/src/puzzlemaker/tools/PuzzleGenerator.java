@@ -7,7 +7,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
 import puzzlemaker.Constants;
-import puzzlemaker.Constants.ProgramDefaultOptions;
+import puzzlemaker.Constants.DefaultOptions;
 import puzzlemaker.model.Model;
 import puzzlemaker.puzzles.Crossword;
 import puzzlemaker.puzzles.Puzzle;
@@ -29,9 +29,9 @@ public class PuzzleGenerator {
 	private long m_debugStart, m_debugEnd;
 	
 	// Size constraints
-	private boolean m_hasMinimumSize = ProgramDefaultOptions.PUZZLE_SIZE_MIN_CONSTRAINED, m_hasMaximumSize = ProgramDefaultOptions.PUZZLE_SIZE_MAX_CONSTRAINED, m_hasExactSize = ProgramDefaultOptions.PUZZLE_SIZE_EXACT_CONSTRAINED;
-	private int m_minSizeX = ProgramDefaultOptions.PUZZLE_SIZE_MIN_X, m_minSizeY = ProgramDefaultOptions.PUZZLE_SIZE_MIN_Y, m_maxSizeX = ProgramDefaultOptions.PUZZLE_SIZE_MAX_X, m_maxSizeY = ProgramDefaultOptions.PUZZLE_SIZE_MAX_Y, m_exactSizeX = ProgramDefaultOptions.PUZZLE_SIZE_EXACT_X, m_exactSizeY = ProgramDefaultOptions.PUZZLE_SIZE_EXACT_Y;
-	private boolean m_allowNonSquare = ProgramDefaultOptions.PUZZLE_ALLOW_NON_SQUARE;
+	private boolean m_hasMinimumSize = DefaultOptions.PUZZLE_SIZE_MIN_CONSTRAINED, m_hasMaximumSize = DefaultOptions.PUZZLE_SIZE_MAX_CONSTRAINED, m_hasExactSize = DefaultOptions.PUZZLE_SIZE_EXACT_CONSTRAINED;
+	private int m_minSizeX = DefaultOptions.PUZZLE_SIZE_MIN_X, m_minSizeY = DefaultOptions.PUZZLE_SIZE_MIN_Y, m_maxSizeX = DefaultOptions.PUZZLE_SIZE_MAX_X, m_maxSizeY = DefaultOptions.PUZZLE_SIZE_MAX_Y, m_exactSizeX = DefaultOptions.PUZZLE_SIZE_EXACT_X, m_exactSizeY = DefaultOptions.PUZZLE_SIZE_EXACT_Y;
+	private boolean m_allowNonSquare = DefaultOptions.PUZZLE_ALLOW_NON_SQUARE;
 	
 	public PuzzleGenerator(Model model) {
 		m_model = model;
@@ -115,12 +115,17 @@ public class PuzzleGenerator {
 			wordList.add(insertIndex, new Word(s));
 		}
 
+		
+		
+		// By doing quietlyInvoke (which blocks) instead of threadPool.execute(...) (which doesn't),
+		//    we give statusReporter the time it needs for m_threadPool to not be Quiescent.
 		PuzzleTask tmpTask = new PuzzleTask(new Grid(1, 1), wordList);
 		m_debugStart = System.currentTimeMillis();
 		tmpTask.quietlyInvoke();
 		
-		final Runtime runtime = Runtime.getRuntime();
 		
+		
+		final Runtime runtime = Runtime.getRuntime();
 //		System.err.println("Memory usage: " + ((runtime.maxMemory() - runtime.freeMemory()) / 1048576) + "/" + (runtime.maxMemory() / 1048576) + "MB; Time elapsed: " + ((System.currentTimeMillis() - m_debugStart) / 1000) + "s");
 
 		Thread statusReporter = new Thread() {
@@ -238,8 +243,10 @@ public class PuzzleGenerator {
 			else {
 //				Limits the size of the "in progress" grids, which otherwise can get out of control.
 				if (m_wordList.size() >= (m_model.getWordList().size() / 2)) {
-					if (!m_inProgressGrids.add(m_grid)) {
-						return null;
+					if (m_puzzleType == Constants.TYPE_CROSSWORD) {
+						if (!m_inProgressGrids.add(m_grid)) {
+							return null;
+						}
 					}
 				}
 				
@@ -260,11 +267,11 @@ public class PuzzleGenerator {
 							Grid tmpGrid = m_validPlacements.remove(0);
 
 //							In Parallel:							
-//							m_threadPool.execute(new PuzzleTask(tmpGrid, tmpList));
+							m_threadPool.execute(new PuzzleTask(tmpGrid, tmpList));
 
 //							In Serial (for debugging):
-							PuzzleTask tmpTask = new PuzzleTask(tmpGrid, tmpList);
-							tmpTask.quietlyInvoke();
+//							PuzzleTask tmpTask = new PuzzleTask(tmpGrid, tmpList);
+//							tmpTask.quietlyInvoke();
 						}
 						wordIndex++;
 					}
@@ -344,16 +351,12 @@ public class PuzzleGenerator {
 					
 					// Now let's find non-intersecting places to put the word until we have 3 total valid grids.
 					
-					// We'll pick a direction and a random location, see if we can place it there, and if not, spiral outwards using the same direction.
-					
+					// We'll pick a direction and a random location, see if we can place it there, 
+					//    and if not, spiral outwards using the same direction.
 					int direction, spiralMoveAmount;
 					boolean increaseSpiral;
 					GridWalker walker;
-					
-//					int attempts = 0;
-//					while (validGrids.size() < 3 && attempts < 7) {
-//					long startTime = System.currentTimeMillis();
-					
+
 					while (validGrids.size() < 3) {
 						direction = r.nextInt(8);
 						spiralMoveAmount = 1;
@@ -373,28 +376,15 @@ public class PuzzleGenerator {
 							validGrids.add(validGrid);
 						}
 					}
-//					System.err.println(((System.currentTimeMillis() - startTime)) + " ms for " + validGrids.size() + " grids.");
-					
-//					for(int i = 0; i < 3; i++) {
-//						
-//						int x=rand.nextInt(grid.getWidth()+2)-1;
-//						int y=rand.nextInt(grid.getHeight()+2)-1;
-//						int direction=rand.nextInt(m_validDirections.length-1);
-//						if (!hasIllegalWordSearchIntersections(grid, word, x, y, m_validDirections[direction], 0)) {
-//							validGrid = new Grid(grid);
-//							placeWordInGrid(validGrid, word, x, y, m_validDirections[direction], 0);
-//							validGrids.add(validGrid);
-//						}
-//					}
 					break;
 			}
-			
 			return validGrids;
 		}
-
 	}
 	
 	public boolean hasIllegalCrosswordIntersections(Grid grid, Word word, int x, int y, int direction, int offset) {
+		
+		
 		while (offset > 0) {
 			switch (direction) {
 				case Constants.LEFT_TO_RIGHT:

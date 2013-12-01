@@ -204,10 +204,6 @@ public class Grid implements Comparable<Grid> {
 		}
 	}
 	
-	public GridIterator getIterator(int x, int y, int dir) {
-		return new GridIterator(this, x, y, dir);
-	}
-	
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof Grid) {
