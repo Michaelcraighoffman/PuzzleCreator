@@ -1089,7 +1089,8 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 			}
 			m_chkBoxShowSolutions.setSelected(m_puzzleShowSolutions);
 			m_popupChkBoxShowSolutions.setSelected(m_puzzleShowSolutions);
-			
+			updatePuzzlePanel();
+			break;
 		default:
 			System.err.println("Unrecognized command: " + command);
 			break;
