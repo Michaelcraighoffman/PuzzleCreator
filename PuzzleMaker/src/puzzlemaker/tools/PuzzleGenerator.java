@@ -311,12 +311,10 @@ public class PuzzleGenerator {
 						int direction = -1;
 						for (int i = 0; i < 4; i++) {
 							direction += r.nextInt(2) + 1;
-							System.out.println("direction: " + direction);
 							validGrid = new Grid(1,1);
 							placeWordInGrid(validGrid, word, 0, 0, direction, 0);
 							validGrids.add(validGrid);
 						}
-						System.out.println("validGrids.size() = " + validGrids.size());
 						return validGrids;
 					}
 					

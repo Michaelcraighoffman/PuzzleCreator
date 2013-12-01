@@ -26,7 +26,7 @@ public class Crossword extends Puzzle {
 	}
 
 	@Override
-	public void applyCellStyle(JTextField cell,Boolean showSolution) {
+	public void applyCellStyle(JTextField cell, boolean showSolution) {
 		cell.setHorizontalAlignment(JTextField.CENTER);
 		cell.setBorder(m_border);
 		cell.setDisabledTextColor(Color.black);

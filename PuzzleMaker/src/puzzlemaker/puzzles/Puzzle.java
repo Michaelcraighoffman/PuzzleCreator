@@ -22,7 +22,6 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 	}
 	
 	public boolean isLegal() {
-		System.out.println("Puzzle.isLegal() beginning legality check for\n" + this.toString());
 		int[] validDirections;
 		if (this instanceof Crossword) {
 			validDirections = Constants.CROSSWORD_DIRECTIONS;
@@ -39,20 +38,17 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 		String letters;
 		ArrayList<Word> newWordList = new ArrayList<Word>();
 		for (int direction : validDirections) {
-			System.out.println("direction: " + direction);
 			walker.dir = direction;
 			walker.jumpToStart();
 			
 			do {
-				System.err.println("letters cleared1");
 				letters = "";
 				do {
 					cellChar = m_grid.getCharAt(walker.x, walker.y);
-					System.out.println("Found \'" + cellChar + "\' at (" + walker.x + "," + walker.y + ");" + walker.dir);
+//					System.out.println("Found \'" + cellChar + "\' at (" + walker.x + "," + walker.y + ");" + walker.dir);
 					
 					if (cellChar == Constants.EMPTY_CELL_CHARACTER) {
 						if (letters.length() < 2) {
-							System.err.println("letters cleared");
 							letters = "";
 						}
 						else {
@@ -63,7 +59,6 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 									if (letters.equals(m_wordList.get(i).toString())) {
 										Word tmpWord = m_wordList.remove(i);
 										walker.setWordData(tmpWord, 0, 0);
-//										System.out.println(tmpWord.toStringDetailed());
 										newWordList.add(tmpWord);
 										found = true;
 										letters = "";
@@ -73,10 +68,8 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 									if (letters.contains(m_wordList.get(i).toString())) {
 										Word tmpWord = m_wordList.remove(i);
 										walker.setWordData(tmpWord, letters.indexOf(tmpWord.toString()), letters.length() - (letters.indexOf(tmpWord.toString()) + tmpWord.toString().length()) );
-//										System.out.println(tmpWord.toStringDetailed());
 										newWordList.add(tmpWord);
 										found = true;
-										System.err.println("letters cleared2");
 										letters = "";
 									}
 								}
@@ -87,7 +80,6 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 									return false;
 								}
 								else if (this instanceof WordSearch) {
-									System.err.println("letters cleared3");
 									letters = "";
 								}
 							}
@@ -100,7 +92,6 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 				
 				// Before going to the new line...
 				if (letters.length() < 2) {
-					System.err.println("letters cleared4");
 					letters = "";
 				}
 				else if (!m_wordList.isEmpty()) {
@@ -110,7 +101,6 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 							if (letters.equals(m_wordList.get(i).toString())) {
 								Word tmpWord = m_wordList.remove(i);
 								walker.setWordData(tmpWord, 0, 0);
-//								System.out.println(tmpWord.toStringDetailed());
 								newWordList.add(tmpWord);
 								found = true;
 								letters = "";
@@ -120,10 +110,8 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 							if (letters.contains(m_wordList.get(i).toString())) {
 								Word tmpWord = m_wordList.remove(i);
 								walker.setWordData(tmpWord, letters.indexOf(tmpWord.toString()), letters.length() - (letters.indexOf(tmpWord.toString()) + tmpWord.toString().length()));
-//								System.out.println(tmpWord.toStringDetailed());			// AAONEA
 								newWordList.add(tmpWord);
 								found = true;
-								System.err.println("letters cleared5");
 								letters = "";
 							}
 						}
@@ -134,7 +122,6 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 							return false;
 						}
 						else if (this instanceof WordSearch) {
-							System.err.println("letters cleared6");
 							letters = "";
 						}
 					}
@@ -147,16 +134,15 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 			m_wordList = newWordList;
 		}
 		else {
-			System.out.println("Puzzle.isLegal(): not all words found in puzzle. Returning false.");
 			return false;
 		}
-//		System.out.println("Puzzle.isLegal(): returning true");
+		
 		return true;
 	}
 	
 	
-	public abstract void applyCellStyle(JTextField cell,Boolean showSolution);		
-	
+	public abstract void applyCellStyle(JTextField cell, boolean showSolution);		
+		
 	@Override
 	public String toString() {
 		String output = this.getClass().getSimpleName() + ":\n" + m_grid.toString();

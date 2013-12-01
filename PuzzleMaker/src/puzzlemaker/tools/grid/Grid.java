@@ -245,13 +245,14 @@ public class Grid implements Comparable<Grid> {
 				if (cellChar == Constants.EMPTY_CELL_CHARACTER) {
 					cellChar = '*'; 
 				}
-				
+
 				output += cellChar + " ";
 			}
 			output += "\n";
 		}
 		
 		output = output.substring(0, output.length() - 1);
+		output = output.toUpperCase();
 		return output;
 	}
 	
