@@ -172,6 +172,38 @@ public class Grid implements Comparable<Grid> {
 		m_data.trimToSize();
 	}
 	
+	public void makeSquare() {
+		int difference = getWidth()-getHeight();
+		if(difference==0) return;
+		while(difference > 0) {
+			//TODO: is there no cheap operation for getting least significant bit?
+			// or maybe a mod 2 gets optimized to the equivalent?
+			switch(difference%2){
+				case 0:
+					addRowOnBottom();
+					break;
+				case 1:
+					addRowOnTop();
+					break;
+			}
+			difference--;
+		}
+		if(difference==0) {
+			return;
+		}
+		while(difference < 0) {
+			switch(Math.abs(difference%2)){
+				case 0:
+					addColumnOnLeft();
+					break;
+				case 1:
+					addColumnOnRight();
+					break;
+			}
+			difference++;
+		}
+	}
+	
 	public GridIterator getIterator(int x, int y, int dir) {
 		return new GridIterator(this, x, y, dir);
 	}

@@ -2,13 +2,6 @@ package puzzlemaker.tools.grid;
 
 import puzzlemaker.Constants;
 
-// TODO: make this a class contained by a Grid class to facilitate object disposal, making memory leak management easier
-/** GridIterator is made to easily traverse a 2D Grid by storing an x, y, and direction
- * and wrapping the 
- * 
- * @author Sam
- *
- */
 public class GridIterator {
 
 	private Grid m_grid;

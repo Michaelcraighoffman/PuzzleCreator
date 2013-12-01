@@ -43,9 +43,10 @@ public class Constants {
 		public static final String ABOUT = "ABOUT";
 	}
 	
-	public final class ProgramDefault {
+	public final class ProgramDefaultOptions {
+		public static final boolean PUZZLE_ALLOW_NON_SQUARE = true;
 		public static final boolean PUZZLE_SIZE_MIN_CONSTRAINED = false;
-		public static final boolean PUZZLE_SIZE_MAX_CONSTRAINED = true;
+		public static final boolean PUZZLE_SIZE_MAX_CONSTRAINED = false;
 		public static final boolean PUZZLE_SIZE_EXACT_CONSTRAINED = false;
 		public static final int PUZZLE_SIZE_MIN_X = -1;
 		public static final int PUZZLE_SIZE_MIN_Y = -1;
