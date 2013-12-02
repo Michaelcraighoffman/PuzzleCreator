@@ -16,6 +16,8 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.Spring;
 import javax.swing.SpringLayout;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 
 import puzzlemaker.Constants;
 import puzzlemaker.model.Model;
@@ -23,7 +25,7 @@ import puzzlemaker.model.Model;
 /** This class manages the graphical representation of the word list.
   * 
   * @author szeren */
-public class WordLabelList implements ActionListener, MouseListener, ComponentListener {
+public class WordLabelList implements ActionListener, MouseListener, ComponentListener, PopupMenuListener {
 
 	Model m_model;
 	JPanel m_displayPanel;
@@ -50,8 +52,9 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 		m_popupMenu = new JPopupMenu();
 		JMenuItem menuItem = new JMenuItem("Delete");
 		menuItem.setActionCommand(DELETE_LABEL);
-		menuItem.addActionListener(this);
+		menuItem.addActionListener(this);		
 		m_popupMenu.add(menuItem);
+		m_popupMenu.addPopupMenuListener(this);
 	}
 	
 	/** Adds the word to the list <b>if</b> the word's length
@@ -66,6 +69,8 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			JLabel newLabel = new JLabel(word);
 			newLabel.addMouseListener(this);
 			newLabel.setName(WORD_LABEL_NAME);
+//			newLabel.setComponentPopupMenu(m_popupMenu);
+			setStyle(newLabel, Font.PLAIN);
 			if (m_data.add(newLabel)) {
 				m_displayPanel.add(newLabel);
 				doLayout();
@@ -89,7 +94,7 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 	
 	/** Whether or not the delete was successful. 
 	 * @return <b>false</b> if no word was selected or the label was not found. */
-	public boolean deleteSelectedWord() {
+	private boolean deleteSelectedWord() {
 		if (m_selectedLabel == null) {
 			System.err.println("WordList.deleteSelectedWord(): no word selected. Delete failed");
 			return false;
@@ -255,7 +260,7 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 	@Override
 	public void componentHidden(ComponentEvent e) {}
 
-	public void changeTo(ArrayList<String> wordList) {
+	public void changeToWordList(ArrayList<String> wordList) {
 		while (!m_data.isEmpty()) {
 			m_data.get(0).removeMouseListener(this);
 			m_displayPanel.remove(m_data.remove(0));
@@ -271,5 +276,15 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			}
 		});
 	}
-	
+
+	@Override
+	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {}
+
+	@Override
+	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
+
+	@Override
+	public void popupMenuCanceled(PopupMenuEvent e) {
+		deselectWord();
+	}
 }

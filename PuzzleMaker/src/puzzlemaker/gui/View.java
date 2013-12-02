@@ -1143,7 +1143,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 				  for(String s : old) {
 					  m_model.addWord(s);
 				  }
-				  m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeTo(m_model.getWordList());
+				  m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getWordList());
 				 // m_model.clearSelectedPuzzle();
 			}
 			if (m_wordLabelLists.get(m_Tabs.getSelectedIndex()).addWord(word)) {
@@ -1158,15 +1158,15 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		}
 		else if (e.getKeyCode() == KeyEvent.VK_F8) {
 			System.err.println("Get new word list.");
-			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeTo(m_model.getNewWordList());
+			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getNewWordList());
 		}
 		else if (e.getKeyCode() == KeyEvent.VK_F11) {
 			System.err.println("Get previous word list.");
-			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeTo(m_model.getPreviousWordList());
+			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getPreviousWordList());
 		}
 		else if (e.getKeyCode() == KeyEvent.VK_F12) {
 			System.err.println("Get next word list.");
-			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeTo(m_model.getNextWordList());
+			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getNextWordList());
 		}
 	}
 	public void updateTab(){
