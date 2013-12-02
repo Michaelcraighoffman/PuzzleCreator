@@ -7,13 +7,14 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
 import puzzlemaker.Constants;
-import puzzlemaker.Constants.ProgramDefault;
+import puzzlemaker.Constants.DefaultOptions;
 import puzzlemaker.model.Model;
 import puzzlemaker.puzzles.Crossword;
 import puzzlemaker.puzzles.Puzzle;
 import puzzlemaker.puzzles.Word;
 import puzzlemaker.puzzles.WordSearch;
 import puzzlemaker.tools.grid.Grid;
+import puzzlemaker.tools.grid.GridWalker;
 
 public class PuzzleGenerator {
 	private Model m_model;
@@ -24,17 +25,13 @@ public class PuzzleGenerator {
 	private ForkJoinPool m_threadPool;
 	private ConcurrentSkipListSet<Puzzle> m_newSolutions;
 	private ConcurrentSkipListSet<Grid> m_inProgressGrids;
-		
-	private SyncObj m_findLock = new SyncObj(true);
-	private long m_totalFind = 0;
-	private SyncObj m_addLock = new SyncObj(true);
-	private long m_totalAdd = 0;
+
 	private long m_debugStart, m_debugEnd;
 	
 	// Size constraints
-	private boolean m_hasMinimumSize = ProgramDefault.PUZZLE_SIZE_MIN_CONSTRAINED, m_hasMaximumSize = ProgramDefault.PUZZLE_SIZE_MAX_CONSTRAINED, m_hasExactSize = ProgramDefault.PUZZLE_SIZE_EXACT_CONSTRAINED;
-	private int m_minSizeX = ProgramDefault.PUZZLE_SIZE_MIN_X, m_minSizeY = ProgramDefault.PUZZLE_SIZE_MIN_Y, m_maxSizeX = ProgramDefault.PUZZLE_SIZE_MAX_X, m_maxSizeY = ProgramDefault.PUZZLE_SIZE_MAX_Y, m_exactSizeX = ProgramDefault.PUZZLE_SIZE_EXACT_X, m_exactSizeY = ProgramDefault.PUZZLE_SIZE_EXACT_Y;
-	private boolean m_allowNonSquare = false;
+	private boolean m_hasMinimumSize = DefaultOptions.PUZZLE_SIZE_MIN_CONSTRAINED, m_hasMaximumSize = DefaultOptions.PUZZLE_SIZE_MAX_CONSTRAINED, m_hasExactSize = DefaultOptions.PUZZLE_SIZE_EXACT_CONSTRAINED;
+	private int m_minSizeX = DefaultOptions.PUZZLE_SIZE_MIN_X, m_minSizeY = DefaultOptions.PUZZLE_SIZE_MIN_Y, m_maxSizeX = DefaultOptions.PUZZLE_SIZE_MAX_X, m_maxSizeY = DefaultOptions.PUZZLE_SIZE_MAX_Y, m_exactSizeX = DefaultOptions.PUZZLE_SIZE_EXACT_X, m_exactSizeY = DefaultOptions.PUZZLE_SIZE_EXACT_Y;
+	private boolean m_allowNonSquare = DefaultOptions.PUZZLE_ALLOW_NON_SQUARE;
 	
 	public PuzzleGenerator(Model model) {
 		m_model = model;
@@ -51,7 +48,7 @@ public class PuzzleGenerator {
 				break;
 		}
 		System.err.println("Using " + numProcessorsToUse + " processors.");
-		m_threadPool = new ForkJoinPool(numProcessorsToUse);
+		m_threadPool = new ForkJoinPool(numProcessorsToUse);		
 	}
 
 	public void setPuzzleType(byte puzzleType) {
@@ -105,44 +102,39 @@ public class PuzzleGenerator {
 		m_newSolutions = solutionsList;
 		m_inProgressGrids = new ConcurrentSkipListSet<Grid>();
 		
+		// Sorting by length in descending order is justified concretely in Puzzle.isLegal()'s WordSearch case for
+		//    checking if the variable "letters" contains (instead of equals [in the Crossword case]) a word in the word list.
 		ArrayList<Word> wordList = new ArrayList<Word>(m_model.getWordList().size());
+		int insertIndex;
 		for (String s : m_model.getWordList()) {
-			wordList.add(new Word(s));
+			for (insertIndex = 0; insertIndex < wordList.size(); insertIndex++) {
+				if (s.length() >= wordList.get(insertIndex).toString().length()) {
+					break;
+				}
+			}
+			wordList.add(insertIndex, new Word(s));
 		}
 
+		
+		
+		// By doing quietlyInvoke (which blocks) instead of threadPool.execute(...) (which doesn't),
+		//    we give statusReporter the time it needs for m_threadPool to not be Quiescent.
 		PuzzleTask tmpTask = new PuzzleTask(new Grid(1, 1), wordList);
-//		long start = System.currentTimeMillis();
 		m_debugStart = System.currentTimeMillis();
 		tmpTask.quietlyInvoke();
 		
-//		m_threadPool.shutdown();
-//		try {
-//			m_threadPool.awaitTermination(5, TimeUnit.SECONDS);
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
 		
 		
-//		long end = System.currentTimeMillis();
-		// Only makes sense to print this stuff if you're running in serial.. otherwise the original task returns pretty quickly.
-//		System.err.println("Original task returned.");
-//		System.err.println("Unique solutions found: " + m_newSolutions.size());
-//		System.err.println("Time elapsed: " + (end - start) + "ms");
 		final Runtime runtime = Runtime.getRuntime();
-		
 //		System.err.println("Memory usage: " + ((runtime.maxMemory() - runtime.freeMemory()) / 1048576) + "/" + (runtime.maxMemory() / 1048576) + "MB; Time elapsed: " + ((System.currentTimeMillis() - m_debugStart) / 1000) + "s");
 
 		Thread statusReporter = new Thread() {
 			
 			@Override
 			public void run() {
+				int reportNumber = 1;
 				while (!m_threadPool.isQuiescent()) {
-					m_findLock.doAcquire();
-					m_addLock.doAcquire();
-//					System.err.println("Total find: " + (m_totalFind / 1000) + "s; Total add: " + (m_totalAdd / 1000) + "s; Unique solutions: " + m_newSolutions.size() + "; In progress grids: " + m_inProgressGrids.size() + "; Queued tasks: " + m_threadPool.getQueuedTaskCount());
-					m_findLock.doRelease();
-					m_addLock.doRelease();
+					System.err.println("Unique solutions: " + m_newSolutions.size() + "; In progress grids: " + m_inProgressGrids.size() + "; Queued tasks: " + m_threadPool.getQueuedTaskCount() + "; Report #" + reportNumber++);
 //					System.err.println("Memory usage: " + ((runtime.maxMemory() - runtime.freeMemory()) / 1048576) + "/" + (runtime.maxMemory() / 1048576) + "MB; Time elapsed: " + ((System.currentTimeMillis() - m_debugStart) / 1000) + "s");
 					try {
 						Thread.sleep(1000);
@@ -154,9 +146,7 @@ public class PuzzleGenerator {
 				m_debugEnd = System.currentTimeMillis();
 				System.err.println("Final count: " + m_newSolutions.size() + " unique, " + m_inProgressGrids.size() + " in progress.  Time elapsed: " + ((m_debugEnd - m_debugStart) / 1000) + " seconds.");
 //				System.err.println("Memory usage: " + ((runtime.maxMemory() - runtime.freeMemory()) / 1048576) + "/" + (runtime.maxMemory() / 1048576) + "MB; Time elapsed: " + ((System.currentTimeMillis() - m_debugStart) / 1000) + "s");
-//				System.err.println("Clearing \"in progress\" grids.");
 				m_inProgressGrids.clear();
-//				System.err.println("Waiting...");
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
@@ -169,10 +159,9 @@ public class PuzzleGenerator {
 //				System.err.println("Memory usage: " + ((runtime.maxMemory() - runtime.freeMemory()) / 1048576) + "/" + (runtime.maxMemory() / 1048576) + "MB; Time elapsed: " + ((System.currentTimeMillis() - m_debugStart) / 1000) + "s");
 			}
 		};
-//		System.err.println("Running status reporter.");
-		statusReporter.start();
 
-//		System.out.println("Returning from PuzzleGenerator.start()");
+		statusReporter.start();
+		
 		return true;
 	}
 	
@@ -189,9 +178,7 @@ public class PuzzleGenerator {
 		private Grid m_grid;
 		private ArrayList<Word> m_wordList;
 		private ArrayList<Grid> m_validPlacements;
-		
-//		private int startFindValid, endFindValid, totalFindValid;
-				
+						
 		public PuzzleTask(Grid grid, ArrayList<Word> wordList) {
 			m_grid = grid;
 
@@ -207,43 +194,65 @@ public class PuzzleGenerator {
 			
 			if (m_wordList.isEmpty()) {
 				m_grid.trim();
-				
-				if (!m_allowNonSquare) {
-					if (m_grid.getWidth() != m_grid.getHeight()) {
-						return null;
-					}
-				}
-				
 				if (m_puzzleType==Constants.TYPE_CROSSWORD) {
-					Puzzle puzzle = gridToPuzzleIfLegal(m_grid);
-					
-					if (puzzle != null) {
+					if (!m_allowNonSquare) {
+						if (m_grid.getWidth() != m_grid.getHeight()) {
+							return null;
+						}
+					}
+
+					ArrayList<Word> wordList = new ArrayList<Word>(m_model.getWordList().size());
+					for (String s : m_model.getWordList()) {
+						wordList.add(new Word(s));
+					}
+
+					Puzzle puzzle = new Crossword(m_grid, wordList);
+					if (puzzle.isLegal()) {
 						addSolution(puzzle);
 					}
-//					else {
-//						System.err.println("Threw away:  "+m_grid.toString());
-//					}
 				}
 				else if (m_puzzleType == Constants.TYPE_WORDSEARCH) {
-					//TODO: Have to actually find words in WordSearch 
-					Puzzle puzzle=new WordSearch(m_grid, new ArrayList<Word>());
-					addSolution(puzzle);
+					if (!m_allowNonSquare) {
+						if (Math.abs(m_grid.getWidth() - m_grid.getHeight()) > 2) {
+							return null;
+						}
+					}
+					
+					ArrayList<Word> wordList = new ArrayList<Word>(m_model.getWordList().size());
+					for (String s : m_model.getWordList()) {
+						wordList.add(new Word(s));
+					}
+
+					Puzzle puzzle = new WordSearch(m_grid, wordList);
+					if (puzzle.isLegal()) {
+						if (!m_allowNonSquare) {
+							if (Math.abs(m_grid.getWidth() - m_grid.getHeight()) <= 2) {
+								puzzle.getGrid().makeSquare();
+							}
+							else {
+								return null;
+							}
+						}
+						// We're going to ignore the fact that using fillIn() could, in some very rare cases,
+						//   allow for puzzles which have identical solutions (and just different fills).
+						((WordSearch)puzzle).fillIn();
+						addSolution(puzzle);
+					}
 				}
 			}
 			else {
 //				Limits the size of the "in progress" grids, which otherwise can get out of control.
 				if (m_wordList.size() >= (m_model.getWordList().size() / 2)) {
-					if (!m_inProgressGrids.add(m_grid)) {
-						return null;
+					if (m_puzzleType == Constants.TYPE_CROSSWORD) {
+						if (!m_inProgressGrids.add(m_grid)) {
+							return null;
+						}
 					}
 				}
 				
 				int wordIndex = 0;
 				while (wordIndex < m_wordList.size()) {
-//					startFindValid = System.currentTimeMillis();
 					m_validPlacements = findValidPlacements(m_grid, m_wordList.get(wordIndex));
-//					endFindValid = System.currentTimeMillis();
-//					totalFindValid += endFindValid - startFindValid;
 					
 					if (m_validPlacements.isEmpty()) {
 						wordIndex++;
@@ -256,18 +265,11 @@ public class PuzzleGenerator {
 						
 						while (!m_validPlacements.isEmpty()) {
 							Grid tmpGrid = m_validPlacements.remove(0);
-//							System.err.println("Spawning new task with \nword list: {" + tmpList.toString() + "} \nand Grid:\n" + tmpGrid.toString());
 
-//							In Parallel:
-//							Might be useful here to check the threadPool's queued task size.. 
-//							because if that number is sufficiently large, we could do something like:
-//							while (m_threadPool.getQueuedSubmissionCount() > 200) {
-//								helpQuiesce();
-//							}
-//							This would help us start getting solutions for larger word sets faster (I think.. but I'm not sure) -SBW
+//							In Parallel:							
 							m_threadPool.execute(new PuzzleTask(tmpGrid, tmpList));
 
-//							To serialize for debugging:
+//							In Serial (for debugging):
 //							PuzzleTask tmpTask = new PuzzleTask(tmpGrid, tmpList);
 //							tmpTask.quietlyInvoke();
 						}
@@ -275,29 +277,12 @@ public class PuzzleGenerator {
 					}
 				}
 			}
-			
-//			Useful for seeing if a given section is taking up a lot of time.
-//			if (totalFind > 1) {
-//				m_findLock.doAcquire();
-//				m_totalFind += (totalFindValid - 1);
-//				m_findLock.doRelease();
-//			}
 			return null;
 		}	
 	
 		public ArrayList<Grid> findValidPlacements(Grid grid, Word word) {
-			ArrayList<Grid> validGrids = new ArrayList<Grid>(0);
+			ArrayList<Grid> validGrids = new ArrayList<Grid>(3);
 			Grid validGrid;
-//			if (grid.isEmpty()) {
-//				for (int direction : m_validDirections) {
-//					validGrid = new Grid(grid);
-//					if (placeWordInGrid(validGrid, word, 0, 0, direction, 0)) {
-//						validGrids.ensureCapacity(validGrids.size() + 1);
-//						validGrids.add(validGrid);
-//					}
-//				}
-//				return validGrids;
-//			}
 			
 			switch (m_puzzleType) {
 				case Constants.TYPE_CROSSWORD:
@@ -305,7 +290,6 @@ public class PuzzleGenerator {
 						for (int direction : m_validDirections) {
 							validGrid = new Grid(grid);
 							placeWordInGrid(validGrid, word, 0, 0, direction, 0);
-							validGrids.ensureCapacity(validGrids.size() + 1);
 							validGrids.add(validGrid);
 						}
 						return validGrids;
@@ -319,7 +303,6 @@ public class PuzzleGenerator {
 										if (!hasIllegalCrosswordIntersections(grid, word, x, y, direction, intersection)) {
 											validGrid = new Grid(grid);
 											if (placeWordInGrid(validGrid, word, x, y, direction, intersection)) {
-												validGrids.ensureCapacity(validGrids.size() + 1);
 												validGrids.add(validGrid);
 											}
 										}
@@ -330,473 +313,106 @@ public class PuzzleGenerator {
 					}
 					break;
 				case Constants.TYPE_WORDSEARCH:
+					Random r = new Random();
 					if (grid.isEmpty()) {
-						for (int direction : m_validDirections) {
-							validGrid = new Grid(10,10);
-							placeWordInGrid(validGrid, word, 5, 5, direction, 0);
-							validGrids.ensureCapacity(validGrids.size() + 1);
+						int direction = -1;
+						for (int i = 0; i < 4; i++) {
+							direction += r.nextInt(2) + 1;
+							validGrid = new Grid(1,1);
+							placeWordInGrid(validGrid, word, 0, 0, direction, 0);
 							validGrids.add(validGrid);
 						}
 						return validGrids;
 					}
-					Random rand=new Random();
-					for(int points=0; points<5; points++) {
-						int x=rand.nextInt(grid.getWidth()+2)-1;
-						int y=rand.nextInt(grid.getHeight()+2)-1;
-						int direction=rand.nextInt(m_validDirections.length-1);
-						if (!hasIllegalWordSearchIntersections(grid, word, x, y, m_validDirections[direction], 0)) {
-							validGrid = new Grid(grid);
-							placeWordInGrid(validGrid, word, x, y, m_validDirections[direction], 0);
+					
+					// Let's just get 3 placements. We'll try for at most two intersections and one non-intersection.
+					
+					findIntersections:
+					for (int x = 0; x < grid.getWidth(); x++) {
+						for (int y = 0; y < grid.getHeight(); y++) {
+							if (word.containsChar(grid.getCharAt(x, y))) {
+								for (int intersection : word.getIntersectionIndices(grid.getCharAt(x, y))) {
+									int direction = r.nextInt(8);
+									for (int i = 0; i < 8; i++) {
+										
+										if (!hasIllegalWordSearchIntersections(grid, word, x, y, direction, intersection)) {
+											validGrid = new Grid(grid);
+											if (placeWordInGrid(validGrid, word, x, y, direction, intersection)) {
+												validGrids.add(validGrid);
+												break findIntersections;
+											}
+										}
+										direction = (direction + 1) & 7;
+									}
+								}							
+							}
+						}
+					}
+					
+					// Now let's find non-intersecting places to put the word until we have 3 total valid grids.
+					
+					// We'll pick a direction and a random location, see if we can place it there, 
+					//    and if not, spiral outwards using the same direction.
+					int direction, spiralMoveAmount;
+					boolean increaseSpiral;
+					GridWalker walker;
+
+					while (validGrids.size() < 3) {
+						direction = r.nextInt(8);
+						spiralMoveAmount = 1;
+						increaseSpiral = false;
+						walker = new GridWalker(grid, r.nextInt(grid.getWidth()), r.nextInt(grid.getHeight()), r.nextInt(4) * 2);
+						
+						while (hasIllegalWordSearchIntersections(grid, word, walker.x, walker.y, direction, 0)) {
+							walker.moveForward(spiralMoveAmount);
+							if (increaseSpiral) {
+								spiralMoveAmount++;
+							}
+							increaseSpiral = !increaseSpiral;
+							walker.rotate(2);
+						}
+						validGrid = new Grid(grid);
+						if (placeWordInGrid(validGrid, word, walker.x, walker.y, direction, 0)) {
 							validGrids.add(validGrid);
 						}
 					}
 					break;
 			}
-			
 			return validGrids;
-		}
-	
-		/** Ensures that the grid contains exactly the word list.<br>
-		 * @return <b>null</b> if the grid is illegal.*/
-		private Puzzle gridToPuzzleIfLegal(Grid grid) {
-			ArrayList<String> unfoundWordList = new ArrayList<String>(m_model.getWordList().size());
-			for (String s : m_model.getWordList()) {
-				unfoundWordList.add(new String(s));
-			}
-			ArrayList<Word> foundWordList = new ArrayList<Word>(unfoundWordList.size());
-			
-			String currentWord = "";
-			int x, y, startX = -1, startY = -1;
-
-			for (int direction : m_validDirections) {
-				// Set start and end points.
-				switch (direction) {
-					case Constants.LEFT_TO_RIGHT: // then top to bottom
-					case Constants.TOP_TO_BOTTOM: // then left to right
-					case Constants.TOPRIGHT_TO_BOTTOMLEFT: // from top-left corner to bot-right corner 
-					case Constants.BOTTOMLEFT_TO_TOPRIGHT: // from top-left corner to bot-right corner
-						startX = 0;
-						startY = 0;
-						break;
-					case Constants.TOPLEFT_TO_BOTTOMRIGHT: // from bot-left corner to top-right corner
-					case Constants.BOTTOM_TO_TOP: // then left to right
-						startX = 0;
-						startY = grid.getHeight() - 1;
-						break;
-					case Constants.RIGHT_TO_LEFT: // then top to bottom
-					case Constants.BOTTOMRIGHT_TO_TOPLEFT: // from top-right corner to bot-left corner
-						startX = grid.getWidth() - 1;
-						startY = 0;
-						break;
-				}
-				
-				x = startX;
-				y = startY;
-				
-				while (startX >= 0 && startX < grid.getWidth() && startY >= 0 && startY < grid.getHeight()) {
-					while (x >= 0 && x < grid.getWidth() && y >= 0 && y < grid.getHeight()) {
-						if (grid.getCharAt(x, y) == Constants.EMPTY_CELL_CHARACTER) {
-							if (currentWord.length() < 2) {
-								currentWord = "";
-							}
-							else {
-								if (unfoundWordList.remove(currentWord)) {
-									int wordStartX = -1, wordStartY = -1;
-									switch (direction) {
-										case Constants.LEFT_TO_RIGHT:
-											wordStartX = x - currentWord.length();
-											wordStartY = y;
-											break;
-										case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-											wordStartX = x - currentWord.length();
-											wordStartY = y - currentWord.length();
-											break;
-										case Constants.TOP_TO_BOTTOM:
-											wordStartX = x;
-											wordStartY = y - currentWord.length();
-											break;
-										case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-											wordStartX = x + currentWord.length();
-											wordStartY = y - currentWord.length();
-											break;
-										case Constants.RIGHT_TO_LEFT:
-											wordStartX = x + currentWord.length();
-											wordStartY = y;
-											break;
-										case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-											wordStartX = x + currentWord.length();
-											wordStartY = y + currentWord.length();
-											break;
-										case Constants.BOTTOM_TO_TOP:
-											wordStartX = x;
-											wordStartY = y + currentWord.length();
-											break;
-										case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-											wordStartX = x - currentWord.length();
-											wordStartY = y + currentWord.length();
-											break;
-									}
-									
-									foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
-									currentWord = "";
-								}
-								else
-								{
-									return null;
-								}
-							}
-						}
-						else {
-							currentWord += grid.getCharAt(x, y);
-						}
-						
-						switch (direction) {
-							case Constants.LEFT_TO_RIGHT:
-								x++;
-								break;
-							case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-								x++;
-								y++;
-								break;
-							case Constants.TOP_TO_BOTTOM:
-								y++;
-								break;
-							case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-								x--;
-								y++;
-								break;
-							case Constants.RIGHT_TO_LEFT:
-								x--;
-								break;
-							case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-								x--;
-								y--;
-								break;
-							case Constants.BOTTOM_TO_TOP:
-								y--;
-								break;
-							case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-								x++;
-								y--;
-								break;
-						}
-					}
-					
-					
-					if (currentWord.length() < 2) {
-						currentWord = "";
-					}
-					else {
-						if (unfoundWordList.remove(currentWord)) {
-							int wordStartX = -1, wordStartY = -1;
-							switch (direction) {
-								case Constants.LEFT_TO_RIGHT:
-									wordStartX = x - currentWord.length();
-									wordStartY = y;
-									break;
-								case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-									wordStartX = x - currentWord.length();
-									wordStartY = y - currentWord.length();
-									break;
-								case Constants.TOP_TO_BOTTOM:
-									wordStartX = x;
-									wordStartY = y - currentWord.length();
-									break;
-								case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-									wordStartX = x + currentWord.length();
-									wordStartY = y - currentWord.length();
-									break;
-								case Constants.RIGHT_TO_LEFT:
-									wordStartX = x + currentWord.length();
-									wordStartY = y;
-									break;
-								case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-									wordStartX = x + currentWord.length();
-									wordStartY = y + currentWord.length();
-									break;
-								case Constants.BOTTOM_TO_TOP:
-									wordStartX = x;
-									wordStartY = y + currentWord.length();
-									break;
-								case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-									wordStartX = x - currentWord.length();
-									wordStartY = y + currentWord.length();
-									break;
-							}
-							
-							foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
-							currentWord = "";
-						}
-						else
-						{
-							return null;
-						}
-					}
-					
-					switch (direction) {
-						case Constants.LEFT_TO_RIGHT:
-						case Constants.RIGHT_TO_LEFT:
-							startY++;
-							break;
-						case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-							if (startY > 0) {
-								startY--;
-							}
-							else {
-								startX++;
-							}
-							break;
-						case Constants.TOP_TO_BOTTOM:
-						case Constants.BOTTOM_TO_TOP:
-							startX++;
-							break;
-						case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-							if (startX < grid.getWidth() - 1) {
-								startX++;
-							}
-							else {
-								startY++;
-							}
-							break;
-						case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-							if (startY < grid.getHeight() - 1) {
-								startY++;
-							}
-							else {
-								startX--;
-							}
-							break;
-						case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-							if (startY < grid.getHeight() - 1) {
-								startY++;
-							}
-							else {
-								startX++;
-							}
-							break;
-					}
-					
-					x = startX;
-					y = startY;			
-				}
-				
-				if (currentWord.length() < 2) {
-					currentWord = "";
-				}
-				else {
-					if (unfoundWordList.remove(currentWord)) {
-						int wordStartX = -1, wordStartY = -1;
-						switch (direction) {
-							case Constants.LEFT_TO_RIGHT:
-								wordStartX = x - currentWord.length();
-								wordStartY = y;
-								break;
-							case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-								wordStartX = x - currentWord.length();
-								wordStartY = y - currentWord.length();
-								break;
-							case Constants.TOP_TO_BOTTOM:
-								wordStartX = x;
-								wordStartY = y - currentWord.length();
-								break;
-							case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-								wordStartX = x + currentWord.length();
-								wordStartY = y - currentWord.length();
-								break;
-							case Constants.RIGHT_TO_LEFT:
-								wordStartX = x + currentWord.length();
-								wordStartY = y;
-								break;
-							case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-								wordStartX = x + currentWord.length();
-								wordStartY = y + currentWord.length();
-								break;
-							case Constants.BOTTOM_TO_TOP:
-								wordStartX = x;
-								wordStartY = y + currentWord.length();
-								break;
-							case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-								wordStartX = x - currentWord.length();
-								wordStartY = y + currentWord.length();
-								break;
-						}
-						
-						System.err.println("PuzzleGenerator: case 3");
-						foundWordList.add(new Word(currentWord, wordStartX, wordStartY, direction));
-						currentWord = "";
-					}
-					else
-					{
-						return null;
-					}
-				}
-			}
-			
-			switch (m_puzzleType) {
-			case Constants.TYPE_CROSSWORD:
-//				System.err.println("foundWordList: ");
-//				for (Word w : foundWordList) {
-//					System.err.println(w.toStringDetailed());
-//				}
-				return new Crossword(grid, foundWordList);
-			case Constants.TYPE_WORDSEARCH:
-				return new WordSearch(grid, foundWordList);
-				
-			default:
-				System.err.println("Unrecognized puzzle type: " + m_puzzleType);
-				System.err.println(Thread.currentThread().getStackTrace());
-				return null;
-			}		
 		}
 	}
 	
 	public boolean hasIllegalCrosswordIntersections(Grid grid, Word word, int x, int y, int direction, int offset) {
-		while (offset > 0) {
-			switch (direction) {
-				case Constants.LEFT_TO_RIGHT:
-					x--;
-					break;
-				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-					x--;
-					y--;
-					break;
-				case Constants.TOP_TO_BOTTOM:
-					y--;
-					break;
-				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-					x++;
-					y--;
-					break;
-				case Constants.RIGHT_TO_LEFT:
-					x++;
-					break;
-				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-					x++;
-					y++;
-					break;
-				case Constants.BOTTOM_TO_TOP:
-					y++;
-					break;
-				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-					x--;
-					y++;
-					break;
-			}
-			offset--;
-		}
+		GridWalker walker = new GridWalker(grid, x, y, direction);
 		
-		// Check behind the first letter
-		switch (direction) {
-			case Constants.LEFT_TO_RIGHT:
-				x--;
-				break;
-			case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-				x--;
-				y--;
-				break;
-			case Constants.TOP_TO_BOTTOM:
-				y--;
-				break;
-			case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-				x++;
-				y--;
-				break;
-			case Constants.RIGHT_TO_LEFT:
-				x++;
-				break;
-			case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-				x++;
-				y++;
-				break;
-			case Constants.BOTTOM_TO_TOP:
-				y++;
-				break;
-			case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-				x--;
-				y++;
-				break;
-		}
+		walker.moveForward(-offset);
 		
-		if (x >= 0 && x < grid.getWidth() && y >= 0 && y < grid.getHeight()) {
-			if (grid.getCharAt(x, y) != Constants.EMPTY_CELL_CHARACTER) {
+		// Start by checking behind the letter.
+		walker.moveForward(-1);
+		
+		if (walker.isInBounds()) {
+			if (grid.getCharAt(walker.x, walker.y) != Constants.EMPTY_CELL_CHARACTER) {
 				return true;
 			}
 		}
 		
-		switch (direction) {
-			case Constants.LEFT_TO_RIGHT:
-				x++;
-				break;
-			case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-				x++;
-				y++;
-				break;
-			case Constants.TOP_TO_BOTTOM:
-				y++;
-				break;
-			case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-				x--;
-				y++;
-				break;
-			case Constants.RIGHT_TO_LEFT:
-				x--;
-				break;
-			case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-				x--;
-				y--;
-				break;
-			case Constants.BOTTOM_TO_TOP:
-				y--;
-				break;
-			case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-				x++;
-				y--;
-				break;
-		}
+		// Go back to the start of the word.
+		walker.moveForward(1);
 		
 		// Check the word's placement
 		for (int i = 0; i < word.toString().length(); i++) {
-			if (x >= 0 && x < grid.getWidth() && y >= 0 && y < grid.getHeight()) {
-				if (grid.getCharAt(x, y) != Constants.EMPTY_CELL_CHARACTER && grid.getCharAt(x, y) != word.toString().charAt(i)) {
+			if (walker.isInBounds()) {
+				if (grid.getCharAt(walker.x, walker.y) != Constants.EMPTY_CELL_CHARACTER && grid.getCharAt(walker.x, walker.y) != word.toString().charAt(i)) {
 					return true;
 				}
 			}
 			
-			switch (direction) {
-				case Constants.LEFT_TO_RIGHT:
-					x++;
-					break;
-				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-					x++;
-					y++;
-					break;
-				case Constants.TOP_TO_BOTTOM:
-					y++;
-					break;
-				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-					x--;
-					y++;
-					break;
-				case Constants.RIGHT_TO_LEFT:
-					x--;
-					break;
-				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-					x--;
-					y--;
-					break;
-				case Constants.BOTTOM_TO_TOP:
-					y--;
-					break;
-				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-					x++;
-					y--;
-					break;
-			}
+			walker.moveForward(1);
 		}
 		
 		// And check after the word
-		if (x >= 0 && x < grid.getWidth() && y >= 0 && y < grid.getHeight()) {
-			if (grid.getCharAt(x, y) != Constants.EMPTY_CELL_CHARACTER) {
+		if (walker.isInBounds()) {
+			if (grid.getCharAt(walker.x, walker.y) != Constants.EMPTY_CELL_CHARACTER) {
 				return true;
 			}
 		}
@@ -805,78 +421,19 @@ public class PuzzleGenerator {
 	}
 	
 	public boolean hasIllegalWordSearchIntersections(Grid grid, Word word, int x, int y, int direction, int offset) {
-		while (offset > 0) {
-			switch (direction) {
-				case Constants.LEFT_TO_RIGHT:
-					x--;
-					break;
-				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-					x--;
-					y--;
-					break;
-				case Constants.TOP_TO_BOTTOM:
-					y--;
-					break;
-				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-					x++;
-					y--;
-					break;
-				case Constants.RIGHT_TO_LEFT:
-					x++;
-					break;
-				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-					x++;
-					y++;
-					break;
-				case Constants.BOTTOM_TO_TOP:
-					y++;
-					break;
-				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-					x--;
-					y++;
-					break;
-			}
-			offset--;
-		}
+		GridWalker walker = new GridWalker(grid, x, y, direction);
+		
+		walker.moveForward(-offset);
 		
 		// Check the word's placement
 		for (int i = 0; i < word.toString().length(); i++) {
-			if (x >= 0 && x < grid.getWidth() && y >= 0 && y < grid.getHeight()) {
-				if (grid.getCharAt(x, y) != Constants.EMPTY_CELL_CHARACTER && grid.getCharAt(x, y) != word.toString().charAt(i)) {
+			if (walker.isInBounds()) {
+				if (grid.getCharAt(walker.x, walker.y) != Constants.EMPTY_CELL_CHARACTER && grid.getCharAt(walker.x, walker.y) != word.toString().charAt(i)) {
 					return true;
 				}
 			}
 			
-			switch (direction) {
-				case Constants.LEFT_TO_RIGHT:
-					x++;
-					break;
-				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-					x++;
-					y++;
-					break;
-				case Constants.TOP_TO_BOTTOM:
-					y++;
-					break;
-				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-					x--;
-					y++;
-					break;
-				case Constants.RIGHT_TO_LEFT:
-					x--;
-					break;
-				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-					x--;
-					y--;
-					break;
-				case Constants.BOTTOM_TO_TOP:
-					y--;
-					break;
-				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-					x++;
-					y--;
-					break;
-			}
+			walker.moveForward(1);
 		}
 		
 		return false;
@@ -898,187 +455,58 @@ public class PuzzleGenerator {
 	 * @author szeren
 	 */
 	public boolean placeWordInGrid(Grid grid, Word word, int x, int y, int direction, int offset) {
-		while (offset > 0) {
-			switch (direction) {
-			case Constants.LEFT_TO_RIGHT:
-				x--;
-				break;
-			case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-				x--;
-				y--;
-				break;
-			case Constants.TOP_TO_BOTTOM:
-				y--;
-				break;
-			case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-				x++;
-				y--;
-				break;
-			case Constants.RIGHT_TO_LEFT:
-				x++;
-				break;
-			case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-				x++;
-				y++;
-				break;
-			case Constants.BOTTOM_TO_TOP:
-				y++;
-				break;
-			case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-				x--;
-				y++;
-				break;
-			}
-			offset--;
-		}
+		GridWalker walker = new GridWalker(grid, x, y, direction);
 		
-		while (x >= grid.getWidth()) {
-			grid.addColumnOnRight();
-			if (m_hasMaximumSize) {
-				if (grid.getWidth() > m_maxSizeX) {
-					return false;
-				}
+		walker.moveForward(-offset);
+		
+		// Expand grid to accommodate walker's current position.
+		if (!walker.isInBounds()) {
+			// Check to see if the additions will exceed size restrictions. (Expanding is costly, cycle-wise.)
+			if (m_hasMaximumSize && (walker.x > m_maxSizeX || walker.y > m_maxSizeY || (grid.getWidth() - walker.x) > m_maxSizeX || (grid.getHeight() - walker.y) > m_maxSizeY)) {
+				return false;
 			}
-			if (m_hasExactSize) {
-				if (grid.getWidth() > m_exactSizeX) {
-					return false;
-				}
+			if (m_hasExactSize && (walker.x > m_exactSizeX || walker.y > m_exactSizeY || (grid.getWidth() - walker.x) > m_exactSizeX || (grid.getHeight() - walker.y) > m_exactSizeY)) {
+				return false;
 			}
-		}
-		while (y >= grid.getHeight()) {
-			grid.addRowOnBottom();
-			if (m_hasMaximumSize) {
-				if (grid.getHeight() > m_maxSizeY) {
-					return false;
-				}
+			
+			while (walker.x >= grid.getWidth()) {
+				grid.addColumnOnRight();
 			}
-			if (m_hasExactSize) {
-				if (grid.getHeight() > m_exactSizeY) {
-					return false;
-				}
+			while (walker.x < 0) {
+				grid.addColumnOnLeft();
+				walker.x++;
 			}
-		}
-		while (x < 0) {
-			grid.addColumnOnLeft();
-			if (m_hasMaximumSize) {
-				if (grid.getWidth() > m_maxSizeX) {
-					return false;
-				}
+			while (walker.y >= grid.getHeight()) {
+				grid.addRowOnBottom();
 			}
-			if (m_hasExactSize) {
-				if (grid.getWidth() > m_exactSizeX) {
-					return false;
-				}
+			while (walker.y < 0) {
+				grid.addRowOnTop();
+				walker.y++;
 			}
-			x++;
-		}
-		while (y < 0) {
-			grid.addRowOnTop();
-			if (m_hasMaximumSize) {
-				if (grid.getHeight() > m_maxSizeY) {
-					return false;
-				}
-			}
-			if (m_hasExactSize) {
-				if (grid.getHeight() > m_exactSizeY) {
-					return false;
-				}
-			}
-			y++;
 		}
 
 		
 		for (int i = 0; i < word.toString().length(); i++) {
 			// Expand grid if necessary
-			if (x < 0) {
-				grid.addColumnOnLeft();
-				if (m_hasMaximumSize) {
-					if (grid.getWidth() > m_maxSizeX) {
-						return false;
-					}
-				}
-				if (m_hasExactSize) {
-					if (grid.getWidth() > m_exactSizeX) {
-						return false;
-					}
-				}
-				x++;
-			}
-			else if (x >= grid.getWidth()) {
+			if (walker.x >= grid.getWidth()) {
 				grid.addColumnOnRight();
-				if (m_hasMaximumSize) {
-					if (grid.getWidth() > m_maxSizeX) {
-						return false;
-					}
-				}
-				if (m_hasExactSize) {
-					if (grid.getWidth() > m_exactSizeX) {
-						return false;
-					}
-				}
 			}
-			if (y < 0) {
-				grid.addRowOnTop();
-				if (m_hasMaximumSize) {
-					if (grid.getHeight() > m_maxSizeY) {
-						return false;
-					}
-				}
-				if (m_hasExactSize) {
-					if (grid.getHeight() > m_exactSizeY) {
-						return false;
-					}
-				}
-				y++;
+			else if (walker.x < 0) {
+				grid.addColumnOnLeft();
+				walker.x++;
 			}
-			else if (y >= grid.getHeight()) {
+			if (walker.y >= grid.getHeight()) {
 				grid.addRowOnBottom();
-				if (m_hasMaximumSize) {
-					if (grid.getHeight() > m_maxSizeY) {
-						return false;
-					}
-				}
-				if (m_hasExactSize) {
-					if (grid.getHeight() > m_exactSizeY) {
-						return false;
-					}
-				}
+			}
+			else if (walker.y < 0) {
+				grid.addRowOnTop();
+				walker.y++;
 			}
 			
 			// Set grid cell's value to character of our word
-			grid.setCharAt(x, y, word.toString().charAt(i));
+			grid.setCharAt(walker.x, walker.y, word.toString().charAt(i));
 			
-			// Move the (x, y) coordinate based on direction
-			switch (direction) {
-				case Constants.LEFT_TO_RIGHT:
-					x++;
-					break;
-				case Constants.TOPLEFT_TO_BOTTOMRIGHT:
-					x++;
-					y++;
-					break;
-				case Constants.TOP_TO_BOTTOM:
-					y++;
-					break;
-				case Constants.TOPRIGHT_TO_BOTTOMLEFT:
-					x--;
-					y++;
-					break;
-				case Constants.RIGHT_TO_LEFT:
-					x--;
-					break;
-				case Constants.BOTTOMRIGHT_TO_TOPLEFT:
-					x--;
-					y--;
-					break;
-				case Constants.BOTTOM_TO_TOP:
-					y--;
-					break;
-				case Constants.BOTTOMLEFT_TO_TOPRIGHT:
-					x++;
-					y--;
-					break;
-			}
+			walker.moveForward(1);
 		}
 		
 		return true;

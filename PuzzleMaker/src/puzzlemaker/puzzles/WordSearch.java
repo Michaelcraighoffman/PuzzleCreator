@@ -1,117 +1,57 @@
 package puzzlemaker.puzzles;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JTextField;
+import javax.swing.border.LineBorder;
 
+import puzzlemaker.Constants;
 import puzzlemaker.tools.grid.Grid;
 
 public class WordSearch extends Puzzle {
 	
 	LinkedBlockingQueue<Grid> m_solutions;
+	Random rand = new Random();
 	
 	public WordSearch(Grid grid, ArrayList<Word> wordList) {
 		m_grid = grid;
 		m_wordList = wordList;
-		fillIn();
 	}
-
-	public WordSearch(ArrayList<String> wordList) {
-		// Find out how big the puzzle has to be
-		// TODO: This starting value may not be necessary with a sophisticated
-		// generate() algorithm.
-		int minSize = wordList.size();
-		for (String word : wordList) {
-			if (word.length() > minSize) {
-				minSize = word.length();
-			}
-		}
-		System.err.println("Wordsearch minsize = " + minSize);
-
-		// "New" all of the CharacterFields of m_grid
-		minSize = minSize + 2;
-		//m_grid = new Grid(minSize, minSize);
-		
-		updateDisplayPanel();
-	}
-	
-	
-	
-	//private void eraseBoundaries() {
-		//m_grid.removeRow(1);
-		//m_grid.removeRow(m_grid.size());
-	//}
 	
 	/** Fill in remaining grid spaces with random letters. */
-	private void fillIn(){
-		Random rand = new Random();
-		
+	public void fillIn() {	
+		Random r = new Random();
 		for(int x = 0; x < m_grid.getWidth(); ++x){
 			for(int y = 0; y < m_grid.getHeight(); ++y){
-				if (m_grid.getCharAt(x, y) == ' '){
-					m_grid.setCharAt(x, y, (char) (rand.nextInt(26) + 65));
+				if (m_grid.getCharAt(x, y) == Constants.EMPTY_CELL_CHARACTER){
+					// By setting these to lower case, we can easily tell which letters are part of the solution.
+					m_grid.setCharAt(x, y, (char) (r.nextInt(26) + 97));
 				}
 			}
 		}
 	}
-	
-	
-	private void placeWord(String word , int caseDirection, int x , int y){
+
+	@Override
+	public void applyCellStyle(JTextField cell, boolean showSolution) {
+		cell.setHorizontalAlignment(JTextField.CENTER);
+		cell.setEnabled(false);
+		cell.setBorder(LineBorder.createBlackLineBorder());
 		
-		for(int i = 0; i < word.length(); ++i){
-		switch(caseDirection){
 		
-		case 0:
-			m_grid.setCharAt(x - i , y , word.charAt(i));
-			break;
-		
-		case 1:
-			m_grid.setCharAt(x - i , y+i , word.charAt(i));
-			break;
-		
-		case 2:
-			m_grid.setCharAt(x , y+i , word.charAt(i));
-			break;
-			
-		case 3:
-			m_grid.setCharAt(x + i , y+i , word.charAt(i));
-			break;
-			
-		case 4:
-			m_grid.setCharAt(x + i , y , word.charAt(i));
-			break;
-			
-		case 5:
-			m_grid.setCharAt(x + i , y-i , word.charAt(i));
-			break;
-			
-		case 6:
-			m_grid.setCharAt(x , y-i , word.charAt(i));
-			break;
-			
-		case 7:
-			m_grid.setCharAt(x - i , y-i , word.charAt(i));
-			break;
+		if (!showSolution) {
+			cell.setDisabledTextColor(Color.black);
+			cell.setFont(cell.getFont().deriveFont(Font.PLAIN));
 		}
+		else {
+			if (cell.getText().charAt(0) < 97) {
+				cell.setDisabledTextColor(Color.black);
+				cell.setFont(cell.getFont().deriveFont(Font.BOLD));
+			}
 		}
-	}
-
-	@Override
-	public void showSolution() {
-
-	}
-
-	@Override
-	public void hideSolution() {
-
-	}
-
-	@Override
-	public void applyCellStyle(JTextField cell) {
-		// TODO Auto-generated method stub
-		
+		cell.setText(cell.getText().toUpperCase());
 	}
 }

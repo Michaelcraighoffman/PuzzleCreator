@@ -1,17 +1,13 @@
 package puzzlemaker.model;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import puzzlemaker.Constants;
 import puzzlemaker.puzzles.Puzzle;
-import puzzlemaker.puzzles.Word;
 import puzzlemaker.tools.PuzzleGenerator;
 import puzzlemaker.tools.TimeStampArrayList;
 
@@ -19,12 +15,6 @@ public class Model {
 	private TreeMap<TimeStampArrayList<String>, ConcurrentSkipListSet<Puzzle>> m_data;
 	private TimeStampArrayList<String> m_selectedWordList;
 	private Puzzle m_selectedPuzzle;
-	private Iterator<TimeStampArrayList<String>>  m_wordIter;
-	private Iterator<Puzzle> m_puzzleIter;
-	private Iterator<Puzzle> m_puzzlePrev;
-	private TimeStampArrayList<String> m_wordPrev;
-	//private <TimeStampArrayList<String>> m_wordElement;
-	private ArrayList<JFrame> m_views;
 	
 	private PuzzleGenerator m_generator;
 	
@@ -127,13 +117,12 @@ public class Model {
 		}
 	}
 	
-	// TODO: Do I have to update the word list
 	public ArrayList<String> getNextWordList() {
 		m_selectedWordList = m_data.higherKey(m_selectedWordList);
 		if (m_selectedWordList == null) {
 			m_selectedWordList = m_data.firstKey();
 		}
-		System.err.println(m_selectedWordList.toString());
+//		System.err.println(m_selectedWordList.toString());
 		return m_selectedWordList;
 	}
 	/**
@@ -142,16 +131,16 @@ public class Model {
 	*/
 	public boolean hasNext(){
 		if(m_data.higherKey(m_selectedWordList) == null)
-			return true;
-		else 
 			return false;
+		else 
+			return true;
 	}
 	public ArrayList<String> getPreviousWordList() {
 		m_selectedWordList = m_data.lowerKey(m_selectedWordList);
 		if (m_selectedWordList == null) {
 			m_selectedWordList = m_data.lastKey();
 		}
-		System.err.println(m_selectedWordList.toString());
+//		System.err.println(m_selectedWordList.toString());
 		return m_selectedWordList;
 	}
 	
@@ -173,7 +162,6 @@ public class Model {
 		m_generator.setExactlPuzzleSize(enabled, x, y);
 	}
 	
-	@Deprecated
 	/**
 	 * I'm just using this right now for the Export function (which prints all of the solutions to a text file).
 	 * Feel free to repurpose it, but it would be nice not to have to clone a solution list with (potentially)
@@ -185,19 +173,16 @@ public class Model {
 		return new ArrayList<Puzzle>(m_data.get(m_selectedWordList));
 	}
 	
-	
 	public void printTreeMap() {
 		System.err.println(m_data.toString());
 	}
 
 	public Puzzle getPuzzle() {
-		// TODO Auto-generated method stub
 		return m_selectedPuzzle;
 	}
 
-	public void clearSelected() {
-		m_selectedPuzzle=null;
-		
+	public void clearSelectedPuzzle() {
+		m_selectedPuzzle=null;		
 	}
 
 	public void setAllowNonSquare(boolean allowed) {

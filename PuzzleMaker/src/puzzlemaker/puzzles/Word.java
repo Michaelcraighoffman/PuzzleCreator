@@ -2,18 +2,13 @@ package puzzlemaker.puzzles;
 
 import java.util.ArrayList;
 
-import puzzlemaker.tools.grid.Grid;
-import puzzlemaker.tools.grid.GridIterator;
-
 public class Word implements Comparable<Object> {
 
 	private String m_word;	
 	private int m_x;
 	private int m_y;
 	private int m_direction;
-	
-	private ArrayList<GridIterator> m_validPlacements;
-	
+		
 	public Word (String word) {
 		m_word = word;
 		m_x = -1;
@@ -71,19 +66,6 @@ public class Word implements Comparable<Object> {
 		
 		return intersections;
 	}
-
-	public void placeInGrid(Grid grid, int placementIndex) {
-		GridIterator iter = m_validPlacements.get(placementIndex);
-		
-		for (int i = 0; i < m_word.length(); i++) {
-			grid.setCharAt(iter.getX(), iter.getY(), m_word.charAt(i));
-//			grid.get(iter.x).get(iter.y).importance++;
-			if (iter.hasNext()) {
-				iter.next();
-			}
-		}
-		iter.dispose();
-	}
 	
 	public boolean containsChar(char c) {
 		return (m_word.indexOf(c) >= 0);
@@ -100,32 +82,6 @@ public class Word implements Comparable<Object> {
 		}
 		
 		return indices;
-	}
-	
-//	public void removeFromGrid() {
-//		PointAndDirection start = m_currentPlacement;
-//		CharacterField field;
-//		
-//		for (int i = 0; i < m_word.length(); i++) {
-//			field = m_grid.get(start.row).get(start.col);
-//			
-//			field.importance--;
-//			if (field.importance == 0) {
-//				field.setText(' ');
-//			}
-//			
-//			start.moveForward();
-//		}
-//		
-//		m_isPlaced = false;
-//		m_currentPlacement = null;
-//		
-//		System.err.println("AFTER REMOVAL: ");
-//		System.err.println(Puzzle.this.toString());
-//	}
-	
-	public boolean hasValidPlacements() {
-		return (m_validPlacements.size() > 0);
 	}
 	
 	@Override

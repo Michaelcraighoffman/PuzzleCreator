@@ -40,16 +40,18 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
 import javax.swing.plaf.basic.BasicArrowButton;
 
 import puzzlemaker.Constants;
+import puzzlemaker.Constants.DefaultOptions;
 import puzzlemaker.Constants.MenuCommand;
-import puzzlemaker.Constants.ProgramDefault;
+import puzzlemaker.Constants.DefaultOptions;
 import puzzlemaker.model.Model;
 import puzzlemaker.puzzles.Crossword;
 import puzzlemaker.puzzles.Puzzle;
@@ -62,11 +64,11 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	private final String WORD_SEARCH_BUTTON = "WORD_SEARCH_BUTTON";
 	private final String CROSSWORD_BUTTON = "CROSSWORD_BUTTON";
 	private final String STOP_BUTTON = "STOP_BUTTON";
-	private final String PREVIOUS_BUTTON = "PREVIOUS_BUTTON";
-	private final String NEXT_BUTTON = "NEXT_BUTTON";
-	private final String PREVIOUS_BUTTON_PZL = "PREVIOUS_BUTTON_PZL";
-	private final String NEXT_BUTTON_PZL = "NEXT_BUTTON_PZL";
-	private final String NEW_WORDBUTTON = "NEW_WORDBUTTON";
+	private final String PREVIOUS_WORDLIST_BUTTON = "PREVIOUS_BUTTON";
+	private final String NEXT_WORDLIST_BUTTON = "NEXT_BUTTON";
+	private final String PREVIOUS_PUZZLE_BUTTON = "PREVIOUS_PUZZLE_BUTTON";
+	private final String NEXT_PUZZLE_BUTTON = "NEXT_PUZZLE_BUTTON";
+	private final String NEW_WORDLIST_BUTTON = "NEW_WORDLIST_BUTTON";
 	private final String CHK_SIZE_EXACTLY = "CHK_SIZE_EXACTLY";
 	private final String PUZZLE_SIZE_OK = "PUZZLE_SIZE_OK";
 	private final String PUZZLE_SIZE_CANCEL = "PUZZLE_SIZE_CANCEL";
@@ -86,8 +88,11 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	private JCheckBox m_chkSizeAtLeast, m_chkSizeAtMost, m_chkSizeExactly;
 	private boolean m_puzzleSizeConstrainMin = false, m_puzzleSizeConstrainMax = true, m_puzzleSizeConstrainExactly = false; 
 	private JTextField m_txtSizeAtLeastX, m_txtSizeAtLeastY, m_txtSizeAtMostX, m_txtSizeAtMostY, m_txtSizeExactlyX, m_txtSizeExactlyY;
-	private int m_puzzleSizeMinX = ProgramDefault.PUZZLE_SIZE_MIN_X, m_puzzleSizeMinY = ProgramDefault.PUZZLE_SIZE_MIN_Y, m_puzzleSizeMaxX = ProgramDefault.PUZZLE_SIZE_MAX_X, m_puzzleSizeMaxY = ProgramDefault.PUZZLE_SIZE_MAX_Y, m_puzzleSizeExactlyX = ProgramDefault.PUZZLE_SIZE_EXACT_X, m_puzzleSizeExactlyY = ProgramDefault.PUZZLE_SIZE_EXACT_Y;
+	private int m_puzzleSizeMinX = DefaultOptions.PUZZLE_SIZE_MIN_X, m_puzzleSizeMinY = DefaultOptions.PUZZLE_SIZE_MIN_Y, m_puzzleSizeMaxX = DefaultOptions.PUZZLE_SIZE_MAX_X, m_puzzleSizeMaxY = DefaultOptions.PUZZLE_SIZE_MAX_Y, m_puzzleSizeExactlyX = DefaultOptions.PUZZLE_SIZE_EXACT_X, m_puzzleSizeExactlyY = DefaultOptions.PUZZLE_SIZE_EXACT_Y;
 	private JCheckBoxMenuItem m_chkBoxNonSquare;
+	private JCheckBoxMenuItem m_chkBoxShowSolutions, m_popupChkBoxShowSolutions;
+	private boolean m_puzzleShowSolutions = DefaultOptions.PUZZLE_SHOW_SOLUTIONS;
+	private JPopupMenu m_puzzlePopupMenu;
 	private JDialog m_aboutDialog;
 	
 	/** Contains and displays the {@link #m_puzzle puzzle}. */
@@ -97,17 +102,25 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	/** For displaying which puzzle is currently selected of the solution set. */
 	private JLabel m_lblPuzzleIndex;
 	/** Arrow Buttons for wordLists */
-	private BasicArrowButton nextWord, prevWord;
-	private JButton newWord;
+	private BasicArrowButton m_nextWordList, m_prevWordList;
+	private JButton m_newWordList;
 	private BasicArrowButton nextWordPZL, prevWordPZL;
 	/** Contains and displays the {@link #m_wordListPanel word list} and the {@link #m_wordEntryField entry field}. */
 	private JPanel m_wordsPanel;
+	private ArrayList<JPanel> m_wordsPanels = new ArrayList<JPanel>();
 	/** Contains one {@link JLabel} for each currently entered word. */
 	private JPanel m_wordListPanel;
 	/** @see WordLabelList */
+	private JTabbedPane m_Tabs;
 	private WordLabelList m_wordLabelList;
+	private ArrayList<WordLabelList> m_wordLabelLists = new ArrayList<WordLabelList>();
+	private ArrayList<JTextField> m_wordEntryFields = new ArrayList<JTextField>();
 	private JTextField m_wordEntryField;
-	private int m_index = 1;
+	private int m_puzzleIndex = 1;
+	/** Used for tabs and wordlist Jpanels*/
+	private int m_Windex = 0;
+	/**Keeps track of selectedWordList in relation to next selectedTab basic stupid method **/
+	private int wordDex = 0;
 
 	
    /** Belongs to {@code m_wordsPanel}.<br>
@@ -124,12 +137,14 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		
 		initMenuBar();
 		initPuzzlePanel();
+		
 		initWordPanel();
+		initTabPane();
 		initPuzzleButtonPanel();
         
         // Initialize the split pane.
         m_horizontalSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        m_horizontalSplit.setTopComponent(m_wordsPanel);
+        m_horizontalSplit.setTopComponent(m_Tabs);
         m_horizontalSplit.setBottomComponent(m_puzzleButtonPanel);
         m_horizontalSplit.setResizeWeight(0.5f);
         
@@ -146,6 +161,8 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
         // Add the split pane to the window.
         this.getContentPane().add(m_verticalSplit);
         this.pack();
+        
+        this.getRootPane().getGlassPane().addMouseListener(this);
 	}
 	
 	/* **********************************************************
@@ -167,18 +184,18 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_menuBar.add(menu);
 		
 		// "Puzzle"
-		menu = createTopLevelMenu("Puzzle", KeyEvent.VK_Z, "This contains functions to alter the current puzzle");
-		menu.add(createMenuItem("Randomize", KeyEvent.VK_R, "Reorder the current puzzle", KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK), null));
-		menu.add(createMenuItem("Set Puzzle Size Limits...", KeyEvent.VK_S, "Set size constraints on the puzzles that are generated", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK + ActionEvent.CTRL_MASK), MenuCommand.PUZZLE_SIZE));
-		m_chkBoxNonSquare = new JCheckBoxMenuItem("Allow Non-square Puzzles");
-		m_chkBoxNonSquare.addActionListener(this);
-		m_chkBoxNonSquare.setActionCommand(MenuCommand.PUZZLE_NON_SQUARE);
-		m_chkBoxNonSquare.setMnemonic(KeyEvent.VK_N);
-		m_chkBoxNonSquare.getAccessibleContext().setAccessibleDescription("Allow puzzles to have a width different from their height");
-		m_chkBoxNonSquare.setSelected(false);
-		menu.add(m_chkBoxNonSquare);
-		menu.add(createRadioButtonMenuItem("Show Solution", KeyEvent.VK_K, "Show or hide the puzzle key", false));
-		m_menuBar.add(menu);
+			menu = createTopLevelMenu("Puzzle", KeyEvent.VK_Z, "This contains functions to alter the current puzzle");
+			menu.add(createMenuItem("Randomize", KeyEvent.VK_R, "Reorder the current puzzle", KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK), null));
+			menu.add(createMenuItem("Set Puzzle Size Limits...", KeyEvent.VK_S, "Set size constraints on the puzzles that are generated", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK + ActionEvent.CTRL_MASK), MenuCommand.PUZZLE_SIZE));
+			m_chkBoxNonSquare = createCheckBoxMenuItem("Allow Non-square Puzzles", KeyEvent.VK_N, "Allow puzzles to have a width different from their height", MenuCommand.PUZZLE_NON_SQUARE, DefaultOptions.PUZZLE_ALLOW_NON_SQUARE);
+			menu.add(m_chkBoxNonSquare);
+			m_chkBoxShowSolutions = createCheckBoxMenuItem("Show Solutions", KeyEvent.VK_K, "Show or hide the puzzle key", MenuCommand.PUZZLE_SHOW_SOLUTIONS, DefaultOptions.PUZZLE_SHOW_SOLUTIONS);
+			menu.add(m_chkBoxShowSolutions);
+			m_popupChkBoxShowSolutions = createCheckBoxMenuItem("Show Solutions", KeyEvent.VK_K, "Show or hide the puzzle key", MenuCommand.PUZZLE_SHOW_SOLUTIONS, DefaultOptions.PUZZLE_SHOW_SOLUTIONS);
+			m_puzzlePopupMenu = new JPopupMenu();
+			m_puzzlePopupMenu.add(m_popupChkBoxShowSolutions);
+				
+			m_menuBar.add(menu);
 
 		// "Help"
 		menu = createTopLevelMenu("Help", KeyEvent.VK_H, "Learn about the program");
@@ -199,8 +216,8 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		nextWordPZL = new BasicArrowButton(BasicArrowButton.EAST);
         prevWordPZL = new BasicArrowButton(BasicArrowButton.WEST);
         m_lblPuzzleIndex = new JLabel("0/0");
-		prevWordPZL.setName(PREVIOUS_BUTTON_PZL);
-		nextWordPZL.setName(NEXT_BUTTON_PZL);
+		prevWordPZL.setName(PREVIOUS_PUZZLE_BUTTON);
+		nextWordPZL.setName(NEXT_PUZZLE_BUTTON);
 		prevWordPZL.addMouseListener(this);
 		nextWordPZL.addMouseListener(this);
 		innerPanel.add(prevWordPZL);
@@ -212,8 +229,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_puzzleDisplayPanel = new JPanel();
 	}
 	
-	private void initWordPanel() {
-		// The top-level container
+	private void nextWordTab(){	
 		m_wordsPanel = new JPanel();
 		m_wordsPanel.addMouseListener(this);
 		m_wordsPanel.setLayout(new BoxLayout(m_wordsPanel, BoxLayout.Y_AXIS));
@@ -231,28 +247,73 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		setComponentSizes(m_wordEntryField, 140, 20, 200, 20, 200, 24);
 		m_wordEntryField.addKeyListener(this);
 		m_wordEntryField.addMouseListener(this);
-		m_wordsPanel.add(m_wordEntryField);		
+		m_wordEntryFields.add(m_wordEntryField);
+		m_wordsPanel.add(m_wordEntryFields.get(m_Windex));		
 		
 		m_wordLabelList = new WordLabelList(m_model, m_wordListPanel);
 		this.addComponentListener(m_wordLabelList);
-        m_wordsPanel.addComponentListener(m_wordLabelList);
-        
-        //Buttons for navigating word lists
-        nextWord = new BasicArrowButton(BasicArrowButton.EAST);
-        prevWord = new BasicArrowButton(BasicArrowButton.WEST);
+		m_wordLabelLists.add(m_wordLabelList);
+        m_wordsPanel.addComponentListener(m_wordLabelLists.get(m_Windex));
+       
         JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new GridLayout(1, 2, 10, 10));
-		prevWord.setName(PREVIOUS_BUTTON);
+		
+		m_newWordList = new JButton("+");
+		m_newWordList.setName(NEW_WORDLIST_BUTTON);
+		m_newWordList.addMouseListener(this);
+		innerPanel.add(m_newWordList);
+		m_wordsPanel.add(innerPanel);
+		m_wordsPanels.add(m_wordsPanel);
+		
+		m_wordsPanels.get(m_Windex).addMouseListener(this);
+		
+	}
+	private void initWordPanel() {
+		// The top-level container
+		
+		m_wordsPanel = new JPanel();
+		m_wordsPanel.addMouseListener(this);
+		m_wordsPanel.setLayout(new BoxLayout(m_wordsPanel, BoxLayout.Y_AXIS));
+		
+		// Displays the currently entered words
+		m_wordListPanel = new JPanel();
+		m_wordListPanel.addMouseListener(this);
+		setComponentSizes(m_wordListPanel, 200, 200, 200, 500, 200, 500);
+		m_wordListPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));		
+		m_wordListPanel.setLayout(new SpringLayout());	
+		m_wordsPanel.add(m_wordListPanel);
+		
+		// The text field where the user types words
+		m_wordEntryField = new JTextField(12);
+		setComponentSizes(m_wordEntryField, 140, 20, 200, 20, 200, 24);
+		m_wordEntryField.addKeyListener(this);
+		m_wordEntryField.addMouseListener(this);
+		m_wordEntryFields.add(m_wordEntryField);
+		m_wordsPanel.add(m_wordEntryFields.get(0));		
+		
+		m_wordLabelList = new WordLabelList(m_model, m_wordListPanel);
+		this.addComponentListener(m_wordLabelList);
+		m_wordLabelLists.add(m_wordLabelList);
+        m_wordsPanel.addComponentListener(m_wordLabelLists.get(0));
+        
+        //Buttons for navigating word lists
+        //nextWord = new BasicArrowButton(BasicArrowButton.EAST);
+       // prevWord = new BasicArrowButton(BasicArrowButton.WEST);
+        JPanel innerPanel = new JPanel();
+		innerPanel.setLayout(new GridLayout(1, 2, 10, 10));
+		/*prevWord.setName(PREVIOUS_BUTTON);
 		nextWord.setName(NEXT_BUTTON);
 		prevWord.addMouseListener(this);
-		nextWord.addMouseListener(this);
-		newWord = new JButton("+");
-		newWord.setName(NEW_WORDBUTTON);
-		newWord.addMouseListener(this);
-		innerPanel.add(prevWord);
-		innerPanel.add(nextWord);
-		innerPanel.add(newWord);
+		nextWord.addMouseListener(this);*/
+		m_newWordList = new JButton("+");
+		m_newWordList.setName(NEW_WORDLIST_BUTTON);
+		m_newWordList.addMouseListener(this);
+		//innerPanel.add(prevWord);
+		//innerPanel.add(nextWord);
+		innerPanel.add(m_newWordList);
 		m_wordsPanel.add(innerPanel);
+		m_wordsPanels.add(m_wordsPanel);
+		m_wordsPanels.get(m_Windex).addMouseListener(this);
 	}
 	
 	private void initPuzzleButtonPanel() {
@@ -289,7 +350,14 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_puzzleButtonPanel.add(innerPanel);
 		m_puzzleButtonPanel.add(Box.createVerticalGlue());
 	}
-	
+	/** @author Alex */
+	private void initTabPane(){
+		m_Tabs = new JTabbedPane();
+		m_Tabs.addMouseListener(this);
+		m_Tabs.addTab("Tab " + (m_Tabs.getTabCount()+1), m_wordsPanels.get(0));
+		setComponentSizes(m_Tabs, 200, 200, 200, 500, 200, 500);
+		add(m_Tabs);
+	}
 	/** @author szeren */
 	public void initPuzzleSizeDialog() {
 		m_puzzleSizeDialog = new JDialog(View.this, "Puzzle Size Limits", true);
@@ -403,23 +471,27 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_puzzlePanel.setLayout(new BoxLayout(m_puzzlePanel, BoxLayout.Y_AXIS));
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.X_AXIS));
-		m_lblPuzzleIndex.setText(m_index + "/" + m_model.getNumPuzzles());
+		m_lblPuzzleIndex.setText(m_puzzleIndex + "/" + m_model.getNumPuzzles());
 		innerPanel.add(prevWordPZL);
 		innerPanel.add(m_lblPuzzleIndex);
 		innerPanel.add(nextWordPZL);
 		innerPanel.setMaximumSize(new Dimension((MAX_BUTTON_SIZE * 2) + 10, MAX_BUTTON_SIZE));
 		m_puzzlePanel.add(innerPanel);
-		m_puzzlePanel.add(Box.createVerticalGlue());
+		m_puzzlePanel.add(Box.createVerticalGlue());		
 		m_puzzleDisplayPanel = createPuzzlePanel();
 		m_puzzlePanel.add(m_puzzleDisplayPanel);
 		m_puzzlePanel.add(Box.createVerticalGlue());
 		m_puzzlePanel.validate();
-		
 	}
 	
 	private JPanel createPuzzlePanel() {
 		JPanel panel = new JPanel();
 		Puzzle puzzle = m_model.getPuzzle();
+		if (puzzle == null) {
+			m_puzzleIndex = 0;
+			m_lblPuzzleIndex.setText("0/0");
+			return panel;
+		}
 		Grid grid = puzzle.getGrid();
 		
 		GridLayout layout = new GridLayout(grid.getHeight(), grid.getWidth());
@@ -439,18 +511,17 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		for (int y = 0; y < grid.getHeight(); y++) {
 			for (int x = 0; x < grid.getWidth(); x++) {
 				cell = new JTextField(Character.toString(grid.getCharAt(x, y)), 1);
-				puzzle.applyCellStyle(cell);
+				puzzle.applyCellStyle(cell,m_chkBoxShowSolutions.isSelected());
+				cell.setInheritsPopupMenu(true);
 				panel.add(cell);
 			}
 		}
-		
+
+		panel.setComponentPopupMenu(m_puzzlePopupMenu);
 		return panel;
 	}
 	
-	/**
-	 * Saves a wordList to a txt file
-	 * @param words
-	 */
+	/** Saves a wordList to a txt file */
 	private void saveFile(ArrayList<String> words)
 	{
 		JFileChooser dlgSave;
@@ -493,9 +564,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	//	dlgSave.setSelectedFile (new File (path));
 		}
 	}
-/**
- * Takes a txt file and outputs the filtered contents as a wordList
- */
+/** Takes a txt file and outputs the filtered contents as a wordList */
 	private void importFile() {
 		
 		JFileChooser dlgSave;
@@ -558,6 +627,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		return panel;
 	}
 	
+	
 	private JMenu createTopLevelMenu(String label, int mnemonic, String description) {
 		JMenu menu = new JMenu(label);
 		menu.setMnemonic(mnemonic);
@@ -565,7 +635,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		menu.addMouseListener(this);
 		return menu;
 	}
-	
+
 	private JMenuItem createMenuItem(String label, int mnemonic, String description, KeyStroke shortcut, String actionCommand) {
 		JMenuItem menuItem = new JMenuItem(label, mnemonic);
 		menuItem.setAccelerator(shortcut);
@@ -574,20 +644,14 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		menuItem.addActionListener(this);
 		return menuItem;
 	}
-	
-	private JRadioButtonMenuItem createRadioButtonMenuItem(String label, int mnemonic, String description, boolean selected) {
-		JRadioButtonMenuItem rbMenuItem = new JRadioButtonMenuItem(label);
-		rbMenuItem.setMnemonic(mnemonic);
-		rbMenuItem.getAccessibleContext().setAccessibleDescription(description);
-		rbMenuItem.setSelected(selected);
-		return rbMenuItem;
-	}
-	
-	private JCheckBoxMenuItem createCheckBoxMenuItem(String label, int mnemonic, String description, boolean selected) {
+
+	private JCheckBoxMenuItem createCheckBoxMenuItem(String label, int mnemonic, String description, String actionCommand, boolean selected) {
 		JCheckBoxMenuItem cbMenuItem = new JCheckBoxMenuItem(label);
 		cbMenuItem.setMnemonic(mnemonic);
 		cbMenuItem.getAccessibleContext().setAccessibleDescription(description);
 		cbMenuItem.setSelected(selected);
+		cbMenuItem.setActionCommand(actionCommand);
+		cbMenuItem.addActionListener(this);
 		return cbMenuItem;
 	}
 	
@@ -902,9 +966,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		return false;
 	}
 	
-	/**
-	 * Shows about dialog box.
-	 */
+	/** Shows about dialog box. */
 	private void showAboutDialog(){
 		if (m_aboutDialog == null) {
 			String aboutMessage = "Iteration 2";
@@ -944,117 +1006,125 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		String command = e.getActionCommand();
 
 		switch (command) {
-		case Constants.DELETE_WORD_LABEL:
-			System.err.println("DELETE_WORD_LABEL NOT UNUSED");
-			// This method also deletes the word from the model's list.
-			if (!m_wordLabelList.deleteSelectedWord()) {
-				System.err.println("Failed to delete word label");
-			}
-			break;
-		case MenuCommand.IMPORT:
-			m_wordLabelList.changeTo(m_model.getNewWordList());
-			importFile();
-			break;
-		case MenuCommand.SAVE_WORDLIST:
-			saveFile(m_model.getWordList());
-			break;
-		case MenuCommand.EXPORT:
-			
-			JFileChooser dlgSave;
-			dlgSave = new JFileChooser ();
-			File file;
-			String path;
-			int value = dlgSave.showSaveDialog(m_wordsPanel);
-			if (value == JFileChooser.APPROVE_OPTION){ 
-	            path = dlgSave.getSelectedFile().getAbsolutePath();
-	            file = new File(path+".txt"); 
-	            			 
-				if(!file.exists()) {
-					try {
-						file.createNewFile();
-					} catch (IOException ioe) {
-						ioe.printStackTrace();
-						return;
-					}
-				}
-			
-				BufferedWriter fileOutput = null;
-
-				try {
-					fileOutput = new BufferedWriter(new FileWriter(file));
-				} catch (IOException e2) {
-					// TODO Auto-generated catch block
-					e2.printStackTrace();
-				}
-
+			case MenuCommand.IMPORT:
+				m_model.clearSelectedPuzzle();
+				//updatePuzzlePanel();
+				//System.err.println(m_model.getWordList().toString());
+				m_Windex = m_Tabs.getTabCount();		
+				nextWordTab();
+				wordDex = m_Tabs.getTabCount()-1;
+				m_model.getNewWordList();
+				//System.err.println(m_model.getWordList().toString());
+				m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanels.get(m_Windex));
+				m_Windex++;
+				wordDex++;
+				importFile();
+				updateTab();
+				break;
+			case MenuCommand.SAVE_WORDLIST:
+				saveFile(m_model.getWordList());
+				break;
+			case MenuCommand.EXPORT:
 				
-				if (fileOutput != null) {
-					String newLine = System.getProperty("line.separator");
-					
-					@SuppressWarnings("deprecation")
-					ArrayList<Puzzle> solutions = m_model.getSolutions();
-					for (int index = 0; index < solutions.size(); index++) {
-//						fileOutput.println(solutions.get(index));
+				JFileChooser dlgSave;
+				dlgSave = new JFileChooser ();
+				File file;
+				String path;
+				int value = dlgSave.showSaveDialog(m_wordsPanel);
+				if (value == JFileChooser.APPROVE_OPTION){ 
+		            path = dlgSave.getSelectedFile().getAbsolutePath();
+		            file = new File(path+".txt"); 
+		            			 
+					if(!file.exists()) {
 						try {
-							fileOutput.write(solutions.get(index).toString() + newLine + newLine);
-						} catch (IOException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
+							file.createNewFile();
+						} catch (IOException ioe) {
+							ioe.printStackTrace();
+							return;
 						}
 					}
+				
+					BufferedWriter fileOutput = null;
+	
+					try {
+						fileOutput = new BufferedWriter(new FileWriter(file));
+					} catch (IOException e2) {
+						e2.printStackTrace();
+					}
+	
 					
+					if (fileOutput != null) {
+						String newLine = System.getProperty("line.separator");
+						
+						ArrayList<Puzzle> solutions = m_model.getSolutions();
+						for (int index = 0; index < solutions.size(); index++) {
+	//						fileOutput.println(solutions.get(index));
+							try {
+								fileOutput.write(solutions.get(index).toString() + newLine + newLine);
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
+						}
+						
+					}
+					try {
+						fileOutput.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
 				}
-				try {
-					fileOutput.close();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+				
+				System.err.println("File written successfully.");
+				break;
+			case MenuCommand.EXIT:
+				System.exit(0);
+				break;
+			case MenuCommand.PUZZLE_SIZE:
+				showPuzzleSizeDialog();
+				break;
+			case CHK_SIZE_EXACTLY:
+				if (m_chkSizeExactly.isSelected()) {
+					m_chkSizeAtLeast.setEnabled(false);
+					m_txtSizeAtLeastX.setEnabled(false);
+					m_txtSizeAtLeastY.setEnabled(false);
+					
+					m_chkSizeAtMost.setEnabled(false);
+					m_txtSizeAtMostX.setEnabled(false);
+					m_txtSizeAtMostY.setEnabled(false);
 				}
-			}
-			
-			System.err.println("File written successfully.");
-			break;
-		case MenuCommand.EXIT:
-			System.exit(0);
-			break;
-		case MenuCommand.PUZZLE_SIZE:
-			showPuzzleSizeDialog();
-			break;
-		case CHK_SIZE_EXACTLY:
-			if (m_chkSizeExactly.isSelected()) {
-				m_chkSizeAtLeast.setEnabled(false);
-				m_txtSizeAtLeastX.setEnabled(false);
-				m_txtSizeAtLeastY.setEnabled(false);
-				
-				m_chkSizeAtMost.setEnabled(false);
-				m_txtSizeAtMostX.setEnabled(false);
-				m_txtSizeAtMostY.setEnabled(false);
-			}
-			else {
-				m_chkSizeAtLeast.setEnabled(true);
-				m_txtSizeAtLeastX.setEnabled(true);
-				m_txtSizeAtLeastY.setEnabled(true);
-				
-				m_chkSizeAtMost.setEnabled(true);
-				m_txtSizeAtMostX.setEnabled(true);
-				m_txtSizeAtMostY.setEnabled(true);
-			}
-			break;
-		case PUZZLE_SIZE_OK:
-			System.err.println("ok");
-			hidePuzzleSizeDialog(true);
-			break;
-		case PUZZLE_SIZE_CANCEL:
-			System.err.println("cancel");
-			hidePuzzleSizeDialog(false);
-			break;
-		case MenuCommand.PUZZLE_NON_SQUARE:
-			m_model.setAllowNonSquare(m_chkBoxNonSquare.isSelected());
-			break;
-		case MenuCommand.ABOUT:
-			showAboutDialog();
-			break;
-			
+				else {
+					m_chkSizeAtLeast.setEnabled(true);
+					m_txtSizeAtLeastX.setEnabled(true);
+					m_txtSizeAtLeastY.setEnabled(true);
+					
+					m_chkSizeAtMost.setEnabled(true);
+					m_txtSizeAtMostX.setEnabled(true);
+					m_txtSizeAtMostY.setEnabled(true);
+				}
+				break;
+			case PUZZLE_SIZE_OK:
+				System.err.println("ok");
+				hidePuzzleSizeDialog(true);
+				break;
+			case PUZZLE_SIZE_CANCEL:
+				System.err.println("cancel");
+				hidePuzzleSizeDialog(false);
+				break;
+			case MenuCommand.PUZZLE_NON_SQUARE:
+				m_model.setAllowNonSquare(m_chkBoxNonSquare.isSelected());
+				break;
+			case MenuCommand.ABOUT:
+				showAboutDialog();
+				break;
+			case MenuCommand.PUZZLE_SHOW_SOLUTIONS:
+				Object source = e.getSource();
+				if (source instanceof JCheckBoxMenuItem) {
+					m_puzzleShowSolutions = ((JCheckBoxMenuItem)source).isSelected();
+				}
+				m_chkBoxShowSolutions.setSelected(m_puzzleShowSolutions);
+				m_popupChkBoxShowSolutions.setSelected(m_puzzleShowSolutions);
+				updatePuzzlePanel();
+				break;
 		default:
 			System.err.println("Unrecognized command: " + command);
 			break;
@@ -1064,20 +1134,21 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 
 	@Override
 	public void keyPressed(KeyEvent e) {
+		updateTab();
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-			String word = m_wordEntryField.getText();
+			String word = m_wordEntryFields.get(m_Tabs.getSelectedIndex()).getText();
 			if(m_model.getPuzzle()!=null) {
 				  ArrayList<String> old=m_model.getWordList();
 				  m_model.getNewWordList();
 				  for(String s : old) {
 					  m_model.addWord(s);
 				  }
-				  m_wordLabelList.changeTo(m_model.getWordList());
-				  m_model.clearSelected();
+				  m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeTo(m_model.getWordList());
+				 // m_model.clearSelectedPuzzle();
 			}
-			if (m_wordLabelList.addWord(word)) {
+			if (m_wordLabelLists.get(m_Tabs.getSelectedIndex()).addWord(word)) {
 				m_model.addWord(word);
-				m_wordEntryField.setText("");
+				m_wordEntryFields.get(m_Tabs.getSelectedIndex()).setText("");
 			}
 			
 		}
@@ -1087,63 +1158,82 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		}
 		else if (e.getKeyCode() == KeyEvent.VK_F8) {
 			System.err.println("Get new word list.");
-			m_wordLabelList.changeTo(m_model.getNewWordList());
+			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeTo(m_model.getNewWordList());
 		}
 		else if (e.getKeyCode() == KeyEvent.VK_F11) {
 			System.err.println("Get previous word list.");
-			m_wordLabelList.changeTo(m_model.getPreviousWordList());
+			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeTo(m_model.getPreviousWordList());
 		}
 		else if (e.getKeyCode() == KeyEvent.VK_F12) {
 			System.err.println("Get next word list.");
-			m_wordLabelList.changeTo(m_model.getNextWordList());
+			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeTo(m_model.getNextWordList());
 		}
 	}
-	
+	public void updateTab(){
+		System.err.println(m_model.getWordList().toString());
+		System.err.println(wordDex + ", " + (m_Tabs.getSelectedIndex()));
+		if (wordDex ==  m_Tabs.getSelectedIndex())
+			return;
+		while(wordDex > m_Tabs.getSelectedIndex()){
+			if(wordDex <= 0)
+				wordDex = m_Tabs.getTabCount();
+			else
+				wordDex--;
+			System.err.println("Prev");
+			m_model.getPreviousWordList();
+			
+		}//going down tree
+		while(wordDex < m_Tabs.getSelectedIndex()){
+			if(wordDex >= m_Tabs.getTabCount())
+				wordDex = 0;
+			else
+				wordDex++;
+			System.err.println("Next");
+			m_model.getNextWordList();
+		}
+	}
+
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		if (!m_wordLabelList.deselectWord()) {
-//			System.err.println("No word currently selected.");
-		}
-		
 		String componentName = e.getComponent().getName();
-		
+		updateTab();
 		if (componentName == null) {
 			return;
 		}
-		
 		switch (componentName) {
 			
 			case WORD_SEARCH_BUTTON:
-				System.err.println("Wordsearch button pressed.");
+				System.err.println(m_model.getWordList());
 				if (!m_model.getWordList().isEmpty()) { // all of this code should be in Model
 					if(m_model.getPuzzle()!=null) {
-						ArrayList<String> old=m_model.getWordList();
-						m_model.getNewWordList();
-						for(String s : old) {
-							m_model.addWord(s);
-						}
-						m_wordLabelList.changeTo(m_model.getWordList()); // except we should call this after startPuzzleGenerator in case the Model made a new word list
-						updatePuzzlePanel();
+					//	ArrayList<String> old=m_model.getWordList();
+					//	m_model.getNewWordList();
+					//	for(String s : old) {
+					//		m_model.addWord(s);
+					//	}
+					//	m_wordLabelList.changeTo(m_model.getWordList()); // except we should call this after startPuzzleGenerator in case the Model made a new word list
+//						updatePuzzlePanel();
 					}
+					
 					m_model.startPuzzleGenerator(Constants.TYPE_WORDSEARCH);
-					updatePuzzlePanel();
+
+					runSolutionMonitor();
+					
 				}
 			break;
 			
 			case CROSSWORD_BUTTON:				
-				System.err.println("Crossword button pressed.");
+				
 				if (!m_model.getWordList().isEmpty()) {
-					if(m_model.getPuzzle()!=null) {
+					/*if(m_model.getPuzzle()!=null) {
 						  ArrayList<String> old=m_model.getWordList();
 						  m_model.getNewWordList();
 						  for(String s : old) {
 							  m_model.addWord(s);
 						  }
-						  m_wordLabelList.changeTo(m_model.getWordList());
-//						  updatePuzzlePanel();
-					  }
+						  m_wordLabelList.changeToWordList(m_model.getWordList());
+					  }*/
 					m_model.startPuzzleGenerator(Constants.TYPE_CROSSWORD);
-//					updatePuzzlePanel(); // Threw a NullPointerException for me. -Sam
 					
 					runSolutionMonitor();
 				}
@@ -1151,42 +1241,58 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 			case STOP_BUTTON:
 				// m_model.stopGeneration();
 				 break;
-			case PREVIOUS_BUTTON:
-				m_wordLabelList.changeTo(m_model.getNextWordList());
-				if(m_model.getCurrentWordPuzzle() != null){
-					m_index = 1;
-					updatePuzzlePanel();
-				}
+			case PREVIOUS_WORDLIST_BUTTON:
+			//	m_wordLabelList.changeTo(m_model.getNextWordList());
+//				if(m_model.getCurrentWordPuzzle() != null){
+				//	m_puzzleIndex = 1;
+				//	updatePuzzlePanel();
+//				}
 				break;
-			case NEXT_BUTTON:
-				m_wordLabelList.changeTo(m_model.getNextWordList());
-				if(m_model.getCurrentWordPuzzle() != null){
-					m_index = 1;
-					updatePuzzlePanel();
-				}
+			case NEXT_WORDLIST_BUTTON:
+		//		m_wordLabelList.changeTo(m_model.getNextWordList());
+//				if(m_model.getCurrentWordPuzzle() != null){
+			//		m_puzzleIndex = 1;
+		//			updatePuzzlePanel();
+//				}
 				break;
 				
-			case PREVIOUS_BUTTON_PZL:
+			case PREVIOUS_PUZZLE_BUTTON:
 				m_model.getPreviousPuzzle();
-				if(m_index != 1)
-					m_index--;
+				if(m_puzzleIndex != 1)
+					m_puzzleIndex--;
 				else
-					m_index = m_model.getNumPuzzles();
+					m_puzzleIndex = m_model.getNumPuzzles();
 				updatePuzzlePanel();
 				break;
 				
-			case NEW_WORDBUTTON:
-				m_wordLabelList.changeTo(m_model.getNewWordList());
-				m_model.clearSelected();
+			case NEW_WORDLIST_BUTTON:
+				//m_wordLabelList.changeToWordList(m_model.getNewWordList());
+				m_model.clearSelectedPuzzle();
+				//updatePuzzlePanel();
+				//System.err.println(m_model.getWordList().toString());
+				m_Windex = m_Tabs.getTabCount();		
+				nextWordTab();
+				wordDex = m_Tabs.getTabCount()-1;
+				m_model.getNewWordList();
+				//System.err.println(m_model.getWordList().toString());
+				m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanels.get(m_Windex));
+				m_Windex++;
+				wordDex++;
+				updateTab();
 				break;
-			case NEXT_BUTTON_PZL:
+			case NEXT_PUZZLE_BUTTON:
 				m_model.getNextPuzzle();
-				if(m_index >= m_model.getNumPuzzles())
-					m_index = 1;
+				if(m_puzzleIndex >= m_model.getNumPuzzles())
+					m_puzzleIndex = 1;
 				else
-					m_index++;
+					m_puzzleIndex++;
+				
 				updatePuzzlePanel();
-				break;
+				
+				break;	
+			//case "puzzleDisplayPanel":
+		//		m_puzzlePopupMenu.show(e.getComponent(), e.getX(), e.getY());
+			//	break;
 			default:
 				System.err.println("Unhandled mouse click: " + e.getComponent().getClass().getName());
 				break;
@@ -1194,7 +1300,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	}
 	
 	private void runSolutionMonitor() {
-		m_index = 1;
+		m_puzzleIndex = 1;
 		Thread puzzlePanelUpdater = new Thread() {
 			@Override
 			public void run() {
@@ -1209,7 +1315,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 						}
 					}
 					else if (displayPuzzle != null && solutionsSize != m_model.getNumPuzzles()) {
-						m_lblPuzzleIndex.setText(m_index + "/" + m_model.getNumPuzzles());
+						m_lblPuzzleIndex.setText(m_puzzleIndex + "/" + m_model.getNumPuzzles());
 					}
 					
 					
@@ -1218,6 +1324,16 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
+				}
+				
+				if (displayPuzzle != m_model.getCurrentWordPuzzle()) {
+					displayPuzzle = m_model.getCurrentWordPuzzle();
+					if (displayPuzzle != null) {
+						updatePuzzlePanel();
+					}
+				}
+				else if (displayPuzzle != null && solutionsSize != m_model.getNumPuzzles()) {
+					m_lblPuzzleIndex.setText(m_puzzleIndex + "/" + m_model.getNumPuzzles());
 				}
 			}
 		};
