@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -41,6 +42,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButton;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
@@ -272,15 +274,27 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new GridLayout(1, 2, 10, 10));
 		
+		JRadioButton Ws = new JRadioButton();
 		JButton btnWordSearch = new JButton(new ImageIcon("res/wordsearch.png"));
-		btnWordSearch.addMouseListener(this);
-		btnWordSearch.setName(WORD_SEARCH_BUTTON);
+		//btnWordSearch.addMouseListener(this);
+		//btnWordSearch.setName(WORD_SEARCH_BUTTON);
+		Ws.addMouseListener(this);
+		Ws.setName(WORD_SEARCH_BUTTON);
+		innerPanel.add(Ws);
 		innerPanel.add(btnWordSearch);
 		
+		JRadioButton Cw = new JRadioButton();
 		JButton btnCrossWord = new JButton(new ImageIcon("res/crossword.png"));
-		btnCrossWord.addMouseListener(this);
-		btnCrossWord.setName(CROSSWORD_BUTTON);
+		//btnCrossWord.addMouseListener(this);
+		//btnCrossWord.setName(CROSSWORD_BUTTON);
+		Cw.addMouseListener(this);
+		Cw.setName(CROSSWORD_BUTTON);
+		innerPanel.add(Cw);
 		innerPanel.add(btnCrossWord);
+		
+		ButtonGroup group = new ButtonGroup();
+		group.add(Ws);
+		group.add(Cw);
 		
 //		JButton btnStop = new JButton("Stop");
 //		btnStop.addMouseListener(this);
