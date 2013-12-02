@@ -131,9 +131,9 @@ public class Model {
 	*/
 	public boolean hasNext(){
 		if(m_data.higherKey(m_selectedWordList) == null)
-			return false;
-		else 
 			return true;
+		else 
+			return false;
 	}
 	public ArrayList<String> getPreviousWordList() {
 		m_selectedWordList = m_data.lowerKey(m_selectedWordList);
