@@ -46,6 +46,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicArrowButton;
 
 import puzzlemaker.Constants;
@@ -357,6 +359,14 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_Tabs.addTab("Tab " + (m_Tabs.getTabCount()+1), m_wordsPanels.get(0));
 		setComponentSizes(m_Tabs, 200, 200, 200, 500, 200, 500);
 		add(m_Tabs);
+		m_Tabs.addChangeListener(new ChangeListener() {
+		    public void stateChanged(ChangeEvent e) {
+		    	updateTab();
+		    	m_model.getCurrentWordPuzzle();
+		    	m_puzzleIndex = 1;
+		    	updatePuzzlePanel();
+		    }
+		});
 	}
 	/** @author szeren */
 	public void initPuzzleSizeDialog() {
@@ -1134,7 +1144,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		updateTab();
+		//updateTab();
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 			String word = m_wordEntryFields.get(m_Tabs.getSelectedIndex()).getText();
 			if(m_model.getPuzzle()!=null) {
