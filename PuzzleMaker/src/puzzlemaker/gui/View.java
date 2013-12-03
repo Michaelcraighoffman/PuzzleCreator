@@ -16,7 +16,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.print.Book;
 import java.awt.print.PageFormat;
+import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
@@ -967,16 +969,24 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				importFile();
 				break;
 			case MenuCommand.PRINT:
-				 //PrinterJob job = PrinterJob.getPrinterJob();
+				 PrinterJob job = PrinterJob.getPrinterJob();
 		         //job.setPrintable(this);
-		         //boolean ok = job.printDialog();
-		         //if (ok) {
-		            // try {
-		              //    job.print();
-		             //} catch (PrinterException ex) {
+				 PageFormat pf = job.defaultPage();
+				 Paper paper = pf.getPaper();
+				 paper.setSize(8.5 * 72, 11 * 72);
+				 paper.setImageableArea(0.5 * 72, 0.0 * 72, 7.5 * 72, 10.5 * 72);
+				 pf.setPaper(paper);
+		         Book book = new Book();
+		         book.append(this, pf);
+		         job.setPageable(book);
+		         boolean ok = job.printDialog();
+		         if (ok) {
+		             try {
+		                  job.print();
+		             } catch (PrinterException ex) {
 		             
-		             //}
-		         //} 
+		             }
+		         } 
 				break;
 			case MenuCommand.SAVE_WORDLIST:
 				saveFile(m_model.getWordList());
@@ -1320,7 +1330,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			throws PrinterException {
         Graphics2D g2d = (Graphics2D)g;
         g2d.translate(pf.getImageableX(), pf.getImageableY());
- 
+        
         this.printAll(g);
 		return 0;
 	}
