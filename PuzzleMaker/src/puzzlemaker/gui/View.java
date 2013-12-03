@@ -3,6 +3,8 @@ package puzzlemaker.gui;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -14,6 +16,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -57,7 +63,7 @@ import puzzlemaker.puzzles.Crossword;
 import puzzlemaker.puzzles.Puzzle;
 import puzzlemaker.tools.grid.Grid;
 
-public class View extends JFrame implements ActionListener, KeyListener, MouseListener, WindowListener {
+public class View extends JFrame implements ActionListener, Printable, KeyListener, MouseListener, WindowListener {
 	
 	private static final long serialVersionUID = 3249856252715867854L;
 	
@@ -169,7 +175,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		menu.add(createMenuItem("Save Puzzle", KeyEvent.VK_U, "Save the current puzzle", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK), null));
 		menu.add(createMenuItem("Save Word List", KeyEvent.VK_L, "Save the current word list", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK), MenuCommand.SAVE_WORDLIST));
 		menu.add(createMenuItem("Export...", KeyEvent.VK_E, "Export puzzle or word list to...", KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK), MenuCommand.EXPORT));
-		menu.add(createMenuItem("Print", KeyEvent.VK_P, "Print current puzzle view", KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK), null));
+		menu.add(createMenuItem("Print", KeyEvent.VK_P, "Print current puzzle view", KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK), MenuCommand.PRINT));
 		menu.add(createMenuItem("Exit", KeyEvent.VK_X, "Exit", KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK), MenuCommand.EXIT));	
 		m_menuBar.add(menu);
 		
@@ -960,6 +966,18 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 				m_wordLabelList.changeToWordList(m_model.getNewWordList());
 				importFile();
 				break;
+			case MenuCommand.PRINT:
+				 //PrinterJob job = PrinterJob.getPrinterJob();
+		         //job.setPrintable(this);
+		         //boolean ok = job.printDialog();
+		         //if (ok) {
+		            // try {
+		              //    job.print();
+		             //} catch (PrinterException ex) {
+		             
+		             //}
+		         //} 
+				break;
 			case MenuCommand.SAVE_WORDLIST:
 				saveFile(m_model.getWordList());
 				break;
@@ -1296,4 +1314,15 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 
 	@Override
 	public void windowDeactivated(WindowEvent e) {}
+
+	@Override
+	public int print(Graphics g, PageFormat pf, int page)
+			throws PrinterException {
+        Graphics2D g2d = (Graphics2D)g;
+        g2d.translate(pf.getImageableX(), pf.getImageableY());
+ 
+        this.printAll(g);
+		return 0;
+	}
+	
 }
