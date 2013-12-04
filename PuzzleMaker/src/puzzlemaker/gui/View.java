@@ -384,7 +384,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_Tabs.addChangeListener(new ChangeListener() {
 		    public void stateChanged(ChangeEvent e) {
 		    	updateTab();
-		    	m_model.getCurrentWordPuzzle();
+		    	m_model.getFirstWordPuzzle();
 		    	m_puzzleIndex = 1;
 		    	updatePuzzlePanel();
 		    }
@@ -1360,8 +1360,8 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				int solutionsSize = 0;
 				
 				while (m_model.isPuzzleGeneratorRunning()) {
-					if (displayPuzzle != m_model.getCurrentWordPuzzle()) {
-						displayPuzzle = m_model.getCurrentWordPuzzle();
+					if (displayPuzzle != m_model.getFirstWordPuzzle()) {
+						displayPuzzle = m_model.getFirstWordPuzzle();
 						if (displayPuzzle != null) {
 							updatePuzzlePanel();
 						}
@@ -1378,8 +1378,8 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 					}
 				}
 				
-				if (displayPuzzle != m_model.getCurrentWordPuzzle()) {
-					displayPuzzle = m_model.getCurrentWordPuzzle();
+				if (displayPuzzle != m_model.getFirstWordPuzzle()) {
+					displayPuzzle = m_model.getFirstWordPuzzle();
 					if (displayPuzzle != null) {
 						updatePuzzlePanel();
 					}
