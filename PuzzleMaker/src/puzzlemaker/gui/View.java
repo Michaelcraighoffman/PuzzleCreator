@@ -48,12 +48,13 @@ import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.basic.BasicArrowButton;
 
 import puzzlemaker.Constants;
 import puzzlemaker.Constants.DefaultOptions;
 import puzzlemaker.Constants.MenuCommand;
-import puzzlemaker.Constants.DefaultOptions;
 import puzzlemaker.model.Model;
 import puzzlemaker.puzzles.Crossword;
 import puzzlemaker.puzzles.Puzzle;
@@ -104,7 +105,6 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	/** For displaying which puzzle is currently selected of the solution set. */
 	private JLabel m_lblPuzzleIndex;
 	/** Arrow Buttons for wordLists */
-	private BasicArrowButton m_nextWordList, m_prevWordList;
 	private JButton m_newWordList;
 	private BasicArrowButton nextWordPZL, prevWordPZL;
 	/** Contains and displays the {@link #m_wordListPanel word list} and the {@link #m_wordEntryField entry field}. */
@@ -362,7 +362,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		m_Tabs.addChangeListener(new ChangeListener() {
 		    public void stateChanged(ChangeEvent e) {
 		    	updateTab();
-		    	m_model.getCurrentWordPuzzle();
+		    	m_model.getFirstWordPuzzle();
 		    	m_puzzleIndex = 1;
 		    	updatePuzzlePanel();
 		    }
@@ -1016,6 +1016,207 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		String command = e.getActionCommand();
 
 		switch (command) {
+/*		case Constants.DELETE_WORD_LABEL:
+			System.err.println("DELETE_WORD_LABEL NOT UNUSED");
+			// This method also deletes the word from the model's list.
+			if (!m_wordLabelList.deleteSelectedWord()) {
+				System.err.println("Failed to delete word label");
+			}
+			break;
+		
+		case MenuCommand.SAVE_WORDLIST:
+			saveFile(m_model.getWordList());
+			break;
+			*/
+		case MenuCommand.EXPORT:
+			
+			JFileChooser dlgSave;
+			dlgSave = new JFileChooser ();
+			
+			FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV File", "csv", "CSV");
+			dlgSave.addChoosableFileFilter(filter);
+			filter = new FileNameExtensionFilter("TXT File", "txt", "TXT");
+			dlgSave.addChoosableFileFilter(filter);
+			filter = new FileNameExtensionFilter("HTML File", "html", "HTML");
+			dlgSave.addChoosableFileFilter(filter);
+			
+			File file_key;
+			File file_puzzle;
+			String path;
+			String extension;
+			int value = dlgSave.showSaveDialog(m_wordsPanel);
+	
+			if (value == JFileChooser.APPROVE_OPTION){ 
+	            path = dlgSave.getSelectedFile().getAbsolutePath();
+	            FileFilter chosenFilter = dlgSave.getFileFilter();
+	            if(chosenFilter.getDescription() == "CSV File"){
+	            	System.out.println("CSV BITCHES");
+	            	extension = ".csv";
+	            }
+	            else if(chosenFilter.getDescription() == "HTML File"){
+	            	System.out.println("HTML ASSWIPE");
+	            	extension = ".html";	            	
+	            }
+	            else{
+	            	System.out.println("TXT MOTHERFUCKR");
+	            	extension = ".txt";
+	            }
+	            file_key = new File(path+"-key"+extension);
+	            file_puzzle = new File(path+"-puzzle"+extension);
+	            			 
+				if(!file_key.exists()) {
+					try {
+						file_key.createNewFile();
+					} catch (IOException ioe) {
+						ioe.printStackTrace();
+						return;
+					}
+				}else if(!file_puzzle.exists()){
+					try {
+						file_puzzle.createNewFile();
+					} catch (IOException ioe) {
+						ioe.printStackTrace();
+						return;
+					}
+				}
+			
+				BufferedWriter file_keyOutput = null;
+				BufferedWriter file_puzzleOutput = null;
+
+				try {
+					file_keyOutput = new BufferedWriter(new FileWriter(file_key));
+					file_puzzleOutput = new BufferedWriter(new FileWriter(file_puzzle));
+				} catch (IOException e2) {
+					e2.printStackTrace();
+				}
+				
+				if(file_keyOutput != null) {
+					String newLine = System.getProperty("line.separator");
+					//m_model.getWordList();
+					String puzzle = m_model.getPuzzle().toString();
+					String toWrite_key = "";
+					String toWrite_puzzle = "";
+	
+					String[] linesplit = puzzle.split("\n");
+					StringBuilder csvsoln = new StringBuilder();
+					StringBuilder csvpuz = new StringBuilder();
+					StringBuilder txtsoln = new StringBuilder();
+					StringBuilder txtpuz = new StringBuilder();
+					StringBuilder htmlsoln = new StringBuilder();
+					StringBuilder htmlpuz = new StringBuilder();
+					htmlsoln.append("<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>"+newLine+"<title>Puzzle - Key</title></head>"+newLine+"<body><table>");
+					htmlpuz.append("<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>"+newLine+"<title>Puzzle - Blank</title></head>"+newLine+"<body><table>");
+// to consider to use
+// https://code.google.com/p/puz/source/browse/trunk/static/crossword.css?r=27
+					//puzzle
+					for (int i = 0; i < linesplit.length; i++) {
+						htmlpuz.append(newLine+"<tr>");
+						htmlsoln.append(newLine+"<tr>");
+						String[] tokensplit = linesplit[i].split(" ");
+						for(int j = 0; j < tokensplit.length; j++){
+							String token = tokensplit[j];
+							if(token.length() > 0){
+								if(token.length() == 1){
+									if(token.equalsIgnoreCase("*")){ 
+										csvpuz.append(token+",");
+										txtpuz.append(token+" ");	
+										htmlpuz.append(newLine+"<td>"+token+"</td>");//consider changing to styling
+									}
+									else{
+										csvpuz.append("?,");
+										txtpuz.append("? ");
+										htmlpuz.append(newLine+"<td>?</td>");//consider changing to styling
+									}
+									htmlsoln.append(newLine+"<td>"+token+"</td>");
+								}
+								else{//puzzle type
+									csvpuz.append(token);
+									txtpuz.append(token);
+								}
+								csvsoln.append(token+",");
+								txtsoln.append(token+" ");
+							}							
+						}
+						csvpuz.deleteCharAt(csvpuz.length()-1);
+						csvsoln.deleteCharAt(csvsoln.length()-1);
+					
+						csvsoln.append(newLine);
+						csvpuz.append(newLine);
+							
+						txtsoln.append(newLine);
+						txtpuz.append(newLine);
+						htmlpuz.append(newLine+"</tr>");
+						htmlsoln.append(newLine+"</tr>");
+					}
+					htmlpuz.append(newLine+"</table>");
+					htmlsoln.append(newLine+"</table>");
+					
+					//wordlist
+					csvpuz.append(newLine+"Word List:"+newLine);
+					csvsoln.append(newLine+"Word List:"+newLine);					
+					txtpuz.append(newLine+"Word List:"+newLine);
+					txtsoln.append(newLine+"Word List:"+newLine);
+					htmlpuz.append(newLine+"<strong><p>Word List:</p></strong>");
+					htmlsoln.append(newLine+"<strong><p>Word List:</p></strong>");
+					ArrayList<String> word_list = m_model.getWordList();
+					for(int i=0; i<word_list.size(); i++){
+						String word = word_list.get(i);
+						
+						csvpuz.append(word+newLine);
+						csvsoln.append(word+newLine);
+						
+						txtpuz.append(word+newLine);
+						txtsoln.append(word+newLine);
+						
+						htmlpuz.append(newLine+"<p>"+word+"</p>");
+						htmlsoln.append(newLine+"<p>"+word+"</p>");
+					}
+					
+					/*csvsoln.insert(0, "==Puzzle Key=="+newLine);
+					htmlsoln.insert(0, "==Puzzle Key=="+newLine);
+					txtsoln.insert(0, "==Puzzle Key=="+newLine);
+*/
+					htmlpuz.append(newLine+"</body></html>");
+					htmlsoln.append(newLine+"</body></html>");
+						
+			
+
+					String solution = "";
+					String blank = "";
+					if(extension == ".csv"){
+						solution = csvsoln.toString();
+						blank = csvpuz.toString();							
+					}else if(extension == ".html"){
+						solution = htmlsoln.toString();
+						blank = htmlpuz.toString();
+					}else{
+						solution = txtsoln.toString();
+						blank = txtpuz.toString();
+					}
+						
+					toWrite_key = solution;
+					toWrite_puzzle = blank;
+					
+					try {
+						file_keyOutput.write(toWrite_key);
+						file_keyOutput.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					try {
+						file_puzzleOutput.write(toWrite_puzzle);
+						file_puzzleOutput.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+		
+				}
+				
+				System.err.println("File written successfully.");
+				break;
+			}
+			
+
 			case MenuCommand.IMPORT:
 				m_model.clearSelectedPuzzle();
 				//updatePuzzlePanel();
@@ -1034,58 +1235,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 			case MenuCommand.SAVE_WORDLIST:
 				saveFile(m_model.getWordList());
 				break;
-			case MenuCommand.EXPORT:
-				
-				JFileChooser dlgSave;
-				dlgSave = new JFileChooser ();
-				File file;
-				String path;
-				int value = dlgSave.showSaveDialog(m_wordsPanel);
-				if (value == JFileChooser.APPROVE_OPTION){ 
-		            path = dlgSave.getSelectedFile().getAbsolutePath();
-		            file = new File(path+".txt"); 
-		            			 
-					if(!file.exists()) {
-						try {
-							file.createNewFile();
-						} catch (IOException ioe) {
-							ioe.printStackTrace();
-							return;
-						}
-					}
-				
-					BufferedWriter fileOutput = null;
-	
-					try {
-						fileOutput = new BufferedWriter(new FileWriter(file));
-					} catch (IOException e2) {
-						e2.printStackTrace();
-					}
-	
-					
-					if (fileOutput != null) {
-						String newLine = System.getProperty("line.separator");
-						
-						ArrayList<Puzzle> solutions = m_model.getSolutions();
-						for (int index = 0; index < solutions.size(); index++) {
-	//						fileOutput.println(solutions.get(index));
-							try {
-								fileOutput.write(solutions.get(index).toString() + newLine + newLine);
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-						}
-						
-					}
-					try {
-						fileOutput.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-				
-				System.err.println("File written successfully.");
-				break;
+
 			case MenuCommand.EXIT:
 				System.exit(0);
 				break;
@@ -1318,8 +1468,8 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 				int solutionsSize = 0;
 				
 				while (m_model.isPuzzleGeneratorRunning()) {
-					if (displayPuzzle != m_model.getCurrentWordPuzzle()) {
-						displayPuzzle = m_model.getCurrentWordPuzzle();
+					if (displayPuzzle != m_model.getFirstWordPuzzle()) {
+						displayPuzzle = m_model.getFirstWordPuzzle();
 						if (displayPuzzle != null) {
 							updatePuzzlePanel();
 						}
@@ -1336,8 +1486,8 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 					}
 				}
 				
-				if (displayPuzzle != m_model.getCurrentWordPuzzle()) {
-					displayPuzzle = m_model.getCurrentWordPuzzle();
+				if (displayPuzzle != m_model.getFirstWordPuzzle()) {
+					displayPuzzle = m_model.getFirstWordPuzzle();
 					if (displayPuzzle != null) {
 						updatePuzzlePanel();
 					}
