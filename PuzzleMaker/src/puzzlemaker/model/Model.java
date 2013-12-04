@@ -26,30 +26,23 @@ public class Model {
 		m_generator = new PuzzleGenerator(this);
 	}
 	
+	// PuzzleGenerator related methods. *******************
+	
 	/** Begins generating puzzles using {@linkplain PuzzleGenerator}.
 	 * 
 	 * @see Constants#TYPE_CROSSWORD
 	 * @see Constants#TYPE_WORDSEARCH
 	 */
-	public int getNumPuzzles(){
-		return m_data.get(m_selectedWordList).size();
-	}
-	
 	public void startPuzzleGenerator(byte puzzleType) {
 		if (m_selectedWordList.size() > 0) {
 			m_generator.setPuzzleType(puzzleType);
-//			System.err.println("Starting puzzle generator.");
-			 m_generator.start(m_data.get(m_selectedWordList));
+			m_generator.start(m_data.get(m_selectedWordList));
 			
 		}
 		else {
 			System.err.println("Invalid word list size.");
 			JOptionPane.showMessageDialog(null, "Invalid word list size.");
 		}
-		
-//		m_selectedPuzzle = m_data.get(m_selectedWordList).first(); // This threw a NoSuchElementException for me. -Sam
-//		m_puzzleIter = m_data.get(m_selectedWordList).iterator();
-//		m_puzzlePrev = m_data.get(m_selectedWordList).descendingIterator();
 	}
 	
 	public void stopPuzzleGenerator() {
@@ -59,6 +52,28 @@ public class Model {
 	public boolean isPuzzleGeneratorRunning() {
 		return m_generator.isRunning();
 	}
+		
+	public void printTreeMap() {
+		System.err.println(m_data.toString());
+	}
+	
+	public void setAllowNonSquare(boolean allowed) {
+		m_generator.setAllowNonSquare(allowed);
+	}
+	
+	public void setMinPuzzleSize(boolean enabled, int x, int y) {
+		m_generator.setMinPuzzleSize(enabled, x, y);
+	}
+	
+	public void setMaxPuzzleSize(boolean enabled, int x, int y) {
+		m_generator.setMaxPuzzleSize(enabled, x, y);
+	}
+
+	public void setExactlPuzzleSize(boolean enabled, int x, int y) {
+		m_generator.setExactlPuzzleSize(enabled, x, y);
+	}
+	
+	// Word list related methods. ************************
 	
 	public boolean addWord(String word) {
 		word = Constants.filterWord(word);
@@ -78,36 +93,38 @@ public class Model {
 		return (ArrayList<String>) m_selectedWordList;
 	}
 	
-	/**
-	 * Moves the selected puzzle up the tree
-	 * @return m_selectedPuzzle
-	 */
-	public Puzzle getNextPuzzle() 
-	{	
-		m_selectedPuzzle = m_data.get(m_selectedWordList).higher(m_selectedPuzzle);
-		if (m_selectedPuzzle == null) {
-			m_selectedPuzzle = m_data.get(m_selectedWordList).first();
-		}
-		return m_selectedPuzzle;
+	public ArrayList<String> getNewWordList() {
+		m_selectedWordList = new TimeStampArrayList<String>();
+		m_data.put(m_selectedWordList, new ConcurrentSkipListSet<Puzzle>());
+		return m_selectedWordList;
 	}
-	/**
-	 * Moves the selected Puzzle down the tree
-	 * @return m_selectedPuzzle
-	 */
-	public Puzzle getPreviousPuzzle() 
-	{
-		m_selectedPuzzle = m_data.get(m_selectedWordList).lower(m_selectedPuzzle);
-		if (m_selectedPuzzle == null) {
-			m_selectedPuzzle = m_data.get(m_selectedWordList).last();
+	
+	public ArrayList<String> getNextWordList() {
+		m_selectedWordList = m_data.higherKey(m_selectedWordList);
+		if (m_selectedWordList == null) {
+			m_selectedWordList = m_data.firstKey();
 		}
+//		System.out.println(m_selectedWordList.toString());
+		return m_selectedWordList;
+	}
+	
+	public ArrayList<String> getPreviousWordList() {
+		m_selectedWordList = m_data.lowerKey(m_selectedWordList);
+		if (m_selectedWordList == null) {
+			m_selectedWordList = m_data.lastKey();
+		}
+//		System.out.println(m_selectedWordList.toString());
+		return m_selectedWordList;
+	}
+	
+	// Puzzle related methods. ***************************
+	
+	public Puzzle getPuzzle() {
 		return m_selectedPuzzle;
 	}
 	
-	/**
-	 * Obtains the first puzzle of the current wordList
-	 * @return m_selectedPuzzle
-	 */
-	public Puzzle getCurrentWordPuzzle(){
+	/** Obtains the first puzzle of the current wordList */
+	public Puzzle getFirstWordPuzzle(){
 		if (!m_data.get(m_selectedWordList).isEmpty()) {
 			m_selectedPuzzle = m_data.get(m_selectedWordList).first();
 			return m_selectedPuzzle;
@@ -117,49 +134,32 @@ public class Model {
 		}
 	}
 	
-	public ArrayList<String> getNextWordList() {
-		m_selectedWordList = m_data.higherKey(m_selectedWordList);
-		if (m_selectedWordList == null) {
-			m_selectedWordList = m_data.firstKey();
+	/** Selects the next (higher value) puzzle. */
+	public Puzzle getNextPuzzle() 
+	{	
+		m_selectedPuzzle = m_data.get(m_selectedWordList).higher(m_selectedPuzzle);
+		if (m_selectedPuzzle == null) {
+			m_selectedPuzzle = m_data.get(m_selectedWordList).first();
 		}
-//		System.err.println(m_selectedWordList.toString());
-		return m_selectedWordList;
+		return m_selectedPuzzle;
 	}
-	/**
-	 * This and a few other things not sure if I'm keeping, still wrapping 
-	 * my head around things
-	*/
-	public boolean hasNext(){
-		if(m_data.higherKey(m_selectedWordList) == null)
-			return true;
-		else 
-			return false;
-	}
-	public ArrayList<String> getPreviousWordList() {
-		m_selectedWordList = m_data.lowerKey(m_selectedWordList);
-		if (m_selectedWordList == null) {
-			m_selectedWordList = m_data.lastKey();
+	
+	/** Selects the previous (lower value) puzzle. */
+	public Puzzle getPreviousPuzzle() 
+	{
+		m_selectedPuzzle = m_data.get(m_selectedWordList).lower(m_selectedPuzzle);
+		if (m_selectedPuzzle == null) {
+			m_selectedPuzzle = m_data.get(m_selectedWordList).last();
 		}
-//		System.err.println(m_selectedWordList.toString());
-		return m_selectedWordList;
+		return m_selectedPuzzle;
 	}
 	
-	public ArrayList<String> getNewWordList() {
-		m_selectedWordList = new TimeStampArrayList<String>();
-		m_data.put(m_selectedWordList, new ConcurrentSkipListSet<Puzzle>());
-		return m_selectedWordList;
+	public void clearSelectedPuzzle() {
+		m_selectedPuzzle=null;		
 	}
 	
-	public void setMinPuzzleSize(boolean enabled, int x, int y) {
-		m_generator.setMinPuzzleSize(enabled, x, y);
-	}
-	
-	public void setMaxPuzzleSize(boolean enabled, int x, int y) {
-		m_generator.setMaxPuzzleSize(enabled, x, y);
-	}
-
-	public void setExactlPuzzleSize(boolean enabled, int x, int y) {
-		m_generator.setExactlPuzzleSize(enabled, x, y);
+	public int getNumPuzzles(){
+		return m_data.get(m_selectedWordList).size();
 	}
 	
 	/**
@@ -173,19 +173,15 @@ public class Model {
 		return new ArrayList<Puzzle>(m_data.get(m_selectedWordList));
 	}
 	
-	public void printTreeMap() {
-		System.err.println(m_data.toString());
-	}
 
-	public Puzzle getPuzzle() {
-		return m_selectedPuzzle;
-	}
-
-	public void clearSelectedPuzzle() {
-		m_selectedPuzzle=null;		
-	}
-
-	public void setAllowNonSquare(boolean allowed) {
-		m_generator.setAllowNonSquare(allowed);
-	}
+	/**
+	 * This and a few other things not sure if I'm keeping, still wrapping 
+	 * my head around things
+	*/
+	public boolean hasNext(){
+		if(m_data.higherKey(m_selectedWordList) == null)
+			return true;
+		else 
+			return false;
+	}	
 }

@@ -14,8 +14,8 @@ import puzzlemaker.tools.grid.Grid;
 
 public class WordSearch extends Puzzle {
 	
+	static final int[] m_validDirections = Constants.WORDSEARCH_DIRECTIONS;
 	LinkedBlockingQueue<Grid> m_solutions;
-	Random rand = new Random();
 	
 	public WordSearch(Grid grid, ArrayList<Word> wordList) {
 		m_grid = grid;

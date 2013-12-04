@@ -204,6 +204,8 @@ public class Grid implements Comparable<Grid> {
 		}
 	}
 	
+	
+	
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof Grid) {
