@@ -355,37 +355,39 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_puzzleButtonPanel.addMouseListener(this);
 		
 		JPanel innerPanel = new JPanel();
-		innerPanel.setLayout(new GridLayout(1, 2, 10, 10));
+		innerPanel.setLayout(new GridBagLayout());
 		
 		JRadioButton Ws = new JRadioButton();
-		JButton btnWordSearch = new JButton(new ImageIcon("res/wordsearch.png"));
+		JLabel lblWordSearch = new JLabel(new ImageIcon("res/wordsearch.png"));
 		//btnWordSearch.addMouseListener(this);
 		//btnWordSearch.setName(WORD_SEARCH_BUTTON);
 		Ws.addMouseListener(this);
 		Ws.setName(WORD_SEARCH_BUTTON);
+		
 		innerPanel.add(Ws);
-		innerPanel.add(btnWordSearch);
+		innerPanel.add(lblWordSearch);
 		
 		JRadioButton Cw = new JRadioButton();
-		JButton btnCrossWord = new JButton(new ImageIcon("res/crossword.png"));
+		JLabel lblCrossword= new JLabel(new ImageIcon("res/crossword.png"));
 		//btnCrossWord.addMouseListener(this);
 		//btnCrossWord.setName(CROSSWORD_BUTTON);
 		Cw.addMouseListener(this);
 		Cw.setName(CROSSWORD_BUTTON);
+		
 		innerPanel.add(Cw);
-		innerPanel.add(btnCrossWord);
+		innerPanel.add(lblCrossword);
 		
 		ButtonGroup group = new ButtonGroup();
 		group.add(Ws);
 		group.add(Cw);
 		
-//		JButton btnStop = new JButton("Stop");
-//		btnStop.addMouseListener(this);
-//		btnStop.setName(STOP_BUTTON);
-//		innerPanel.add(btnStop);
+		JButton btnStop = new JButton("Stop");
+		btnStop.addMouseListener(this);
+		btnStop.setName(STOP_BUTTON);
+		innerPanel.add(btnStop);
 		// Minimum and preferred sizes don't need to be set since 
 		// m_horizontalSplit.getBottomComponent()'s minimum size is set.
-		innerPanel.setMaximumSize(new Dimension((MAX_BUTTON_SIZE * 2) + 10, MAX_BUTTON_SIZE));
+		innerPanel.setMaximumSize(new Dimension((MAX_BUTTON_SIZE * 4) + 20, MAX_BUTTON_SIZE));
 
 		m_puzzleButtonPanel.add(Box.createVerticalGlue());
 		m_puzzleButtonPanel.add(innerPanel);
@@ -1427,6 +1429,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				System.err.println(m_model.getWordList());
 				if (!m_model.getWordList().isEmpty()) { // all of this code should be in Model
 					if(m_model.getPuzzle()!=null) {
+						//TODO This needs to be converted over to work with Tabs
 					//	ArrayList<String> old=m_model.getWordList();
 					//	m_model.getNewWordList();
 					//	for(String s : old) {
@@ -1446,6 +1449,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			case CROSSWORD_BUTTON:				
 				
 				if (!m_model.getWordList().isEmpty()) {
+					//TODO This needs to be converted over to work with Tabs
 					/*if(m_model.getPuzzle()!=null) {
 						  ArrayList<String> old=m_model.getWordList();
 						  m_model.getNewWordList();
