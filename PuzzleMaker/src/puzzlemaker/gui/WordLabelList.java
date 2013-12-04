@@ -75,13 +75,14 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			newLabel.addMouseListener(this);
 			newLabel.setName(WORD_LABEL_NAME);
 			setStyle(newLabel, Font.PLAIN);
-			JLabel clueLabel = new JLabel(word + "'s clue");
+			JLabel clueLabel = new JLabel();
 			clueLabel.addMouseListener(this);
 			clueLabel.setName(CLUE_LABEL_NAME);
 			if (m_data.add(newLabel)) {
 				m_data.add(clueLabel);
 				m_displayPanel.add(newLabel);
 				m_displayPanel.add(clueLabel);
+				System.out.println("from add word to do layout");
 				doLayout();
 				return true;
 			} 
@@ -157,12 +158,14 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			Component currentComponent;
 			int biggestWidthInColumn = 0;
 			
+			System.out.println("modelData.size() = " + modelData.size());
 			for (int i = 0; i < modelData.size(); i++) {
 				currentComponent = m_displayPanel.getComponent(i * 2); // this should grab all word labels
-				System.out.println("Laying out " + ((JLabel)currentComponent).getText());
+//				System.out.println("Laying out " + ((JLabel)currentComponent).getText());
 				SpringLayout.Constraints constraints = layout.getConstraints(currentComponent);
 				constraints.setX(Spring.constant(0));
 				constraints.setY(Spring.constant(i * (ROW_HEIGHT + ROW_GAP)));
+				System.out.println(((JLabel)currentComponent).getText() + "'s height: " + (i * (ROW_HEIGHT + ROW_GAP)));
 				int labelWidth = Math.min(maxColumnWidth, minWidth(((JLabel)currentComponent)));
 				constraints.setWidth(Spring.constant(labelWidth));
 				constraints.setHeight(Spring.constant(ROW_HEIGHT));
@@ -175,11 +178,12 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			
 			for (int i = 0; i < modelData.size(); i++) {
 				currentComponent = m_displayPanel.getComponent((i * 2) + 1);
-				System.out.println("Laying out " + ((JLabel)currentComponent).getText());
+//				System.out.println("Laying out " + ((JLabel)currentComponent).getText());
 				((JLabel)currentComponent).setText(modelData.get(i).getClue());
 				SpringLayout.Constraints constraints = layout.getConstraints(currentComponent);
 				constraints.setX(Spring.constant(biggestWidthInColumn + COLUMN_GAP));
 				constraints.setY(Spring.constant(i * (ROW_HEIGHT * ROW_GAP)));
+				System.out.println(((JLabel)currentComponent).getText() + "'s height: " + (i * (ROW_HEIGHT + ROW_GAP)));
 				constraints.setWidth(Spring.constant(Math.min(remainingWidth, minWidth((JLabel)currentComponent))));
 				constraints.setHeight(Spring.constant(ROW_HEIGHT));
 			}

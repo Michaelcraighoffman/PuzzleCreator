@@ -1367,8 +1367,8 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				  m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getWordList());
 				 // m_model.clearSelectedPuzzle();
 			}
-			if (m_wordLabelLists.get(m_Tabs.getSelectedIndex()).addWord(word)) {
-				m_model.addWord(word);
+			if (m_model.addWord(word)) {
+				m_wordLabelLists.get(m_Tabs.getSelectedIndex()).addWord(word);
 				m_wordEntryFields.get(m_Tabs.getSelectedIndex()).setText("");
 			}
 			

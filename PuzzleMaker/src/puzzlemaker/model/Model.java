@@ -85,7 +85,9 @@ public class Model {
 			return false;
 		}
 		
-		return m_selectedWordList.add(new WordCluePair(word));
+		return m_selectedWordList.add(new WordCluePair(word, word + "'s clue"));
+		// TODO: uncomment below, delete above.
+//		return m_selectedWordList.add(new WordCluePair(word));
 	}
 	
 	public boolean removeWord(String word) {
