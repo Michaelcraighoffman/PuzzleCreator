@@ -133,6 +133,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	private int m_Windex = 0;
 	/**Keeps track of selectedWordList in relation to next selectedTab basic stupid method **/
 	private int wordDex = 0;
+	private int pageNumber = 0;
 
 	
    /** Belongs to {@code m_wordsPanel}.<br>
@@ -1055,7 +1056,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				break;
 			case MenuCommand.PRINT:
 				 PrinterJob job = PrinterJob.getPrinterJob();
-		         //job.setPrintable(this);
+		         job.setPrintable(this);
 				 PageFormat pf = job.defaultPage();
 				 Paper paper = pf.getPaper();
 				 paper.setSize(8.5 * 72, 11 * 72);
@@ -1064,9 +1065,11 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		         Book book = new Book();
 		         book.append(this, pf);
 		         job.setPageable(book);
+		        
 		         boolean ok = job.printDialog();
 		         if (ok) {
 		             try {
+		                  job.print();
 		                  job.print();
 		             } catch (PrinterException ex) {
 		             
@@ -1459,8 +1462,18 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
         Graphics2D g2d = (Graphics2D)g;
         g2d.translate(pf.getImageableX(), pf.getImageableY());
         
-        this.printAll(g);
+        if(pageNumber == 0)
+        {
+        	m_puzzlePanel.printAll(g);
+        	pageNumber++;
+        }
+        else if(pageNumber == 1)
+        {
+        	m_wordsPanel.printAll(g);
+        	pageNumber--;
+        }
 		return 0;
 	}
+	
 	
 }
