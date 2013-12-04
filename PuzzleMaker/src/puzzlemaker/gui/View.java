@@ -3,6 +3,8 @@ package puzzlemaker.gui;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -14,6 +16,12 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.print.Book;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -27,6 +35,7 @@ import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -41,6 +50,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButton;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
@@ -60,7 +70,7 @@ import puzzlemaker.puzzles.Crossword;
 import puzzlemaker.puzzles.Puzzle;
 import puzzlemaker.tools.grid.Grid;
 
-public class View extends JFrame implements ActionListener, KeyListener, MouseListener, WindowListener {
+public class View extends JFrame implements ActionListener, Printable, KeyListener, MouseListener, WindowListener {
 	
 	private static final long serialVersionUID = 3249856252715867854L;
 	
@@ -123,6 +133,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 	private int m_Windex = 0;
 	/**Keeps track of selectedWordList in relation to next selectedTab basic stupid method **/
 	private int wordDex = 0;
+	private int pageNumber = 0;
 
 	
    /** Belongs to {@code m_wordsPanel}.<br>
@@ -181,7 +192,7 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		menu.add(createMenuItem("Save Puzzle", KeyEvent.VK_U, "Save the current puzzle", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK), null));
 		menu.add(createMenuItem("Save Word List", KeyEvent.VK_L, "Save the current word list", KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK), MenuCommand.SAVE_WORDLIST));
 		menu.add(createMenuItem("Export...", KeyEvent.VK_E, "Export puzzle or word list to...", KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK), MenuCommand.EXPORT));
-		menu.add(createMenuItem("Print", KeyEvent.VK_P, "Print current puzzle view", KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK), null));
+		menu.add(createMenuItem("Print", KeyEvent.VK_P, "Print current puzzle view", KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK), MenuCommand.PRINT));
 		menu.add(createMenuItem("Exit", KeyEvent.VK_X, "Exit", KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK), MenuCommand.EXIT));	
 		m_menuBar.add(menu);
 		
@@ -330,15 +341,27 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new GridLayout(1, 2, 10, 10));
 		
+		JRadioButton Ws = new JRadioButton();
 		JButton btnWordSearch = new JButton(new ImageIcon("res/wordsearch.png"));
-		btnWordSearch.addMouseListener(this);
-		btnWordSearch.setName(WORD_SEARCH_BUTTON);
+		//btnWordSearch.addMouseListener(this);
+		//btnWordSearch.setName(WORD_SEARCH_BUTTON);
+		Ws.addMouseListener(this);
+		Ws.setName(WORD_SEARCH_BUTTON);
+		innerPanel.add(Ws);
 		innerPanel.add(btnWordSearch);
 		
+		JRadioButton Cw = new JRadioButton();
 		JButton btnCrossWord = new JButton(new ImageIcon("res/crossword.png"));
-		btnCrossWord.addMouseListener(this);
-		btnCrossWord.setName(CROSSWORD_BUTTON);
+		//btnCrossWord.addMouseListener(this);
+		//btnCrossWord.setName(CROSSWORD_BUTTON);
+		Cw.addMouseListener(this);
+		Cw.setName(CROSSWORD_BUTTON);
+		innerPanel.add(Cw);
 		innerPanel.add(btnCrossWord);
+		
+		ButtonGroup group = new ButtonGroup();
+		group.add(Ws);
+		group.add(Cw);
 		
 //		JButton btnStop = new JButton("Stop");
 //		btnStop.addMouseListener(this);
@@ -1232,6 +1255,28 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 				importFile();
 				updateTab();
 				break;
+			case MenuCommand.PRINT:
+				 PrinterJob job = PrinterJob.getPrinterJob();
+		         job.setPrintable(this);
+				 PageFormat pf = job.defaultPage();
+				 Paper paper = pf.getPaper();
+				 paper.setSize(8.5 * 72, 11 * 72);
+				 paper.setImageableArea(0.5 * 72, 0.0 * 72, 7.5 * 72, 10.5 * 72);
+				 pf.setPaper(paper);
+		         Book book = new Book();
+		         book.append(this, pf);
+		         job.setPageable(book);
+		        
+		         boolean ok = job.printDialog();
+		         if (ok) {
+		             try {
+		                  job.print();
+		                  job.print();
+		             } catch (PrinterException ex) {
+		             
+		             }
+		         } 
+				break;
 			case MenuCommand.SAVE_WORDLIST:
 				saveFile(m_model.getWordList());
 				break;
@@ -1560,4 +1605,25 @@ public class View extends JFrame implements ActionListener, KeyListener, MouseLi
 
 	@Override
 	public void windowDeactivated(WindowEvent e) {}
+
+	@Override
+	public int print(Graphics g, PageFormat pf, int page)
+			throws PrinterException {
+        Graphics2D g2d = (Graphics2D)g;
+        g2d.translate(pf.getImageableX(), pf.getImageableY());
+        
+        if(pageNumber == 0)
+        {
+        	m_puzzlePanel.printAll(g);
+        	pageNumber++;
+        }
+        else if(pageNumber == 1)
+        {
+        	m_wordsPanel.printAll(g);
+        	pageNumber--;
+        }
+		return 0;
+	}
+	
+	
 }

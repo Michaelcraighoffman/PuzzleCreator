@@ -41,6 +41,7 @@ public class Constants {
 		public static final String PUZZLE_SHOW_SOLUTIONS = "PUZZLE_SHOW_SOLUTIONS";
 		
 		public static final String ABOUT = "ABOUT";
+		public static final String PRINT = "PRINT";
 	}
 	
 	public final class DefaultOptions {
