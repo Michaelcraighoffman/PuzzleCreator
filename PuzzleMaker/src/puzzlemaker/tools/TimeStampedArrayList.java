@@ -2,21 +2,21 @@ package puzzlemaker.tools;
 
 import java.util.ArrayList;
 
-@SuppressWarnings("rawtypes")
-public class TimeStampArrayList<E> extends ArrayList<E> implements Comparable<TimeStampArrayList> {
-
-	/**
-	 * 
-	 */
+/** An ArrayList coupled with a time stamp (System.currentTimeMillis() at instantiation).
+ * The time stamp is used for {@link java.lang.Comparable comparison}.
+ * 
+ * @author Sam */
+public class TimeStampedArrayList<E> extends ArrayList<E> implements Comparable<TimeStampedArrayList<E>> {
 	private static final long serialVersionUID = 7599564760278487793L;
+	
 	private long m_timeStamp;
 	
-	public TimeStampArrayList () {
+	public TimeStampedArrayList () {
 		super();
 		m_timeStamp = System.currentTimeMillis();
 	}
 	
-	public TimeStampArrayList(int capacity) {
+	public TimeStampedArrayList(int capacity) {
 		super(capacity);
 		m_timeStamp = System.currentTimeMillis();
 	}
@@ -27,19 +27,17 @@ public class TimeStampArrayList<E> extends ArrayList<E> implements Comparable<Ti
 
 	@Override
 	public boolean equals (Object o) {
-		if (o instanceof TimeStampArrayList) {
-			TimeStampArrayList t = (TimeStampArrayList) o;
-			if (m_timeStamp == t.getTimeStamp()) {
+		if (o instanceof TimeStampedArrayList<?>) {
+			if (m_timeStamp == ((TimeStampedArrayList<?>)o).getTimeStamp()) {
 				return true;
 			}
 		}
 
 		return false;
-		// Always return false since we never want to collide with another word list in the model's tree.
 	}
 	
 	@Override
-	public int compareTo(TimeStampArrayList o) {
+	public int compareTo(TimeStampedArrayList<E> o) {
 		return (int) (m_timeStamp - o.getTimeStamp());
 	}
 

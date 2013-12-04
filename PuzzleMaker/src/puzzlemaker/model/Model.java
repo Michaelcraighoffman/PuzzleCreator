@@ -9,18 +9,19 @@ import javax.swing.JOptionPane;
 import puzzlemaker.Constants;
 import puzzlemaker.puzzles.Puzzle;
 import puzzlemaker.tools.PuzzleGenerator;
-import puzzlemaker.tools.TimeStampArrayList;
+import puzzlemaker.tools.TimeStampedArrayList;
+import puzzlemaker.tools.WordCluePair;
 
 public class Model {
-	private TreeMap<TimeStampArrayList<String>, ConcurrentSkipListSet<Puzzle>> m_data;
-	private TimeStampArrayList<String> m_selectedWordList;
+	private TreeMap<TimeStampedArrayList<WordCluePair>, ConcurrentSkipListSet<Puzzle>> m_data;
+	private TimeStampedArrayList<WordCluePair> m_selectedWordList;
 	private Puzzle m_selectedPuzzle;
 	
 	private PuzzleGenerator m_generator;
 	
 	public Model() {
-		m_data = new TreeMap<TimeStampArrayList<String>, ConcurrentSkipListSet<Puzzle>>();
-		m_selectedWordList = new TimeStampArrayList<String>();
+		m_data = new TreeMap<TimeStampedArrayList<WordCluePair>, ConcurrentSkipListSet<Puzzle>>();
+		m_selectedWordList = new TimeStampedArrayList<WordCluePair>();
 		m_data.put(m_selectedWordList, new ConcurrentSkipListSet<Puzzle>());
 		
 		m_generator = new PuzzleGenerator(this);
@@ -32,6 +33,8 @@ public class Model {
 	 * 
 	 * @see Constants#TYPE_CROSSWORD
 	 * @see Constants#TYPE_WORDSEARCH
+	 * 
+	 * @author Samuel Wiley
 	 */
 	public void startPuzzleGenerator(byte puzzleType) {
 		if (m_selectedWordList.size() > 0) {
@@ -82,21 +85,35 @@ public class Model {
 			return false;
 		}
 		
-		return m_selectedWordList.add(word);
+		return m_selectedWordList.add(new WordCluePair(word));
 	}
 	
 	public boolean removeWord(String word) {
-		return m_selectedWordList.remove(word);
+		for (WordCluePair w : m_selectedWordList) {
+			if (w.getWord().equals(word)) {
+				m_selectedWordList.remove(w);
+				return true;
+			}
+		}
+		return false;
+//		return m_selectedWordList.remove(word);
+	}
+	
+	public ArrayList<WordCluePair> getWordCluePairList() {
+		return m_selectedWordList;
 	}
 	
 	public ArrayList<String> getWordList() {
-		return (ArrayList<String>) m_selectedWordList;
+		// Instead of making the whole program conform to the new class this
+		// late in the game, we'll just sacrifice some memory. -Sam
+		return convertToStringList(m_selectedWordList);
 	}
 	
 	public ArrayList<String> getNewWordList() {
-		m_selectedWordList = new TimeStampArrayList<String>();
+		m_selectedWordList = new TimeStampedArrayList<WordCluePair>();
 		m_data.put(m_selectedWordList, new ConcurrentSkipListSet<Puzzle>());
-		return m_selectedWordList;
+
+		return convertToStringList(m_selectedWordList);
 	}
 	
 	public ArrayList<String> getNextWordList() {
@@ -105,7 +122,7 @@ public class Model {
 			m_selectedWordList = m_data.firstKey();
 		}
 //		System.out.println(m_selectedWordList.toString());
-		return m_selectedWordList;
+		return convertToStringList(m_selectedWordList);
 	}
 	
 	public ArrayList<String> getPreviousWordList() {
@@ -114,7 +131,15 @@ public class Model {
 			m_selectedWordList = m_data.lastKey();
 		}
 //		System.out.println(m_selectedWordList.toString());
-		return m_selectedWordList;
+		return convertToStringList(m_selectedWordList);
+	}
+	
+	public ArrayList<String> convertToStringList(ArrayList<WordCluePair> wordCluePairList) {
+		ArrayList<String> returnValue = new ArrayList<String>(wordCluePairList.size());
+		for (WordCluePair w : wordCluePairList) {
+			returnValue.add(w.getWord());
+		}
+		return returnValue;
 	}
 	
 	// Puzzle related methods. ***************************
@@ -123,7 +148,8 @@ public class Model {
 		return m_selectedPuzzle;
 	}
 	
-	/** Obtains the first puzzle of the current wordList */
+	/** Obtains the first puzzle of the current wordList. 
+	 * @author Samuel Wiley*/
 	public Puzzle getFirstWordPuzzle(){
 		if (!m_data.get(m_selectedWordList).isEmpty()) {
 			m_selectedPuzzle = m_data.get(m_selectedWordList).first();
@@ -134,7 +160,8 @@ public class Model {
 		}
 	}
 	
-	/** Selects the next (higher value) puzzle. */
+	/** Selects the next (higher value) puzzle. 
+	 * @author Samuel Wiley*/
 	public Puzzle getNextPuzzle() 
 	{	
 		m_selectedPuzzle = m_data.get(m_selectedWordList).higher(m_selectedPuzzle);
@@ -144,7 +171,8 @@ public class Model {
 		return m_selectedPuzzle;
 	}
 	
-	/** Selects the previous (lower value) puzzle. */
+	/** Selects the previous (lower value) puzzle.
+	 * @author Samuel Wiley */
 	public Puzzle getPreviousPuzzle() 
 	{
 		m_selectedPuzzle = m_data.get(m_selectedWordList).lower(m_selectedPuzzle);
@@ -167,7 +195,7 @@ public class Model {
 	 * Feel free to repurpose it, but it would be nice not to have to clone a solution list with (potentially)
 	 * tens of thousands of objects.
 	 * 
-	 * @author szeren
+	 * @author Samuel Wiley
 	 */
 	public ArrayList<Puzzle> getSolutions() {
 		return new ArrayList<Puzzle>(m_data.get(m_selectedWordList));

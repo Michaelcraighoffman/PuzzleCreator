@@ -51,6 +51,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
@@ -122,6 +123,8 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	private ArrayList<JPanel> m_wordsPanels = new ArrayList<JPanel>();
 	/** Contains one {@link JLabel} for each currently entered word. */
 	private JPanel m_wordListPanel;
+	private JScrollPane m_wordListScrollPane;
+	
 	/** @see WordLabelList */
 	private JTabbedPane m_Tabs;
 	private WordLabelList m_wordLabelList;
@@ -242,6 +245,8 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_puzzleDisplayPanel = new JPanel();
 	}
 	
+	// FIXME: This is the initWordPanel method with some variable replacements that I'm not convinced couldn't
+//	 be squashed into a single method. Please do so. -SBW
 	private void nextWordTab(){	
 		m_wordsPanel = new JPanel();
 		m_wordsPanel.addMouseListener(this);
@@ -281,7 +286,11 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_wordsPanels.get(m_Windex).addMouseListener(this);
 		
 	}
+	
 	private void initWordPanel() {
+		
+		
+		
 		// The top-level container
 		
 		m_wordsPanel = new JPanel();
@@ -291,11 +300,18 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		// Displays the currently entered words
 		m_wordListPanel = new JPanel();
 		m_wordListPanel.addMouseListener(this);
+		
+		// TODO: this component needs to be slightly smaller so that we don't START with scroll bars.
 		setComponentSizes(m_wordListPanel, 200, 200, 200, 500, 200, 500);
 		m_wordListPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));		
 		m_wordListPanel.setLayout(new SpringLayout());	
-		m_wordsPanel.add(m_wordListPanel);
+//		m_wordsPanel.add(m_wordListPanel);
 		
+		m_wordListScrollPane = new JScrollPane(m_wordListPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		setComponentSizes(m_wordListScrollPane, 200, 200, 200, 500, 200, 500);
+		m_wordsPanel.add(m_wordListScrollPane);
+
+
 		// The text field where the user types words
 		m_wordEntryField = new JTextField(12);
 		setComponentSizes(m_wordEntryField, 140, 20, 200, 20, 200, 24);
@@ -391,7 +407,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		    }
 		});
 	}
-	/** @author szeren */
+	/** @author Samuel Wiley */
 	public void initPuzzleSizeDialog() {
 		m_puzzleSizeDialog = new JDialog(View.this, "Puzzle Size Limits", true);
 		m_puzzleSizeDialog.addWindowListener(this);
@@ -691,7 +707,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	
 	/** Shows the puzzle size dialog and updates the text field values to reflect the program's current values. 
 	 * 
-	 * @author szeren */
+	 * @author Samuel Wiley */
 	private void showPuzzleSizeDialog() {
 		if (m_puzzleSizeDialog == null) {
 			initPuzzleSizeDialog();
@@ -758,7 +774,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	 * 
 	 * @param applyChanges {@code false} if the user clicked Cancel.
 	 * 
-	 * @author szeren
+	 * @author Samuel Wiley
 	 */
 	private void hidePuzzleSizeDialog(boolean applyChanges) {
 		if (applyChanges) {
@@ -936,12 +952,12 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_puzzleSizeDialog.setVisible(false);
 	}
 	
-	/** @author szeren */
+	/** @author Samuel Wiley */
 	private void showInvalidSizeEntryDialog(String message) {
 		JOptionPane.showMessageDialog(m_puzzleSizeDialog, message, "Invalid Entry", JOptionPane.ERROR_MESSAGE);
 	}
 	
-	/** @author szeren */
+	/** @author Samuel Wiley */
 	private boolean puzzleSizeDialogHasUnconfirmedChanges() {
 		if (m_chkSizeAtLeast.isSelected() != m_puzzleSizeConstrainMin || m_chkSizeAtMost.isSelected() != m_puzzleSizeConstrainMax || m_chkSizeExactly.isSelected() != m_puzzleSizeConstrainExactly) {
 			return true;
@@ -1021,7 +1037,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	 * {@link Component#setPreferredSize(Dimension) preferred}, and 
 	 * {@link Component#setMaximumSize(Dimension) maximum} sizes of the given {@code Component}. 
 	 * 
-	 * @author szeren
+	 * @author Samuel Wiley
 	 */
 	private void setComponentSizes (Component c, int minWidth, int minHeight, int prefWidth, int prefHeight, int maxWidth, int maxHeight) {
 		c.setMinimumSize(new Dimension(minWidth, minHeight));

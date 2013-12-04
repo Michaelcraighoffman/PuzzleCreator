@@ -9,3 +9,4 @@ Export-Package: puzzlemaker,
  puzzlemaker.puzzles,
  puzzlemaker.tools,
  puzzlemaker.tools.grid
+Require-Bundle: org.junit

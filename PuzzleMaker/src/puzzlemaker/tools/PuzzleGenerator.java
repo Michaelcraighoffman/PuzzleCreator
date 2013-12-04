@@ -452,7 +452,7 @@ public class PuzzleGenerator {
 	 * 
 	 * @return {@code true} if the puzzle is a legal size after placement.
 	 * 
-	 * @author szeren
+	 * @author Samuel Wiley
 	 */
 	public boolean placeWordInGrid(Grid grid, Word word, int x, int y, int direction, int offset) {
 		GridWalker walker = new GridWalker(grid, x, y, direction);
@@ -518,7 +518,7 @@ public class PuzzleGenerator {
 	 * @see #setMaxPuzzleSize(boolean, int, int)
 	 * @see #setExactlPuzzleSize(boolean, int, int)
 	 * 
-	 * @author szeren
+	 * @author Samuel Wiley
 	 */
 	private void addSolution (Puzzle newPuzzle) {
 		if (m_hasExactSize) {

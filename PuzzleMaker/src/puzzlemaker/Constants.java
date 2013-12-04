@@ -58,23 +58,18 @@ public class Constants {
 		public static final int PUZZLE_SIZE_EXACT_Y = -1;
 	}
 
-//	public static final String IMPORT = "MENU_IMPORT";
-//	public static final String SAVE_WORDLIST = "MENU_EXPORT_WORDLIST";
-//	public static final String EXPORT = "MENU_EXPORT";
-//	public static final String EXIT = "EXIT";
-//	public static final String ABOUT = "ABOUT";
-	
 	public static String filterWord(String word) {
 		word = filterToLetters(word.trim().toUpperCase());
 		
-		if (word.isEmpty()) {
+		if (word.length() < 2) {
 			return null;
 		}
 
 		return word;
 	}
 	
-	/** @returns The string with all non-letters removed. */
+	/** @returns The string with all non-letters removed. 
+	 * @author Samuel Wiley*/
 	private static String filterToLetters(String word) {
 		char[] input = word.toCharArray();
 		String output = "";
