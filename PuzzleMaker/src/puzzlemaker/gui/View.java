@@ -86,6 +86,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	private final String CHK_SIZE_EXACTLY = "CHK_SIZE_EXACTLY";
 	private final String PUZZLE_SIZE_OK = "PUZZLE_SIZE_OK";
 	private final String PUZZLE_SIZE_CANCEL = "PUZZLE_SIZE_CANCEL";
+	private final String PUZZLE_BUTTONS = "PUZZLE_BUTTONS";
 	
 	/* **********************************************************
 	 * CLASS VARIABLES.
@@ -524,6 +525,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_puzzlePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		m_puzzlePanel.setLayout(new BoxLayout(m_puzzlePanel, BoxLayout.Y_AXIS));
 		JPanel innerPanel = new JPanel();
+		innerPanel.setName(PUZZLE_BUTTONS);
 		innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.X_AXIS));
 		m_lblPuzzleIndex.setText(m_puzzleIndex + "/" + m_model.getNumPuzzles());
 		innerPanel.add(prevWordPZL);
@@ -1527,6 +1529,13 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	
 	private void toggleButtonActivation(boolean activate) {
 		
+		//FIXME Getting these by index seems REALLY brittle.  Solutions welcome
+		
+		//Puzzle buttons
+		JPanel PuzzleButtons=(JPanel)m_puzzlePanel.getComponent(0);
+		PuzzleButtons.getComponent(0).setEnabled(activate);
+		PuzzleButtons.getComponent(1).setEnabled(activate);
+		PuzzleButtons.getComponent(2).setEnabled(activate);
 		if(activate) {
 			m_StartStopButton.setText("Start");
 		}
@@ -1571,6 +1580,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				else if (displayPuzzle != null && solutionsSize != m_model.getNumPuzzles()) {
 					m_lblPuzzleIndex.setText(m_puzzleIndex + "/" + m_model.getNumPuzzles());
 				}
+				toggleButtonActivation(true);
 			}
 		};
 		
