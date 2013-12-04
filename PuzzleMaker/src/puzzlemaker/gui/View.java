@@ -106,6 +106,8 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	private JCheckBoxMenuItem m_chkBoxNonSquare;
 	private JCheckBoxMenuItem m_chkBoxShowSolutions, m_popupChkBoxShowSolutions;
 	private boolean m_puzzleShowSolutions = DefaultOptions.PUZZLE_SHOW_SOLUTIONS;
+	private boolean m_generateCrossword = DefaultOptions.PUZZLE_GENERATE_CROSSWORD;
+	private JButton m_StartStopButton;
 	private JPopupMenu m_puzzlePopupMenu;
 	private JDialog m_aboutDialog;
 	
@@ -363,6 +365,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		//btnWordSearch.setName(WORD_SEARCH_BUTTON);
 		Ws.addMouseListener(this);
 		Ws.setName(WORD_SEARCH_BUTTON);
+		Ws.setSelected(!m_generateCrossword);
 		
 		innerPanel.add(Ws);
 		innerPanel.add(lblWordSearch);
@@ -373,7 +376,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		//btnCrossWord.setName(CROSSWORD_BUTTON);
 		Cw.addMouseListener(this);
 		Cw.setName(CROSSWORD_BUTTON);
-		
+		Cw.setSelected(m_generateCrossword);
 		innerPanel.add(Cw);
 		innerPanel.add(lblCrossword);
 		
@@ -381,10 +384,10 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		group.add(Ws);
 		group.add(Cw);
 		
-		JButton btnStop = new JButton("Stop");
-		btnStop.addMouseListener(this);
-		btnStop.setName(STOP_BUTTON);
-		innerPanel.add(btnStop);
+		m_StartStopButton = new JButton("Start");
+		m_StartStopButton.addMouseListener(this);
+		m_StartStopButton.setName(STOP_BUTTON);
+		innerPanel.add(m_StartStopButton);
 		// Minimum and preferred sizes don't need to be set since 
 		// m_horizontalSplit.getBottomComponent()'s minimum size is set.
 		innerPanel.setMaximumSize(new Dimension((MAX_BUTTON_SIZE * 4) + 20, MAX_BUTTON_SIZE));
@@ -1426,45 +1429,14 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		switch (componentName) {
 			
 			case WORD_SEARCH_BUTTON:
-				System.err.println(m_model.getWordList());
-				if (!m_model.getWordList().isEmpty()) { // all of this code should be in Model
-					if(m_model.getPuzzle()!=null) {
-						//TODO This needs to be converted over to work with Tabs
-					//	ArrayList<String> old=m_model.getWordList();
-					//	m_model.getNewWordList();
-					//	for(String s : old) {
-					//		m_model.addWord(s);
-					//	}
-					//	m_wordLabelList.changeTo(m_model.getWordList()); // except we should call this after startPuzzleGenerator in case the Model made a new word list
-//						updatePuzzlePanel();
-					}
-					
-					m_model.startPuzzleGenerator(Constants.TYPE_WORDSEARCH);
-
-					runSolutionMonitor();
-					
-				}
-			break;
+				m_generateCrossword=false;
+				break;
 			
 			case CROSSWORD_BUTTON:				
-				
-				if (!m_model.getWordList().isEmpty()) {
-					//TODO This needs to be converted over to work with Tabs
-					/*if(m_model.getPuzzle()!=null) {
-						  ArrayList<String> old=m_model.getWordList();
-						  m_model.getNewWordList();
-						  for(String s : old) {
-							  m_model.addWord(s);
-						  }
-						  m_wordLabelList.changeToWordList(m_model.getWordList());
-					  }*/
-					m_model.startPuzzleGenerator(Constants.TYPE_CROSSWORD);
-					
-					runSolutionMonitor();
-				}
+				m_generateCrossword=true;
 				break;
 			case STOP_BUTTON:
-				// m_model.stopGeneration();
+				stopStartGeneration();
 				 break;
 			case PREVIOUS_WORDLIST_BUTTON:
 			//	m_wordLabelList.changeTo(m_model.getNextWordList());
@@ -1524,6 +1496,45 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		}
 	}
 	
+	private void stopStartGeneration() {
+		if(m_model.isPuzzleGeneratorRunning()) {
+			toggleButtonActivation(true);
+			m_model.stopPuzzleGenerator();
+		}
+		else {
+			toggleButtonActivation(false);
+			//TODO This needs to be converted over to work with Tabs
+			//	ArrayList<String> old=m_model.getWordList();
+			//	m_model.getNewWordList();
+			//	for(String s : old) {
+			//		m_model.addWord(s);
+			//	}
+			//	m_wordLabelList.changeTo(m_model.getWordList()); // except we should call this after startPuzzleGenerator in case the Model made a new word list
+			//	updatePuzzlePanel();
+			if (!m_model.getWordList().isEmpty()) {
+				if(m_generateCrossword) {
+					m_model.startPuzzleGenerator(Constants.TYPE_CROSSWORD);
+				}
+				else {
+					m_model.startPuzzleGenerator(Constants.TYPE_WORDSEARCH);
+				}
+				runSolutionMonitor();
+			}
+		
+		}
+		
+	}
+	
+	private void toggleButtonActivation(boolean activate) {
+		
+		if(activate) {
+			m_StartStopButton.setText("Start");
+		}
+		else {
+			m_StartStopButton.setText("Stop");
+		}
+	}
+
 	private void runSolutionMonitor() {
 		m_puzzleIndex = 1;
 		Thread puzzlePanelUpdater = new Thread() {

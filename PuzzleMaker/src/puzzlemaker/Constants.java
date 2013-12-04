@@ -50,6 +50,7 @@ public class Constants {
 		public static final boolean PUZZLE_SIZE_MIN_CONSTRAINED = false;
 		public static final boolean PUZZLE_SIZE_MAX_CONSTRAINED = false;
 		public static final boolean PUZZLE_SIZE_EXACT_CONSTRAINED = false;
+		public static final boolean PUZZLE_GENERATE_CROSSWORD=true;
 		public static final int PUZZLE_SIZE_MIN_X = -1;
 		public static final int PUZZLE_SIZE_MIN_Y = -1;
 		public static final int PUZZLE_SIZE_MAX_X = 10;
