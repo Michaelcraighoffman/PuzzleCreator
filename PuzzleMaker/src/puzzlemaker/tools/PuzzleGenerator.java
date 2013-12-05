@@ -44,7 +44,7 @@ public class PuzzleGenerator {
 				numProcessorsToUse = 1;
 				break;
 			default:
-				numProcessorsToUse = Runtime.getRuntime().availableProcessors() - 2;
+				numProcessorsToUse = Runtime.getRuntime().availableProcessors() - 1;
 				break;
 		}
 		System.err.println("Using " + numProcessorsToUse + " processors.");
@@ -207,7 +207,7 @@ public class PuzzleGenerator {
 					}
 
 					Puzzle puzzle = new Crossword(m_grid, wordList);
-					if (puzzle.isLegal()) {
+					if (((Crossword)puzzle).isLegal()) {
 						addSolution(puzzle);
 					}
 				}
@@ -507,6 +507,13 @@ public class PuzzleGenerator {
 			grid.setCharAt(walker.x, walker.y, word.toString().charAt(i));
 			
 			walker.moveForward(1);
+		}
+		
+		if (m_hasMaximumSize && (walker.x > m_maxSizeX || walker.y > m_maxSizeY || (grid.getWidth() - walker.x) > m_maxSizeX || (grid.getHeight() - walker.y) > m_maxSizeY)) {
+			return false;
+		}
+		if (m_hasExactSize && (walker.x > m_exactSizeX || walker.y > m_exactSizeY || (grid.getWidth() - walker.x) > m_exactSizeX || (grid.getHeight() - walker.y) > m_exactSizeY)) {
+			return false;
 		}
 		
 		return true;

@@ -2,6 +2,8 @@ package puzzlemaker.puzzles;
 
 import java.util.ArrayList;
 
+import puzzlemaker.Constants;
+
 public class Word implements Comparable<Object> {
 
 	private String m_word;	
@@ -91,6 +93,43 @@ public class Word implements Comparable<Object> {
 	
 	public String toStringDetailed() {
 		return m_word + " x: " + m_x + " y: " + m_y + " dir: " + m_direction;
+	}
+	
+	public String toStringPretty() {
+		String output = m_word + " (" + m_x + ", " + m_y + ")  ";
+		
+		String direction;
+		switch (m_direction) {
+			case Constants.LEFT_TO_RIGHT:
+				direction = "(Left to Right)";
+				break;
+			case Constants.TOPLEFT_TO_BOTTOMRIGHT:
+				direction = "(Top Left to Bottom Right)";
+				break;
+			case Constants.TOP_TO_BOTTOM:
+				direction = "(Top to Bottom)";
+				break;
+			case Constants.TOPRIGHT_TO_BOTTOMLEFT:
+				direction = "(Top Right to Bottom Left)";
+				break;
+			case Constants.RIGHT_TO_LEFT:
+				direction = "(Right to Left)";
+				break;
+			case Constants.BOTTOMRIGHT_TO_TOPLEFT:
+				direction = "(Bottom Right to Top Left)";
+				break;
+			case Constants.BOTTOM_TO_TOP:
+				direction = "(Bottom to Top)";
+				break;
+			case Constants.BOTTOMLEFT_TO_TOPRIGHT:
+				direction = "(Bottom Left to Top Right)";
+				break;
+			default:
+				direction = ":(";
+				break;
+		}
+		
+		return output + direction;
 	}
 
 	@Override

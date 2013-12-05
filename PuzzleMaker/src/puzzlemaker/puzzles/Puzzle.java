@@ -69,6 +69,7 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 										newWordList.add(tmpWord);
 										found = true;
 										letters = "";
+										break;
 									}
 								}
 								else if (this instanceof WordSearch) {
@@ -112,6 +113,7 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 								newWordList.add(tmpWord);
 								found = true;
 								letters = "";
+								break;
 							}
 						}
 						else if (this instanceof WordSearch) {
@@ -121,6 +123,7 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 								newWordList.add(tmpWord);
 								found = true;
 								letters = "";
+								break;
 							}
 						}
 					}

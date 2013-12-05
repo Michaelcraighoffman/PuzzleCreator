@@ -25,6 +25,7 @@ public class Crossword extends Puzzle {
 		m_wordList = wordList;
 	}
 	
+	@Override
 	public boolean isLegal() {
 		
 		GridWalker walker = new GridWalker(m_grid);
