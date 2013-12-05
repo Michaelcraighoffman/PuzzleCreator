@@ -57,6 +57,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
@@ -108,6 +109,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	private JMenuItem tabDeletebox;
 	private JCheckBoxMenuItem m_chkBoxShowSolutions, m_popupChkBoxShowSolutions;
 	private boolean m_puzzleShowSolutions = DefaultOptions.PUZZLE_SHOW_SOLUTIONS;
+	private JRadioButton m_rbtnWordsearch, m_rbtnCrossword;
 	private boolean m_generateCrossword = DefaultOptions.PUZZLE_GENERATE_CROSSWORD;
 	private JButton m_StartStopButton;
 	private JPopupMenu m_puzzlePopupMenu;
@@ -362,45 +364,50 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		setComponentSizes(m_puzzleButtonPanel, 200, 100, 200, 150, 200, 200);
 		m_puzzleButtonPanel.addMouseListener(this);
 		
-		JPanel innerPanel = new JPanel();
-		innerPanel.setLayout(new GridBagLayout());
-		
-		JRadioButton Ws = new JRadioButton();
+		JPanel imagePanel = new JPanel();
+		imagePanel.setLayout(new BoxLayout(imagePanel, BoxLayout.X_AXIS));
 		JLabel lblWordSearch = new JLabel(new ImageIcon("res/wordsearch.png"));
-		//btnWordSearch.addMouseListener(this);
-		//btnWordSearch.setName(WORD_SEARCH_BUTTON);
-		Ws.addMouseListener(this);
-		Ws.setName(WORD_SEARCH_BUTTON);
-		Ws.setSelected(!m_generateCrossword);
-		
-		innerPanel.add(Ws);
-		innerPanel.add(lblWordSearch);
-		
-		JRadioButton Cw = new JRadioButton();
+		lblWordSearch.setName("LBL_WORDSEARCH");
+		lblWordSearch.addMouseListener(this);
 		JLabel lblCrossword= new JLabel(new ImageIcon("res/crossword.png"));
-		//btnCrossWord.addMouseListener(this);
-		//btnCrossWord.setName(CROSSWORD_BUTTON);
-		Cw.addMouseListener(this);
-		Cw.setName(CROSSWORD_BUTTON);
-		Cw.setSelected(m_generateCrossword);
-		innerPanel.add(Cw);
-		innerPanel.add(lblCrossword);
+		lblCrossword.setName("LBL_CROSSWORD");
+		lblCrossword.addMouseListener(this);
+		imagePanel.add(lblWordSearch);
+		imagePanel.add(Box.createHorizontalStrut(15));
+		imagePanel.add(lblCrossword);
 		
+		JPanel radioButtonPanel = new JPanel();
+		radioButtonPanel.setLayout(new BoxLayout(radioButtonPanel, BoxLayout.X_AXIS));
+		m_rbtnWordsearch = new JRadioButton("Wordsearch", !m_generateCrossword);
+		m_rbtnWordsearch.setName(WORD_SEARCH_BUTTON);
+		m_rbtnCrossword = new JRadioButton("Crossword", m_generateCrossword);
+		m_rbtnCrossword.setName(CROSSWORD_BUTTON);
 		ButtonGroup group = new ButtonGroup();
-		group.add(Ws);
-		group.add(Cw);
+		group.add(m_rbtnWordsearch);
+		group.add(m_rbtnCrossword);
+		radioButtonPanel.add(m_rbtnWordsearch);
+		radioButtonPanel.add(Box.createHorizontalStrut(7));
+		radioButtonPanel.add(m_rbtnCrossword);
 		
+		// This has it's own panel because adding it to outerPanel without putting it in a panel made it off-center. (more like right-aligned)
+		JPanel oneButtonPanel = new JPanel();
 		m_StartStopButton = new JButton("Start");
+		setComponentSizes(m_StartStopButton, 57, 23, 57, 23, 100, 23);
 		m_StartStopButton.addMouseListener(this);
 		m_StartStopButton.setName(STOP_BUTTON);
-		innerPanel.add(m_StartStopButton);
-		// Minimum and preferred sizes don't need to be set since 
-		// m_horizontalSplit.getBottomComponent()'s minimum size is set.
-		innerPanel.setMaximumSize(new Dimension((MAX_BUTTON_SIZE * 4) + 20, MAX_BUTTON_SIZE));
+		oneButtonPanel.add(m_StartStopButton);
+		
+		JPanel outerPanel = new JPanel();
+		outerPanel.setLayout(new BoxLayout(outerPanel, BoxLayout.Y_AXIS));
+		outerPanel.add(imagePanel);
+		outerPanel.add(radioButtonPanel);
+		outerPanel.add(oneButtonPanel);
 
 		m_puzzleButtonPanel.add(Box.createVerticalGlue());
-		m_puzzleButtonPanel.add(innerPanel);
+		m_puzzleButtonPanel.add(outerPanel);
 		m_puzzleButtonPanel.add(Box.createVerticalGlue());
+		
+		m_puzzleButtonPanel.revalidate();
 	}
 	/** @author Alex */
 	private void initTabPane(){
@@ -1534,6 +1541,12 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				updatePuzzlePanel();
 				
 				break;	
+			case "LBL_WORDSEARCH":
+				m_rbtnWordsearch.doClick();
+				break;
+			case "LBL_CROSSWORD":
+				m_rbtnCrossword.doClick();
+				break;
 			//case "puzzleDisplayPanel":
 		//		m_puzzlePopupMenu.show(e.getComponent(), e.getX(), e.getY());
 			//	break;
