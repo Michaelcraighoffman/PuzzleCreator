@@ -37,9 +37,11 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 	JLabel m_selectedLabel;
 
 	private JPopupMenu m_popupMenu;
+	private JPopupMenu m_popupMenu2;
 	private final String WORD_LABEL_NAME = "WORD_LABEL_NAME";
 	private final String CLUE_LABEL_NAME = "CLUE_LABEL_NAME";
 	private final String DELETE_LABEL = "DELETE_LABEL";
+	private final String EDIT_CLUE_LABEL = "EDIT_CLUE_LABEL";
 	
 	// For managing the WordListPanel's layout
 	private final int ROW_HEIGHT = 16;
@@ -58,8 +60,17 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 		JMenuItem menuItem = new JMenuItem("Delete");
 		menuItem.setActionCommand(DELETE_LABEL);
 		menuItem.addActionListener(this);		
-		m_popupMenu.add(menuItem);
+		m_popupMenu.add(menuItem);	
 		m_popupMenu.addPopupMenuListener(this);
+		
+		m_popupMenu2 = new JPopupMenu();
+		JMenuItem menuItemEdit = new JMenuItem("Edit Clue");
+		menuItemEdit.setActionCommand(EDIT_CLUE_LABEL);
+		menuItemEdit.addActionListener(this);		
+		m_popupMenu2.add(menuItemEdit);
+		m_popupMenu2.addPopupMenuListener(this);
+		
+
 	}
 	
 	/** Adds the word to the list <b>if</b> the word's length
@@ -78,6 +89,7 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			JLabel clueLabel = new JLabel();
 			clueLabel.addMouseListener(this);
 			clueLabel.setName(CLUE_LABEL_NAME);
+			setStyle(clueLabel, Font.PLAIN);
 			if (m_data.add(newLabel)) {
 				m_data.add(clueLabel);
 				m_displayPanel.add(newLabel);
@@ -110,23 +122,26 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			return false;
 		}
 		
-		// hmmm TODO: should be able to just remove one neighboring label... if we deleted a clue label,
+		// TODO: did the following, but it's not very clean...
+		// should be able to just remove one neighboring label... if we deleted a clue label,
 		// then move one index down and delete that, but if we just deleted a word label, stay at the same index
 		// and delete again? and should all word labels be on even indexes? (i think so)
+		JLabel m_selectedLabelClue = null;
 		for (int i = 0; i < m_displayPanel.getComponentCount(); i++) {
 			if (m_displayPanel.getComponent(i) == m_selectedLabel) {
 				System.out.println("WordLabelList.deleteSelectedWord(): Match found.");
+				m_selectedLabelClue = (JLabel) m_displayPanel.getComponent(i+1);
 			}
 		}
-		
 		m_selectedLabel.removeMouseListener(this);
-		if (!m_data.remove(m_selectedLabel)) {
+		if (!m_data.remove(m_selectedLabel) && !m_data.remove(m_selectedLabelClue)) {
 			System.err.println("WordList.deleteSelectedWord(): selected word (" + m_selectedLabel.getText() + ") not found in m_data. Delete failed");
 			return false;
 		}
 		
 		m_displayPanel.remove(m_selectedLabel);
-		if (!m_model.removeWord(m_selectedLabel.getText())) {
+		m_displayPanel.remove(m_selectedLabelClue);
+		if (!m_model.removeWord(m_selectedLabel.getText()) && !m_model.removeWord(m_selectedLabelClue.getText())) {
 			System.err.println("Failed to remove word from model's list.");
 		}
 		m_selectedLabel = null;
@@ -134,7 +149,29 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 		return true;
 	}
 	
+	/** Resets the current word clue by overwriting the current
+	  * auto-generated or user-entered clue.<br>
+	 */
+	// TODO: need to get this to work when right clicking clue
+	// consider adding delete word option to get rid of all
+	// consider adding edit from the word (it would modify component i+1)
+	public boolean editSelectedWordClue() {
+		// TODO: make this work. Somehow.
+/*		m_selectedLabel.setText("user set text bitches");
+		m_selectedLabel.setName("user set text bitches");
+		for (int i = 0; i < m_displayPanel.getComponentCount(); i++) {
+			if (m_displayPanel.getComponent(i) == m_selectedLabel) {
 
+				setStyle(m_selectedLabel, Font.BOLD);
+				m_data.set(i, m_selectedLabel);
+			}
+		}*/
+		
+		
+
+		return true;
+	}
+	
 	
 	private void setStyle(JLabel label, int fontStyle) {
 		label.setFont(label.getFont().deriveFont(fontStyle));
@@ -152,6 +189,15 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			int availableWidth = m_displayPanel.getSize().width - (m_displayPanel.getInsets().left + m_displayPanel.getInsets().right);
 			int maxColumnWidth = (availableWidth - COLUMN_GAP) / 2;
 			
+		/*	modelData.size() = 3
+			TEST's height: 0
+			BAM's height: 19
+			LOLZORS's height: 38
+			Biggest width in column = 55
+			TEST's clue's height: 0
+			BAM's clue's height: 19
+			LOLZORS's clue's height: 38*/
+
 			
 			ArrayList<WordCluePair> modelData = m_model.getWordCluePairList();
 			SpringLayout layout = (SpringLayout) m_displayPanel.getLayout();
@@ -182,7 +228,7 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 				((JLabel)currentComponent).setText(modelData.get(i).getClue());
 				SpringLayout.Constraints constraints = layout.getConstraints(currentComponent);
 				constraints.setX(Spring.constant(biggestWidthInColumn + COLUMN_GAP));
-				constraints.setY(Spring.constant(i * (ROW_HEIGHT * ROW_GAP)));
+				constraints.setY(Spring.constant(i * (ROW_HEIGHT + ROW_GAP)));
 				System.out.println(((JLabel)currentComponent).getText() + "'s height: " + (i * (ROW_HEIGHT + ROW_GAP)));
 				constraints.setWidth(Spring.constant(Math.min(remainingWidth, minWidth((JLabel)currentComponent))));
 				constraints.setHeight(Spring.constant(ROW_HEIGHT));
@@ -266,6 +312,11 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			setStyle(m_selectedLabel, Font.BOLD);
 			doLayout(); // Since the label's width will change.
 		}
+		if (cmp.getName().equals(CLUE_LABEL_NAME)) {
+			m_selectedLabel = (JLabel) cmp;
+			setStyle(m_selectedLabel, Font.BOLD);
+			doLayout(); // Since the label's width will change.
+		}
 	}
 	
 	/************************************************************
@@ -278,6 +329,9 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 		
 		if (command.equals(DELETE_LABEL)) {
 			deleteSelectedWord();
+		}
+		if (command.equals(EDIT_CLUE_LABEL)) {
+			editSelectedWordClue();
 		}
 	}
 	
@@ -306,6 +360,15 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 				 * getX and getY might not work properly. They have alternatives,
 				 * getXOnScreen and getYOnScreen, but I haven't tried them. -SBW */
 				m_popupMenu.show(e.getComponent(), e.getX(), e.getY());
+			}
+		}
+		if(e.getComponent().getName().equals(CLUE_LABEL_NAME)) {
+			updateSelection(e.getComponent());
+			if (e.getButton() == MouseEvent.BUTTON3) {
+				/* TODO: This might need testing on a multi-monitor device;
+				 * getX and getY might not work properly. They have alternatives,
+				 * getXOnScreen and getYOnScreen, but I haven't tried them. -SBW */
+				m_popupMenu2.show(e.getComponent(), e.getX(), e.getY());
 			}
 		}
 	}

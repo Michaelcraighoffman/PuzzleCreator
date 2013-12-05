@@ -304,14 +304,14 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_wordListPanel = new JPanel();
 		m_wordListPanel.addMouseListener(this);
 		
-		// TODO: this component needs to be slightly smaller so that we don't START with scroll bars.
-		setComponentSizes(m_wordListPanel, 200, 200, 200, 500, 200, 500);
+		setComponentSizes(m_wordListPanel, 100, 100, 100, 400, 100, 400);
 		m_wordListPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));		
 		m_wordListPanel.setLayout(new SpringLayout());	
 //		m_wordsPanel.add(m_wordListPanel);
 		
 		m_wordListScrollPane = new JScrollPane(m_wordListPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		setComponentSizes(m_wordListScrollPane, 200, 200, 200, 500, 200, 500);
+	// AEZ removed set size to allow scrollpane to resize with panel 
+	//	setComponentSizes(m_wordListScrollPane, 200, 200, 200, 500, 200, 500);
 		m_wordsPanel.add(m_wordListScrollPane);
 
 
