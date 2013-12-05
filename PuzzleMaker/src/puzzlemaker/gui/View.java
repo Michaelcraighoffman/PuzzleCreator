@@ -87,6 +87,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	private final String PUZZLE_SIZE_OK = "PUZZLE_SIZE_OK";
 	private final String PUZZLE_SIZE_CANCEL = "PUZZLE_SIZE_CANCEL";
 	private final String PUZZLE_BUTTONS = "PUZZLE_BUTTONS";
+
 	/* **********************************************************
 	 * CLASS VARIABLES.
 	 * 
@@ -153,6 +154,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	/** Initializes the main {@link javax.swing.JFrame window} and the GUI components therein. */
 	public View(Model model) {
 		m_model = model;
+		m_model.setView(this);
 		
 		initMenuBar();
 		initPuzzlePanel();
@@ -247,9 +249,10 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		
 		m_puzzleDisplayPanel = new JPanel();
 	}
-	
+
 	private void initWordPanel() {
-		// The top-level containerE
+
+		// The top-level container
 		m_wordsPanel = new JPanel();
 		m_wordsPanel.addMouseListener(this);
 		m_wordsPanel.setLayout(new BoxLayout(m_wordsPanel, BoxLayout.Y_AXIS));
@@ -478,7 +481,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	}
 	
 	/** Resets {@code m_puzzlePanel}'s contents, border, and layout. */
-	private void updatePuzzlePanel() {
+	public void updatePuzzlePanel() {
 		final int MAX_BUTTON_SIZE = 82;
 		m_puzzlePanel.removeAll();
 		m_puzzlePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -527,6 +530,9 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			for (int x = 0; x < grid.getWidth(); x++) {
 				cell = new JTextField(Character.toString(grid.getCharAt(x, y)), 1);
 				puzzle.applyCellStyle(cell,m_chkBoxShowSolutions.isSelected());
+				if(puzzle.isSelected(x, y)){
+					cell.setBackground(Color.LIGHT_GRAY);
+				}
 				cell.setInheritsPopupMenu(true);
 				panel.add(cell);
 			}
@@ -1394,7 +1400,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			return;
 		}
 		switch (componentName) {
-		
+
 		case WORD_SEARCH_BUTTON:
 			m_generateCrossword=false;
 			break;
@@ -1405,7 +1411,6 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		case STOP_BUTTON:
 			stopStartGeneration();
 			 break;
-			
 			case PREVIOUS_WORDLIST_BUTTON:
 			//	m_wordLabelList.changeTo(m_model.getNextWordList());
 //				if(m_model.getCurrentWordPuzzle() != null){
@@ -1489,7 +1494,9 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		}
 		
 	}
-private void toggleButtonActivation(boolean activate) {
+	
+	private void toggleButtonActivation(boolean activate) {
+
 		
 		//FIXME Getting these by index seems REALLY brittle.  Solutions welcome
 		
