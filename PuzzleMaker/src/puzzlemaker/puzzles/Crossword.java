@@ -76,13 +76,20 @@ public class Crossword extends Puzzle {
 								walker.setWordData(tmpWord, 0, 0);
 								newWordList.add(tmpWord);
 								found = true;
-								if (m_wordList.isEmpty()) { return true; }
+								if (m_wordList.isEmpty()) { 
+									m_wordList = newWordList;
+									return true; 
+								}
 								break;
 							}
 						}
-						if (!found) { return false; }
+						if (!found) { 
+							return false; }
 					}
-					else { return true; }
+					else { 
+						m_wordList = newWordList;
+						return true; 
+						}
 				}
 			} while (walker.tryNextLine());	
 		}
