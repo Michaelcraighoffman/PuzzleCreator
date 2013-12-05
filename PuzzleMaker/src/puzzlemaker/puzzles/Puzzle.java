@@ -12,6 +12,7 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 	
 	protected Grid m_grid;
 	protected ArrayList<Word> m_wordList;
+	protected Word m_selectedWord;
 		
 	public Grid getGrid() {
 		return m_grid;
@@ -171,5 +172,26 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 		else {
 			return false;
 		}
+	}
+
+	public void selectWord(String text) {
+		for(Word w : m_wordList) {
+			if(w.toString().equals(text)) {
+				m_selectedWord=w;
+				return;
+			}
+		}
+	}
+	public boolean isSelected(int x, int y) {
+		if(m_selectedWord!=null) {
+			GridWalker walker=new GridWalker(m_grid,m_selectedWord.getX(),m_selectedWord.getY(),m_selectedWord.getDirection());
+			for(int i=0; i<m_selectedWord.toString().length(); i++) {
+				if(walker.x==x && walker.y==y) {
+					return true;
+				}
+				walker.tryNextCell();
+			}
+		}
+		return false;
 	}
 }

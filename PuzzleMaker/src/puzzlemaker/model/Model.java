@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import javax.swing.JOptionPane;
 
 import puzzlemaker.Constants;
+import puzzlemaker.gui.View;
 import puzzlemaker.puzzles.Puzzle;
 import puzzlemaker.tools.PuzzleGenerator;
 import puzzlemaker.tools.TimeStampedArrayList;
@@ -16,6 +17,7 @@ public class Model {
 	private TreeMap<TimeStampedArrayList<WordCluePair>, ConcurrentSkipListSet<Puzzle>> m_data;
 	private TimeStampedArrayList<WordCluePair> m_selectedWordList;
 	private Puzzle m_selectedPuzzle;
+	private View m_view;
 	
 	private PuzzleGenerator m_generator;
 	
@@ -27,6 +29,12 @@ public class Model {
 		m_generator = new PuzzleGenerator(this);
 	}
 	
+	public void setView(View v) {
+		m_view=v;
+	}
+	public View getView() {
+		return m_view;
+	}
 	// PuzzleGenerator related methods. *******************
 	
 	/** Begins generating puzzles using {@linkplain PuzzleGenerator}.
@@ -203,15 +211,8 @@ public class Model {
 		return new ArrayList<Puzzle>(m_data.get(m_selectedWordList));
 	}
 	
-
-	/**
-	 * This and a few other things not sure if I'm keeping, still wrapping 
-	 * my head around things
-	*/
-	public boolean hasNext(){
-		if(m_data.higherKey(m_selectedWordList) == null)
-			return true;
-		else 
-			return false;
+	public void setSelected(String text) {
+		Puzzle puzzle=getPuzzle();
+		puzzle.selectWord(text);
 	}	
 }

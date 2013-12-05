@@ -87,7 +87,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	private final String PUZZLE_SIZE_OK = "PUZZLE_SIZE_OK";
 	private final String PUZZLE_SIZE_CANCEL = "PUZZLE_SIZE_CANCEL";
 	private final String PUZZLE_BUTTONS = "PUZZLE_BUTTONS";
-	
+
 	/* **********************************************************
 	 * CLASS VARIABLES.
 	 * 
@@ -105,13 +105,14 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	private JTextField m_txtSizeAtLeastX, m_txtSizeAtLeastY, m_txtSizeAtMostX, m_txtSizeAtMostY, m_txtSizeExactlyX, m_txtSizeExactlyY;
 	private int m_puzzleSizeMinX = DefaultOptions.PUZZLE_SIZE_MIN_X, m_puzzleSizeMinY = DefaultOptions.PUZZLE_SIZE_MIN_Y, m_puzzleSizeMaxX = DefaultOptions.PUZZLE_SIZE_MAX_X, m_puzzleSizeMaxY = DefaultOptions.PUZZLE_SIZE_MAX_Y, m_puzzleSizeExactlyX = DefaultOptions.PUZZLE_SIZE_EXACT_X, m_puzzleSizeExactlyY = DefaultOptions.PUZZLE_SIZE_EXACT_Y;
 	private JCheckBoxMenuItem m_chkBoxNonSquare;
+	private JMenuItem tabDeletebox;
 	private JCheckBoxMenuItem m_chkBoxShowSolutions, m_popupChkBoxShowSolutions;
 	private boolean m_puzzleShowSolutions = DefaultOptions.PUZZLE_SHOW_SOLUTIONS;
 	private boolean m_generateCrossword = DefaultOptions.PUZZLE_GENERATE_CROSSWORD;
 	private JButton m_StartStopButton;
 	private JPopupMenu m_puzzlePopupMenu;
 	private JDialog m_aboutDialog;
-	
+	private JPopupMenu m_wordPopupMenu;
 	/** Contains and displays the {@link #m_puzzle puzzle}. */
 	private JPanel m_puzzlePanel;
 	/** For displaying the grid of characters in the puzzle panel. */
@@ -153,6 +154,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	/** Initializes the main {@link javax.swing.JFrame window} and the GUI components therein. */
 	public View(Model model) {
 		m_model = model;
+		m_model.setView(this);
 		
 		initMenuBar();
 		initPuzzlePanel();
@@ -290,12 +292,10 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		
 	}
 	
+
 	private void initWordPanel() {
-		
-		
-		
+
 		// The top-level container
-		
 		m_wordsPanel = new JPanel();
 		m_wordsPanel.addMouseListener(this);
 		m_wordsPanel.setLayout(new BoxLayout(m_wordsPanel, BoxLayout.Y_AXIS));
@@ -305,6 +305,9 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_wordListPanel.addMouseListener(this);
 		
 		setComponentSizes(m_wordListPanel, 100, 100, 100, 400, 100, 400);
+		
+		// TODO: this component needs to be slightly smaller so that we don't START with scroll bars.
+		setComponentSizes(m_wordListPanel, 200, 200, 200, 500, 200, 500);
 		m_wordListPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));		
 		m_wordListPanel.setLayout(new SpringLayout());	
 //		m_wordsPanel.add(m_wordListPanel);
@@ -321,12 +324,12 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_wordEntryField.addKeyListener(this);
 		m_wordEntryField.addMouseListener(this);
 		m_wordEntryFields.add(m_wordEntryField);
-		m_wordsPanel.add(m_wordEntryFields.get(0));		
+		m_wordsPanel.add(m_wordEntryFields.get(m_Windex));	
 		
 		m_wordLabelList = new WordLabelList(m_model, m_wordListPanel);
 		this.addComponentListener(m_wordLabelList);
 		m_wordLabelLists.add(m_wordLabelList);
-        m_wordsPanel.addComponentListener(m_wordLabelLists.get(0));
+		m_wordsPanel.addComponentListener(m_wordLabelLists.get(m_Windex));
         
         //Buttons for navigating word lists
         //nextWord = new BasicArrowButton(BasicArrowButton.EAST);
@@ -404,6 +407,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_Tabs.addTab("Tab " + (m_Tabs.getTabCount()+1), m_wordsPanels.get(0));
 		setComponentSizes(m_Tabs, 200, 200, 200, 500, 200, 500);
 		add(m_Tabs);
+		tabDeletebox = new JMenuItem("Delete");
 		m_Tabs.addChangeListener(new ChangeListener() {
 		    public void stateChanged(ChangeEvent e) {
 		    	updateTab();
@@ -412,6 +416,9 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		    	updatePuzzlePanel();
 		    }
 		});
+		m_wordPopupMenu = new JPopupMenu("Delete");
+		m_wordPopupMenu.add(tabDeletebox);
+		m_Tabs.setComponentPopupMenu(m_wordPopupMenu);
 	}
 	/** @author Samuel Wiley */
 	public void initPuzzleSizeDialog() {
@@ -519,7 +526,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	}
 	
 	/** Resets {@code m_puzzlePanel}'s contents, border, and layout. */
-	private void updatePuzzlePanel() {
+	public void updatePuzzlePanel() {
 		final int MAX_BUTTON_SIZE = 82;
 		m_puzzlePanel.removeAll();
 		m_puzzlePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -568,6 +575,9 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			for (int x = 0; x < grid.getWidth(); x++) {
 				cell = new JTextField(Character.toString(grid.getCharAt(x, y)), 1);
 				puzzle.applyCellStyle(cell,m_chkBoxShowSolutions.isSelected());
+				if(puzzle.isSelected(x, y)){
+					cell.setBackground(Color.LIGHT_GRAY);
+				}
 				cell.setInheritsPopupMenu(true);
 				panel.add(cell);
 			}
@@ -1268,7 +1278,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				//updatePuzzlePanel();
 				//System.err.println(m_model.getWordList().toString());
 				m_Windex = m_Tabs.getTabCount();		
-				nextWordTab();
+				initWordPanel();
 				wordDex = m_Tabs.getTabCount()-1;
 				m_model.getNewWordList();
 				//System.err.println(m_model.getWordList().toString());
@@ -1397,34 +1407,40 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getNextWordList());
 		}
 	}
+	/**Author: Alex*/
 	public void updateTab(){
-		System.err.println(m_model.getWordList().toString());
+		System.err.println(Constants.filterWord(m_model.getWordList().toString()));
 		System.err.println(wordDex + ", " + (m_Tabs.getSelectedIndex()));
 		if (wordDex ==  m_Tabs.getSelectedIndex())
 			return;
-		while(wordDex > m_Tabs.getSelectedIndex()){
-			if(wordDex <= 0)
-				wordDex = m_Tabs.getTabCount();
-			else
-				wordDex--;
+		while(wordDex > m_Tabs.getSelectedIndex())
+		{
+			wordDex--;
 			System.err.println("Prev");
+			//while(Constants.filterWord(m_model.getWordList().toString()).equals(Constants.filterWord(m_model.getPreviousWordList().toString())))
 			m_model.getPreviousWordList();
+			System.err.println(Constants.filterWord(m_model.getWordList().toString()));
 			
 		}//going down tree
-		while(wordDex < m_Tabs.getSelectedIndex()){
-			if(wordDex >= m_Tabs.getTabCount())
-				wordDex = 0;
-			else
-				wordDex++;
+		while(wordDex < m_Tabs.getSelectedIndex())
+		{
+			wordDex++;
 			System.err.println("Next");
+			//while(Constants.filterWord(m_model.getWordList().toString()).equals(Constants.filterWord(m_model.getNextWordList().toString())))
 			m_model.getNextWordList();
+			System.err.println(Constants.filterWord(m_model.getWordList().toString()));
 		}
+		if(m_model.getFirstWordPuzzle() != null){
+				m_puzzleIndex = 1;
+				updatePuzzlePanel();
+		}
+		if(m_model.getWordList() != null)
+			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getWordList());
 	}
-
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		String componentName = e.getComponent().getName();
-		updateTab();
+		//updateTab();
 		if (componentName == null) {
 			return;
 		}
@@ -1470,12 +1486,11 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				//updatePuzzlePanel();
 				//System.err.println(m_model.getWordList().toString());
 				m_Windex = m_Tabs.getTabCount();		
-				nextWordTab();
+				initWordPanel();
 				wordDex = m_Tabs.getTabCount()-1;
 				m_model.getNewWordList();
 				//System.err.println(m_model.getWordList().toString());
 				m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanels.get(m_Windex));
-				m_Windex++;
 				wordDex++;
 				updateTab();
 				break;
@@ -1485,7 +1500,6 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 					m_puzzleIndex = 1;
 				else
 					m_puzzleIndex++;
-				
 				updatePuzzlePanel();
 				
 				break;	
@@ -1497,7 +1511,6 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				break;
 		}
 	}
-	
 	private void stopStartGeneration() {
 		if(m_model.isPuzzleGeneratorRunning()) {
 			toggleButtonActivation(true);
@@ -1528,7 +1541,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	}
 	
 	private void toggleButtonActivation(boolean activate) {
-		
+
 		//FIXME Getting these by index seems REALLY brittle.  Solutions welcome
 		
 		//Puzzle buttons
@@ -1586,6 +1599,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		
 		puzzlePanelUpdater.start();
 	}
+	
 	
 	@Override
 	public void mousePressed(MouseEvent e) {

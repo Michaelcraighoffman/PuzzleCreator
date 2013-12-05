@@ -353,13 +353,26 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 	public void mouseClicked(MouseEvent e) {
 		if (e.getComponent().getName().equals(WORD_LABEL_NAME)) {
 			updateSelection(e.getComponent());
-			
+			if(e.getButton()==MouseEvent.BUTTON1) {
+				JLabel lbl=(JLabel)e.getComponent();
+				m_model.setSelected(lbl.getText());
+				m_model.getView().updatePuzzlePanel();
+			}
 			// If it was a right-click, also show the popup menu.
 			if (e.getButton() == MouseEvent.BUTTON3) {
 				/* TODO: This might need testing on a multi-monitor device;
 				 * getX and getY might not work properly. They have alternatives,
 				 * getXOnScreen and getYOnScreen, but I haven't tried them. -SBW */
 				m_popupMenu.show(e.getComponent(), e.getX(), e.getY());
+			}
+		}
+		if(e.getComponent().getName().equals(CLUE_LABEL_NAME)) {
+			updateSelection(e.getComponent());
+			if (e.getButton() == MouseEvent.BUTTON3) {
+				/* TODO: This might need testing on a multi-monitor device;
+				 * getX and getY might not work properly. They have alternatives,
+				 * getXOnScreen and getYOnScreen, but I haven't tried them. -SBW */
+				m_popupMenu2.show(e.getComponent(), e.getX(), e.getY());
 			}
 		}
 		if(e.getComponent().getName().equals(CLUE_LABEL_NAME)) {

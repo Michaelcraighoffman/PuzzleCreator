@@ -39,7 +39,7 @@ public class Constants {
 		public static final String PUZZLE_SIZE = "PUZZLE_SIZE";
 		public static final String PUZZLE_NON_SQUARE = "PUZZLE_NON_SQUARE";
 		public static final String PUZZLE_SHOW_SOLUTIONS = "PUZZLE_SHOW_SOLUTIONS";
-		
+		public static final String DELETE_TAB = "DELETE_TAB";
 		public static final String ABOUT = "ABOUT";
 		public static final String PRINT = "PRINT";
 	}
