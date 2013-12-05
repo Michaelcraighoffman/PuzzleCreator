@@ -1387,14 +1387,17 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				m_model.clearSelectedPuzzle();
 				//updatePuzzlePanel();
 				//System.err.println(m_model.getWordList().toString());
-				m_Windex = m_Tabs.getTabCount();		
-				initWordPanel();
-				wordDex = m_Tabs.getTabCount()-1;
-				m_model.getNewWordList();
-				//System.err.println(m_model.getWordList().toString());
-				m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanels.get(m_Windex));
-				m_Windex++;
-				wordDex++;
+				if(!(m_model.getWordList().isEmpty()))
+				{
+					m_Windex = m_Tabs.getTabCount();		
+					initWordPanel();
+					wordDex = m_Tabs.getTabCount()-1;
+					m_model.getNewWordList();
+					//System.err.println(m_model.getWordList().toString());
+					m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanels.get(m_Windex));
+					m_Windex++;
+					wordDex++;
+				}
 				importFile();
 				updateTab();
 				break;
