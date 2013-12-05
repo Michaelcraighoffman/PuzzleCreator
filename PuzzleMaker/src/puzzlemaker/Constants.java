@@ -39,8 +39,9 @@ public class Constants {
 		public static final String PUZZLE_SIZE = "PUZZLE_SIZE";
 		public static final String PUZZLE_NON_SQUARE = "PUZZLE_NON_SQUARE";
 		public static final String PUZZLE_SHOW_SOLUTIONS = "PUZZLE_SHOW_SOLUTIONS";
-		
+		public static final String DELETE_TAB = "DELETE_TAB";
 		public static final String ABOUT = "ABOUT";
+		public static final String PRINT = "PRINT";
 	}
 	
 	public final class DefaultOptions {
@@ -49,6 +50,7 @@ public class Constants {
 		public static final boolean PUZZLE_SIZE_MIN_CONSTRAINED = false;
 		public static final boolean PUZZLE_SIZE_MAX_CONSTRAINED = false;
 		public static final boolean PUZZLE_SIZE_EXACT_CONSTRAINED = false;
+		public static final boolean PUZZLE_GENERATE_CROSSWORD=true;
 		public static final int PUZZLE_SIZE_MIN_X = -1;
 		public static final int PUZZLE_SIZE_MIN_Y = -1;
 		public static final int PUZZLE_SIZE_MAX_X = 10;
@@ -57,23 +59,18 @@ public class Constants {
 		public static final int PUZZLE_SIZE_EXACT_Y = -1;
 	}
 
-//	public static final String IMPORT = "MENU_IMPORT";
-//	public static final String SAVE_WORDLIST = "MENU_EXPORT_WORDLIST";
-//	public static final String EXPORT = "MENU_EXPORT";
-//	public static final String EXIT = "EXIT";
-//	public static final String ABOUT = "ABOUT";
-	
 	public static String filterWord(String word) {
 		word = filterToLetters(word.trim().toUpperCase());
 		
-		if (word.isEmpty()) {
+		if (word.length() < 2) {
 			return null;
 		}
 
 		return word;
 	}
 	
-	/** @returns The string with all non-letters removed. */
+	/** @returns The string with all non-letters removed. 
+	 * @author Samuel Wiley*/
 	private static String filterToLetters(String word) {
 		char[] input = word.toCharArray();
 		String output = "";

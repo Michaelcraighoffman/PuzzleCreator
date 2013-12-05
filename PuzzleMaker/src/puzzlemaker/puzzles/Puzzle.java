@@ -21,6 +21,12 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 		return m_wordList;
 	}
 	
+	public abstract void applyCellStyle(JTextField cell, boolean showSolution);		
+	
+	/**
+	 * 
+	 * @return
+	 */
 	public boolean isLegal() {
 		int[] validDirections;
 		if (this instanceof Crossword) {
@@ -31,7 +37,7 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 		}
 		else {
 			return false;
-		}
+		}		
 				
 		GridWalker walker = new GridWalker(m_grid);
 		char cellChar;
@@ -140,9 +146,6 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 		return true;
 	}
 	
-	
-	public abstract void applyCellStyle(JTextField cell, boolean showSolution);		
-		
 	@Override
 	public String toString() {
 		String output = this.getClass().getSimpleName() + ":\n" + m_grid.toString();
@@ -154,20 +157,19 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 	}
 	
 	@Override
+	public int compareTo(Puzzle p) {
+		return (this.getGrid().compareTo(p.getGrid()));
+	}
+	
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof Puzzle) {
 			Puzzle p = (Puzzle) o;
 			
 			return (this.getGrid().equals(p.getGrid()));
 		}
-		else
-		{
+		else {
 			return false;
 		}
-	}
-	
-	@Override
-	public int compareTo(Puzzle p) {
-		return (this.getGrid().compareTo(p.getGrid()));
 	}
 }

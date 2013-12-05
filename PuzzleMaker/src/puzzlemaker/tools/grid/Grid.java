@@ -7,7 +7,7 @@ import puzzlemaker.Constants;
 /** A Grid is a 2D ArrayList of Characters.<br>
  * A grid's dimensions can range (0, 128) or [1, 127].
  * 
- * @author Sam
+ * @author Samuel Wiley
  *
  */
 public class Grid implements Comparable<Grid> {

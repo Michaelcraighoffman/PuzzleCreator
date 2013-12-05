@@ -14,6 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.Spring;
 import javax.swing.SpringLayout;
 import javax.swing.event.PopupMenuEvent;
@@ -21,20 +22,23 @@ import javax.swing.event.PopupMenuListener;
 
 import puzzlemaker.Constants;
 import puzzlemaker.model.Model;
+import puzzlemaker.tools.WordCluePair;
 
 /** This class manages the graphical representation of the word list.
   * 
-  * @author szeren */
+  * @author Samuel Wiley */
 public class WordLabelList implements ActionListener, MouseListener, ComponentListener, PopupMenuListener {
 
 	Model m_model;
 	JPanel m_displayPanel;
+	JScrollPane m_scrollPane;
 	
 	ArrayList<JLabel> m_data;
 	JLabel m_selectedLabel;
 
 	private JPopupMenu m_popupMenu;
 	private final String WORD_LABEL_NAME = "WORD_LABEL_NAME";
+	private final String CLUE_LABEL_NAME = "CLUE_LABEL_NAME";
 	private final String DELETE_LABEL = "DELETE_LABEL";
 	
 	// For managing the WordListPanel's layout
@@ -48,6 +52,7 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 		
 		m_data = new ArrayList<JLabel>();
 		m_displayPanel = displayPanel;
+		m_scrollPane = new JScrollPane();
 				
 		m_popupMenu = new JPopupMenu();
 		JMenuItem menuItem = new JMenuItem("Delete");
@@ -69,10 +74,15 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			JLabel newLabel = new JLabel(word);
 			newLabel.addMouseListener(this);
 			newLabel.setName(WORD_LABEL_NAME);
-//			newLabel.setComponentPopupMenu(m_popupMenu);
 			setStyle(newLabel, Font.PLAIN);
+			JLabel clueLabel = new JLabel();
+			clueLabel.addMouseListener(this);
+			clueLabel.setName(CLUE_LABEL_NAME);
 			if (m_data.add(newLabel)) {
+				m_data.add(clueLabel);
 				m_displayPanel.add(newLabel);
+				m_displayPanel.add(clueLabel);
+				System.out.println("from add word to do layout");
 				doLayout();
 				return true;
 			} 
@@ -100,6 +110,15 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			return false;
 		}
 		
+		// hmmm TODO: should be able to just remove one neighboring label... if we deleted a clue label,
+		// then move one index down and delete that, but if we just deleted a word label, stay at the same index
+		// and delete again? and should all word labels be on even indexes? (i think so)
+		for (int i = 0; i < m_displayPanel.getComponentCount(); i++) {
+			if (m_displayPanel.getComponent(i) == m_selectedLabel) {
+				System.out.println("WordLabelList.deleteSelectedWord(): Match found.");
+			}
+		}
+		
 		m_selectedLabel.removeMouseListener(this);
 		if (!m_data.remove(m_selectedLabel)) {
 			System.err.println("WordList.deleteSelectedWord(): selected word (" + m_selectedLabel.getText() + ") not found in m_data. Delete failed");
@@ -122,54 +141,107 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 		label.setSize(minWidth(label), label.getHeight());
 	}
 	
-	/** Sets the locations and sizes of all of the word list's labels using a SpringLayout. */
+	/** Sets the locations and sizes of all of the word list's labels using a SpringLayout. 
+	 * @author Samuel Wiley*/
 	private void doLayout() {
-		if (m_displayPanel.getComponentCount() > 0) {
-			SpringLayout layout = (SpringLayout) m_displayPanel.getLayout();
-					
-			// The "available" prefix refers to the limit of the display panel.
-	        int availableHeight = m_displayPanel.getSize().height - (m_displayPanel.getInsets().top + m_displayPanel.getInsets().bottom);
-			int availableWidth = m_displayPanel.getSize().width - (m_displayPanel.getInsets().left + m_displayPanel.getInsets().right);
-	
-	        int availableRows = availableHeight / (ROW_HEIGHT + ROW_GAP);
-	        int rows = m_displayPanel.getComponentCount() > availableRows ? availableRows : m_displayPanel.getComponentCount();
-			int columns = (m_displayPanel.getComponentCount() / availableRows) + 1;
-			if (m_displayPanel.getComponentCount() % availableRows == 0) {
-				columns--;
-			}
-			int maxColumnWidth = (availableWidth - ((columns - 1) * COLUMN_GAP)) / columns;
-	
+		boolean useNewLayout = true;
+		System.out.println("Doing layout.");
+		
+		if (useNewLayout) {
 			
-			// Set label locations and sizes.
+			int availableWidth = m_displayPanel.getSize().width - (m_displayPanel.getInsets().left + m_displayPanel.getInsets().right);
+			int maxColumnWidth = (availableWidth - COLUMN_GAP) / 2;
+			
+			
+			ArrayList<WordCluePair> modelData = m_model.getWordCluePairList();
+			SpringLayout layout = (SpringLayout) m_displayPanel.getLayout();
 			Component currentComponent;
-			int x = 0;
-			int componentIndex = 0;
 			int biggestWidthInColumn = 0;
-			for (int c = 0; c < columns; c++) {
-				for (int r = 0; r < rows; r++) {
-					if (componentIndex == m_displayPanel.getComponentCount()) {
-						break;
-					}
-					currentComponent = m_displayPanel.getComponent(componentIndex);
-					SpringLayout.Constraints constraints = layout.getConstraints(currentComponent);
-					
-					constraints.setX(Spring.constant(x));
-					constraints.setY(Spring.constant(r * (ROW_HEIGHT + ROW_GAP)));
-					int labelWidth = Math.min(maxColumnWidth, minWidth((JLabel) currentComponent));
-					constraints.setWidth(Spring.constant(labelWidth));
-					constraints.setHeight(Spring.constant(ROW_HEIGHT));
-					
-					biggestWidthInColumn = Math.max(labelWidth, biggestWidthInColumn);
-					componentIndex++;
-				}
-				x += biggestWidthInColumn + COLUMN_GAP;
-				biggestWidthInColumn = 0;
+			
+			System.out.println("modelData.size() = " + modelData.size());
+			for (int i = 0; i < modelData.size(); i++) {
+				currentComponent = m_displayPanel.getComponent(i * 2); // this should grab all word labels
+//				System.out.println("Laying out " + ((JLabel)currentComponent).getText());
+				SpringLayout.Constraints constraints = layout.getConstraints(currentComponent);
+				constraints.setX(Spring.constant(0));
+				constraints.setY(Spring.constant(i * (ROW_HEIGHT + ROW_GAP)));
+				System.out.println(((JLabel)currentComponent).getText() + "'s height: " + (i * (ROW_HEIGHT + ROW_GAP)));
+				int labelWidth = Math.min(maxColumnWidth, minWidth(((JLabel)currentComponent)));
+				constraints.setWidth(Spring.constant(labelWidth));
+				constraints.setHeight(Spring.constant(ROW_HEIGHT));
+				
+				biggestWidthInColumn = Math.max(labelWidth, biggestWidthInColumn);
+			}
+			
+			System.out.println("Biggest width in column = " + biggestWidthInColumn);
+			int remainingWidth = availableWidth - (biggestWidthInColumn + COLUMN_GAP);
+			
+			for (int i = 0; i < modelData.size(); i++) {
+				currentComponent = m_displayPanel.getComponent((i * 2) + 1);
+//				System.out.println("Laying out " + ((JLabel)currentComponent).getText());
+				((JLabel)currentComponent).setText(modelData.get(i).getClue());
+				SpringLayout.Constraints constraints = layout.getConstraints(currentComponent);
+				constraints.setX(Spring.constant(biggestWidthInColumn + COLUMN_GAP));
+				constraints.setY(Spring.constant(i * (ROW_HEIGHT * ROW_GAP)));
+				System.out.println(((JLabel)currentComponent).getText() + "'s height: " + (i * (ROW_HEIGHT + ROW_GAP)));
+				constraints.setWidth(Spring.constant(Math.min(remainingWidth, minWidth((JLabel)currentComponent))));
+				constraints.setHeight(Spring.constant(ROW_HEIGHT));
 			}
 			
 			SpringLayout.Constraints panelConstraints = layout.getConstraints(m_displayPanel);
-			panelConstraints.setConstraint(SpringLayout.EAST, Spring.constant((columns * (maxColumnWidth + COLUMN_GAP)) - COLUMN_GAP));
-			panelConstraints.setConstraint(SpringLayout.SOUTH, Spring.constant((rows * (ROW_HEIGHT + ROW_GAP)) - ROW_GAP));
+			panelConstraints.setConstraint(SpringLayout.EAST, Spring.constant(availableWidth));
+			
+			// TODO: Not sure about this line.. whether or not this spring layout needs to constrain it's vertical size since we have a scroll bar...
+			panelConstraints.setConstraint(SpringLayout.SOUTH, Spring.constant(((modelData.size() / 2) * (ROW_HEIGHT + ROW_GAP)) - ROW_GAP));
 		}
+		else {
+			if (m_displayPanel.getComponentCount() > 0) {
+				SpringLayout layout = (SpringLayout) m_displayPanel.getLayout();
+						
+				// The "available" prefix refers to the limit of the display panel.
+		        int availableHeight = m_displayPanel.getSize().height - (m_displayPanel.getInsets().top + m_displayPanel.getInsets().bottom);
+				int availableWidth = m_displayPanel.getSize().width - (m_displayPanel.getInsets().left + m_displayPanel.getInsets().right);
+		
+		        int availableRows = availableHeight / (ROW_HEIGHT + ROW_GAP);
+		        int rows = m_displayPanel.getComponentCount() > availableRows ? availableRows : m_displayPanel.getComponentCount();
+				int columns = (m_displayPanel.getComponentCount() / availableRows) + 1;
+				if (m_displayPanel.getComponentCount() % availableRows == 0) {
+					columns--;
+				}
+				int maxColumnWidth = (availableWidth - ((columns - 1) * COLUMN_GAP)) / columns;
+				
+				// Set label locations and sizes.
+				Component currentComponent;
+				int x = 0;
+				int componentIndex = 0;
+				int biggestWidthInColumn = 0;
+				for (int c = 0; c < columns; c++) {
+					for (int r = 0; r < rows; r++) {
+						if (componentIndex == m_displayPanel.getComponentCount()) {
+							break;
+						}
+						currentComponent = m_displayPanel.getComponent(componentIndex);
+						SpringLayout.Constraints constraints = layout.getConstraints(currentComponent);
+						
+						constraints.setX(Spring.constant(x));
+						constraints.setY(Spring.constant(r * (ROW_HEIGHT + ROW_GAP)));
+						int labelWidth = Math.min(maxColumnWidth, minWidth((JLabel) currentComponent));
+						constraints.setWidth(Spring.constant(labelWidth));
+						constraints.setHeight(Spring.constant(ROW_HEIGHT));
+						
+						biggestWidthInColumn = Math.max(labelWidth, biggestWidthInColumn);
+						componentIndex++;
+					}
+					x += biggestWidthInColumn + COLUMN_GAP;
+					biggestWidthInColumn = 0;
+				}
+				
+				SpringLayout.Constraints panelConstraints = layout.getConstraints(m_displayPanel);
+				panelConstraints.setConstraint(SpringLayout.EAST, Spring.constant((columns * (maxColumnWidth + COLUMN_GAP)) - COLUMN_GAP));
+				panelConstraints.setConstraint(SpringLayout.SOUTH, Spring.constant((rows * (ROW_HEIGHT + ROW_GAP)) - ROW_GAP));
+			}
+		}
+
 		m_displayPanel.revalidate();
 		
 		/* When the most recently entered word gets deleted, the part of the word that wasn't covered

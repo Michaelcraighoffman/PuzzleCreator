@@ -6,7 +6,7 @@ import puzzlemaker.puzzles.Word;
 /** 
  * Similar to GridIterator, except doesn't hold a pointer to its Grid and doesn't return Grid elements on next().
  * Iteration pattern is left to right then top to bottom, rotated as appropriate.
- * @author szeren
+ * @author Samuel Wiley
  *
  */
 public class GridWalker {
