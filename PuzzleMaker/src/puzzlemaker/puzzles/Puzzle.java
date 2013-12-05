@@ -78,6 +78,7 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 										newWordList.add(tmpWord);
 										found = true;
 										letters = "";
+										break;
 									}
 								}
 							}
@@ -179,6 +180,19 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 			if(w.toString().equals(text)) {
 				m_selectedWord=w;
 				return;
+			}
+		}
+	}
+
+	public void selectWord(int x, int y) {
+		for(Word w : m_wordList) {
+			GridWalker walker=new GridWalker(m_grid,w.getX(),w.getY(),w.getDirection());
+			for(int i=0; i<w.toString().length(); i++) {
+				if(walker.x==x && walker.y==y) {
+					m_selectedWord=w;
+					return;
+				}
+				walker.tryNextCell();
 			}
 		}
 	}

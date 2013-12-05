@@ -109,6 +109,8 @@ public class Model {
 //		return m_selectedWordList.remove(word);
 	}
 	
+
+	
 	public ArrayList<WordCluePair> getWordCluePairList() {
 		return m_selectedWordList;
 	}

@@ -122,10 +122,6 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			return false;
 		}
 		
-		// TODO: did the following, but it's not very clean...
-		// should be able to just remove one neighboring label... if we deleted a clue label,
-		// then move one index down and delete that, but if we just deleted a word label, stay at the same index
-		// and delete again? and should all word labels be on even indexes? (i think so)
 		JLabel m_selectedLabelClue = null;
 		for (int i = 0; i < m_displayPanel.getComponentCount(); i++) {
 			if (m_displayPanel.getComponent(i) == m_selectedLabel) {
@@ -156,20 +152,42 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 	// consider adding delete word option to get rid of all
 	// consider adding edit from the word (it would modify component i+1)
 	public boolean editSelectedWordClue() {
-		// TODO: make this work. Somehow.
-/*		m_selectedLabel.setText("user set text bitches");
+	/*	m_selectedLabel.setText("user set text bitches");
 		m_selectedLabel.setName("user set text bitches");
 		for (int i = 0; i < m_displayPanel.getComponentCount(); i++) {
 			if (m_displayPanel.getComponent(i) == m_selectedLabel) {
-
-				setStyle(m_selectedLabel, Font.BOLD);
+				System.out.println("WordLabelList.editSelectedWordClue(): Match found.");
 				m_data.set(i, m_selectedLabel);
 			}
-		}*/
+		}*/	
 		
+		JLabel m_clueword = null;
+		for (int i = 0; i < m_displayPanel.getComponentCount(); i++) {
+			if (m_displayPanel.getComponent(i) == m_selectedLabel) {
+				m_clueword = (JLabel) m_displayPanel.getComponent(i-1);
+			}
+		}
+		String userText = "user set text";
+		JLabel userclue = new JLabel();
+		userclue.setText(userText);
+		if(modifyWordClue(m_clueword, userclue)){		
+			doLayout();
+			m_selectedLabel = null;
+	
+		}
 		
 
 		return true;
+	}
+// FIXME: Still not doing what it should be -AEZ
+	private boolean modifyWordClue(JLabel word, JLabel clue){
+		for (int i=0; i<m_data.size(); i++) {
+			if (m_data.get(i).equals(word)) {
+				m_data.set(i+1, clue);
+				return true;
+			}
+		}
+		return false;		
 	}
 	
 	
@@ -188,15 +206,6 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			
 			int availableWidth = m_displayPanel.getSize().width - (m_displayPanel.getInsets().left + m_displayPanel.getInsets().right);
 			int maxColumnWidth = (availableWidth - COLUMN_GAP) / 2;
-			
-		/*	modelData.size() = 3
-			TEST's height: 0
-			BAM's height: 19
-			LOLZORS's height: 38
-			Biggest width in column = 55
-			TEST's clue's height: 0
-			BAM's clue's height: 19
-			LOLZORS's clue's height: 38*/
 
 			
 			ArrayList<WordCluePair> modelData = m_model.getWordCluePairList();
@@ -368,6 +377,19 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 		}
 		if(e.getComponent().getName().equals(CLUE_LABEL_NAME)) {
 			updateSelection(e.getComponent());
+			
+			//highlights the word associated with the clue
+			if(e.getButton()==MouseEvent.BUTTON1) {
+				JLabel lbl=(JLabel)e.getComponent();
+				JLabel m_clueword = null;
+				for (int i = 0; i < m_displayPanel.getComponentCount(); i++) {
+					if (m_displayPanel.getComponent(i) == lbl) {
+						m_clueword = (JLabel) m_displayPanel.getComponent(i-1);
+					}
+				}
+				m_model.setSelected(m_clueword.getText());
+				m_model.getView().updatePuzzlePanel();
+			}
 			if (e.getButton() == MouseEvent.BUTTON3) {
 				/* TODO: This might need testing on a multi-monitor device;
 				 * getX and getY might not work properly. They have alternatives,
@@ -375,16 +397,11 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 				m_popupMenu2.show(e.getComponent(), e.getX(), e.getY());
 			}
 		}
-		if(e.getComponent().getName().equals(CLUE_LABEL_NAME)) {
-			updateSelection(e.getComponent());
-			if (e.getButton() == MouseEvent.BUTTON3) {
-				/* TODO: This might need testing on a multi-monitor device;
-				 * getX and getY might not work properly. They have alternatives,
-				 * getXOnScreen and getYOnScreen, but I haven't tried them. -SBW */
-				m_popupMenu2.show(e.getComponent(), e.getX(), e.getY());
-			}
-		}
+
 	}
+	
+
+	
 	
 	/************************************************************
 	  				UNUSED INHERITED FUNCTIONS
