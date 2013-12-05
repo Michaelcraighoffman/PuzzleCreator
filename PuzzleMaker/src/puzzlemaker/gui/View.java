@@ -87,6 +87,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	private final String PUZZLE_SIZE_OK = "PUZZLE_SIZE_OK";
 	private final String PUZZLE_SIZE_CANCEL = "PUZZLE_SIZE_CANCEL";
 	private final String PUZZLE_BUTTONS = "PUZZLE_BUTTONS";
+
 	/* **********************************************************
 	 * CLASS VARIABLES.
 	 * 
@@ -153,6 +154,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	/** Initializes the main {@link javax.swing.JFrame window} and the GUI components therein. */
 	public View(Model model) {
 		m_model = model;
+		m_model.setView(this);
 		
 		initMenuBar();
 		initPuzzlePanel();
@@ -247,9 +249,10 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		
 		m_puzzleDisplayPanel = new JPanel();
 	}
-	
+
 	private void initWordPanel() {
-		// The top-level containerE
+
+		// The top-level container
 		m_wordsPanel = new JPanel();
 		m_wordsPanel.addMouseListener(this);
 		m_wordsPanel.setLayout(new BoxLayout(m_wordsPanel, BoxLayout.Y_AXIS));
@@ -262,7 +265,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		setComponentSizes(m_wordListPanel, 200, 200, 200, 500, 200, 500);
 		m_wordListPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));		
 		m_wordListPanel.setLayout(new SpringLayout());	
-		m_wordsPanel.add(m_wordListPanel);
+//		m_wordsPanel.add(m_wordListPanel);
 		
 		m_wordListScrollPane = new JScrollPane(m_wordListPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 	// AEZ removed set size to allow scrollpane to resize with panel 
@@ -478,7 +481,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 	}
 	
 	/** Resets {@code m_puzzlePanel}'s contents, border, and layout. */
-	private void updatePuzzlePanel() {
+	public void updatePuzzlePanel() {
 		final int MAX_BUTTON_SIZE = 82;
 		m_puzzlePanel.removeAll();
 		m_puzzlePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -527,7 +530,12 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			for (int x = 0; x < grid.getWidth(); x++) {
 				cell = new JTextField(Character.toString(grid.getCharAt(x, y)), 1);
 				puzzle.applyCellStyle(cell,m_chkBoxShowSolutions.isSelected());
+				if(puzzle.isSelected(x, y)){
+					cell.setBackground(Color.LIGHT_GRAY);
+				}
 				cell.setInheritsPopupMenu(true);
+				cell.addMouseListener(this);
+				cell.setName("CELL"+Integer.toString(x)+","+Integer.toString(y));
 				panel.add(cell);
 			}
 		}
@@ -1384,7 +1392,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				updatePuzzlePanel();
 		}
 		if(m_model.getWordList() != null)
-			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getWordList());
+		;//	m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getWordList());
 	}
 	@Override
 	public void mouseClicked(MouseEvent e) {
@@ -1393,8 +1401,17 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		if (componentName == null) {
 			return;
 		}
+		if(componentName.contains("CELL")) {
+			String toBeParsed=componentName.substring(4);
+			String[] coords=toBeParsed.split(",");
+			int x=Integer.parseInt(coords[0]);
+			int y=Integer.parseInt(coords[1]);
+			m_model.getPuzzle().selectWord(x,y);
+			updatePuzzlePanel();
+			return;
+		}
 		switch (componentName) {
-		
+
 		case WORD_SEARCH_BUTTON:
 			m_generateCrossword=false;
 			break;
@@ -1405,7 +1422,6 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		case STOP_BUTTON:
 			stopStartGeneration();
 			 break;
-			
 			case PREVIOUS_WORDLIST_BUTTON:
 			//	m_wordLabelList.changeTo(m_model.getNextWordList());
 //				if(m_model.getCurrentWordPuzzle() != null){
@@ -1467,29 +1483,44 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			m_model.stopPuzzleGenerator();
 		}
 		else {
-			toggleButtonActivation(false);
+			//m_model.clearSelectedPuzzle();
+			//updatePuzzlePanel();
+			//System.err.println(m_model.getWordList().toString());
+			//m_Windex = m_Tabs.getTabCount();		
+			
+			//wordDex = m_Tabs.getTabCount()-1;
+			
 			//TODO This needs to be converted over to work with Tabs
-			//	ArrayList<String> old=m_model.getWordList();
-			//	m_model.getNewWordList();
-			//	for(String s : old) {
-			//		m_model.addWord(s);
+				//ArrayList<String> old=m_model.getWordList();
+				//m_model.getNewWordList();
+				//for(String s : old) {
+					//m_model.addWord(s);
 			//	}
 			//	m_wordLabelList.changeTo(m_model.getWordList()); // except we should call this after startPuzzleGenerator in case the Model made a new word list
 			//	updatePuzzlePanel();
 			if (!m_model.getWordList().isEmpty()) {
+				toggleButtonActivation(false);
 				if(m_generateCrossword) {
 					m_model.startPuzzleGenerator(Constants.TYPE_CROSSWORD);
+					//initWordPanel();
+					//System.err.println(m_model.getWordList().toString());
+					//m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanels.get(m_Windex));
+					//wordDex++;
+					//updateTab();
 				}
 				else {
 					m_model.startPuzzleGenerator(Constants.TYPE_WORDSEARCH);
 				}
 				runSolutionMonitor();
+				
 			}
 		
 		}
 		
 	}
-private void toggleButtonActivation(boolean activate) {
+	
+	private void toggleButtonActivation(boolean activate) {
+
 		
 		//FIXME Getting these by index seems REALLY brittle.  Solutions welcome
 		
