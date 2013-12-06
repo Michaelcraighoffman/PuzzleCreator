@@ -1639,36 +1639,43 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			m_model.stopPuzzleGenerator();
 		}
 		else {
-			//m_model.clearSelectedPuzzle();
-			//updatePuzzlePanel();
-			//System.err.println(m_model.getWordList().toString());
-			//m_Windex = m_Tabs.getTabCount();		
 			
-			//wordDex = m_Tabs.getTabCount()-1;
-			
+			if(m_model.getFirstWordPuzzle() != null){
+				//System.err.println(m_model.getWordList().toString());
+				m_Windex = m_Tabs.getTabCount();		
+				wordDex = m_Tabs.getTabCount()-1;
+				initWordPanel();
+				//System.err.println(m_model.getWordList().toString());
+				m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanels.get(m_Windex));
+				wordDex++;
+			}
 			//TODO This needs to be converted over to work with Tabs
-				//ArrayList<String> old=m_model.getWordList();
-				//m_model.getNewWordList();
-				//for(String s : old) {
-					//m_model.addWord(s);
-			//	}
-			//	m_wordLabelList.changeTo(m_model.getWordList()); // except we should call this after startPuzzleGenerator in case the Model made a new word list
-			//	updatePuzzlePanel();
+				ArrayList<String> old=m_model.getWordList();
+				m_model.getNewWordList();
+				for(String s : old) {
+					m_model.addWord(s);
+				}
+		
 			if (!m_model.getWordList().isEmpty()) {
 				toggleButtonActivation(false);
+				
 				if(m_rbtnCrossword.isSelected()) {
 					m_model.startPuzzleGenerator(Constants.TYPE_CROSSWORD);
-					//initWordPanel();
-					//System.err.println(m_model.getWordList().toString());
-					//m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanels.get(m_Windex));
-					//wordDex++;
-					//updateTab();
+					
 				}
 				else {
 					m_model.startPuzzleGenerator(Constants.TYPE_WORDSEARCH);
 				}
 				runSolutionMonitor();
-				
+				if(wordDex != m_Tabs.getSelectedIndex()){
+					System.err.println(m_Windex); 
+				for(String s : old) {
+					m_wordLabelLists.get(m_Windex).addWord(s);
+				}
+				}//if
+				//m_wordLabelLists.get(m_Windex).changeToWordList(m_model.getWordList()); // except we should call this after startPuzzleGenerator in case the Model made a new word list
+				updatePuzzlePanel();
+				updateTab();
 			}
 		
 		}

@@ -215,11 +215,12 @@ public class WordLabelList implements ActionListener, MouseListener, ComponentLi
 			
 			System.out.println("modelData.size() = " + modelData.size());
 			for (int i = 0; i < modelData.size(); i++) {
-				currentComponent = m_displayPanel.getComponent(i * 2); // this should grab all word labels
+				//TODO: Need a different way to realign words in the list, this causes out of bound error.
+				currentComponent = m_displayPanel.getComponent(i*2); // this should grab all word labels
 //				System.out.println("Laying out " + ((JLabel)currentComponent).getText());
 				SpringLayout.Constraints constraints = layout.getConstraints(currentComponent);
 				constraints.setX(Spring.constant(0));
-				constraints.setY(Spring.constant(i * (ROW_HEIGHT + ROW_GAP)));
+				constraints.setY(Spring.constant((i) * (ROW_HEIGHT + ROW_GAP)));
 				System.out.println(((JLabel)currentComponent).getText() + "'s height: " + (i * (ROW_HEIGHT + ROW_GAP)));
 				int labelWidth = Math.min(maxColumnWidth, minWidth(((JLabel)currentComponent)));
 				constraints.setWidth(Spring.constant(labelWidth));
