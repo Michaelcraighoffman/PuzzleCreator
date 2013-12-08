@@ -93,7 +93,7 @@ public class Model {
 			return false;
 		}
 		
-		return m_selectedWordList.add(new WordCluePair(word, word + "'s clue"));
+		return m_selectedWordList.add(new WordCluePair(word, "(no clue)"));
 		// TODO: uncomment below, delete above.
 //		return m_selectedWordList.add(new WordCluePair(word));
 	}
@@ -108,19 +108,6 @@ public class Model {
 		return false;
 //		return m_selectedWordList.remove(word);
 	}
-	
-	public boolean editWord(String word, String clue) {
-		WordCluePair newClue = new WordCluePair(word, clue);
-		for(int i=0; i<m_selectedWordList.size();i++){
-			if(m_selectedWordList.get(i).getWord().equals(word)){
-				m_selectedWordList.set(i, newClue);
-				return true;
-			}
-		}
-		return false;
-	}
-	
-
 	
 	public ArrayList<WordCluePair> getWordCluePairList() {
 		return m_selectedWordList;
@@ -213,8 +200,6 @@ public class Model {
 		return m_data.get(m_selectedWordList).size();
 	}
 	
-	
-	
 	/**
 	 * I'm just using this right now for the Export function (which prints all of the solutions to a text file).
 	 * Feel free to repurpose it, but it would be nice not to have to clone a solution list with (potentially)
@@ -227,11 +212,8 @@ public class Model {
 	}
 	
 	public void setSelected(String text) {
-		if(m_selectedPuzzle == null){
-			// no puzzles have been created yet
-			return;
+		if (m_selectedPuzzle != null) {
+			m_selectedPuzzle.selectWord(text);
 		}
-		Puzzle puzzle=getPuzzle();
-		puzzle.selectWord(text);
 	}	
 }

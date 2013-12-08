@@ -4,8 +4,6 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
@@ -25,518 +23,315 @@ import puzzlemaker.Constants;
 import puzzlemaker.model.Model;
 import puzzlemaker.tools.WordCluePair;
 
-/**
- * This class manages the graphical representation of the word list.
- * 
- * @author Samuel Wiley
- */
-public class WordLabelList implements ActionListener, MouseListener,
-		ComponentListener, PopupMenuListener {
+/** This class manages the graphical representation of the word list.
+  * 
+  * @author Samuel Wiley */
+public class WordLabelList implements ActionListener, MouseListener, PopupMenuListener {
 
 	Model m_model;
+	View m_view;
 	JPanel m_displayPanel;
 	JScrollPane m_scrollPane;
-
+	
 	ArrayList<JLabel> m_data;
-	JLabel m_selectedLabel;
+	JLabel m_selectedWordLabel;
+	JLabel m_selectedClueLabel;
 
 	private JPopupMenu m_popupMenu;
-	private JPopupMenu m_popupMenu2;
-	private final String WORD_LABEL_NAME = "WORD_LABEL_NAME";
-	private final String CLUE_LABEL_NAME = "CLUE_LABEL_NAME";
+	private final String WORD_LABEL = "WORD_LABEL_NAME";
+	private final String CLUE_LABEL = "CLUE_LABEL_NAME";
 	private final String DELETE_LABEL = "DELETE_LABEL";
-	private final String EDIT_CLUE_LABEL = "EDIT_CLUE_LABEL";
-
+	private final String EDIT_CLUE = "EDIT_CLUE_LABEL";
+	
 	// For managing the WordListPanel's layout
 	private final int ROW_HEIGHT = 16;
 	private final int ROW_GAP = 3;
-	private final int COLUMN_GAP = 10;
-
-	/**
-	 * @param displayPanel
-	 *            The panel that the words' labels should be placed in.
-	 */
-	public WordLabelList(Model model, JPanel displayPanel) {
+	private final int COLUMN_GAP = 20;
+	
+	/** @param displayPanel The panel that the words' labels should be placed in. */
+	public WordLabelList(Model model, View view, JPanel displayPanel) {
 		m_model = model;
-
+		m_view = view;
+		
 		m_data = new ArrayList<JLabel>();
 		m_displayPanel = displayPanel;
 		m_scrollPane = new JScrollPane();
-
+				
 		m_popupMenu = new JPopupMenu();
-		JMenuItem menuItem = new JMenuItem("Delete Word");
+		JMenuItem menuItem = new JMenuItem("Delete");
 		menuItem.setActionCommand(DELETE_LABEL);
+		menuItem.addActionListener(this);		
+		m_popupMenu.add(menuItem);	
+		menuItem = new JMenuItem("Edit Clue");
+		menuItem.setActionCommand(EDIT_CLUE);
 		menuItem.addActionListener(this);
-		JMenuItem menuItemEdit = new JMenuItem("Edit Clue");
-		menuItemEdit.setActionCommand(EDIT_CLUE_LABEL);
-		menuItemEdit.addActionListener(this);
 		m_popupMenu.add(menuItem);
-		m_popupMenu.add(menuItemEdit);
 		m_popupMenu.addPopupMenuListener(this);
-
-		m_popupMenu2 = new JPopupMenu();
-		JMenuItem menuItem2 = new JMenuItem("Delete Word");
-		menuItem2.setActionCommand(DELETE_LABEL);
-		menuItem2.addActionListener(this);
-		JMenuItem menuItemEdit2 = new JMenuItem("Edit Clue");
-		menuItemEdit2.setActionCommand(EDIT_CLUE_LABEL);
-		menuItemEdit2.addActionListener(this);
-		m_popupMenu2.add(menuItem2);
-		m_popupMenu2.add(menuItemEdit2);
-		m_popupMenu2.addPopupMenuListener(this);
-
 	}
-
-	/**
-	 * Adds the word to the list <b>if</b> the word's length is non-zero after
-	 * being filtered to only letters.<br>
-	 * Capitalizes the word and adds it to the display panel.
-	 * 
-	 * @param word
-	 *            The word to be added.
-	 * @return <b>true</b> if the add was successful.
-	 */
+	
+	/************************************************************
+						LABEL MANIPULATION
+	 ************************************************************/
+	
+	/** Adds the word to the list <b>if</b> the word's length
+	  * is non-zero after being filtered to only letters.<br>
+	  * Capitalizes the word and adds it to the display panel.
+	  * @param word The word to be added.
+	  * @return <b>true</b> if the add was successful. */
 	public boolean addWord(String word) {
 		word = Constants.filterWord(word);
-
+		
 		if (word != null) {
 			JLabel newLabel = new JLabel(word);
 			newLabel.addMouseListener(this);
-			newLabel.setName(WORD_LABEL_NAME);
+			newLabel.setName(WORD_LABEL);
 			setStyle(newLabel, Font.PLAIN);
 			JLabel clueLabel = new JLabel();
 			clueLabel.addMouseListener(this);
-			clueLabel.setName(CLUE_LABEL_NAME);
+			clueLabel.setName(CLUE_LABEL);
 			setStyle(clueLabel, Font.PLAIN);
 			if (m_data.add(newLabel)) {
 				m_data.add(clueLabel);
 				m_displayPanel.add(newLabel);
 				m_displayPanel.add(clueLabel);
-				System.out.println("from add word to do layout");
 				doLayout();
 				return true;
-			}
+			} 
 		}
-
+		
 		return false;
 	}
-
-	/** @return If a selected word was de-selected. */
-	public boolean deselectWord() {
-		if (m_selectedLabel == null) {
-			return false;
-		}
-
-		setStyle(m_selectedLabel, Font.PLAIN);
-		m_selectedLabel = null;
-		return true;
-	}
-
-	/**
-	 * Whether or not the delete was successful.
-	 * 
-	 * @return <b>false</b> if no word was selected or the label was not found.
-	 */
-	private boolean deleteSelectedWord() {
-		if (m_selectedLabel == null) {
-			System.err
-					.println("WordList.deleteSelectedWord(): no word selected. Delete failed");
-			return false;
-		}
-		JLabel m_selectedLabelWord = null;
-		JLabel m_selectedLabelClue = null;
+	
+	private void updateSelection(Component cmp) {
+		deselectLabels();
+		
 		for (int i = 0; i < m_displayPanel.getComponentCount(); i++) {
-			if (m_displayPanel.getComponent(i) == m_selectedLabel) {
-				System.out
-						.println("WordLabelList.deleteSelectedWord(): Match found.");
-				if (i % 2 == 0) {
-					m_selectedLabelWord = m_selectedLabel;
-					m_selectedLabelClue = (JLabel) m_displayPanel
-							.getComponent(i + 1);
-				} else {
-					m_selectedLabelWord = (JLabel) m_displayPanel
-							.getComponent(i - 1);
-					m_selectedLabelClue = m_selectedLabel;
+			if (m_displayPanel.getComponent(i).equals(cmp)) {
+				if ((i & 1) == 0) {
+					m_selectedWordLabel = (JLabel) m_displayPanel.getComponent(i);
+					m_selectedClueLabel = (JLabel) m_displayPanel.getComponent(i + 1);
 				}
+				else {
+					m_selectedWordLabel = (JLabel) m_displayPanel.getComponent(i - 1);
+					m_selectedClueLabel = (JLabel) m_displayPanel.getComponent(i);
+				}
+				setStyle(m_selectedWordLabel, Font.BOLD);
+				setStyle(m_selectedClueLabel, Font.BOLD);
+				
+				if (m_model.getPuzzle() != null) {
+					m_model.getPuzzle().selectWord(m_selectedWordLabel.getText());
+					m_view.updatePuzzlePanel();
+				}
+				
+				return;
 			}
 		}
-		m_selectedLabel.removeMouseListener(this);
-		if (!m_data.remove(m_selectedLabelWord)
-				&& !m_data.remove(m_selectedLabelClue)) {
-			System.err.println("WordList.deleteSelectedWord(): selected word ("
-					+ m_selectedLabelWord.getText()
-					+ ") not found in m_data. Delete failed");
+		System.err.println("WordLabelList.updateSelection(): No matching component found.");
+	}
+	
+	/** For use by the View when the user has clicked on a word in the puzzle. */
+ 	public void selectWord(String wordSelected) {
+		for (int i = 0; i < m_data.size(); i += 2) {
+			if (m_data.get(i).getText().equals(wordSelected)) {
+				updateSelection(m_data.get(i));
+			}
+		}
+	}
+	
+	/** Resets the current word clue by overwriting the current
+	  * auto-generated or user-entered clue.<br>*/
+	public boolean editSelectedWordClue() {
+		String newClue = JOptionPane.showInputDialog(m_view, "Enter a new clue:");
+		if (newClue == null) {
+			return false;
+		}
+		m_model.getWordCluePairList().get(m_data.indexOf(m_selectedWordLabel) / 2).setClue(newClue);
+		deselectLabels();
+		doLayout();
+		
+		return true;
+	}
+	
+	/** Whether or not the delete was successful. 
+	 * @return <b>false</b> if no word was selected or the label was not found. */
+	private boolean deleteSelected() {
+		if (m_selectedWordLabel == null || m_selectedClueLabel == null) {
 			return false;
 		}
 
-		m_displayPanel.remove(m_selectedLabelWord);
-		m_displayPanel.remove(m_selectedLabelClue);
-		if (!m_model.removeWord(m_selectedLabelWord.getText())
-				&& !m_model.removeWord(m_selectedLabelClue.getText())) {
-			System.err.println("Failed to remove word from model's list.");
-		}
-		m_selectedLabel = null;
+		m_selectedWordLabel.removeMouseListener(this);
+		m_selectedClueLabel.removeMouseListener(this);
+		
+		m_model.getWordCluePairList().remove(m_data.indexOf(m_selectedWordLabel) / 2);
+		
+		m_data.remove(m_selectedWordLabel);
+		m_data.remove(m_selectedClueLabel);
+
+		m_displayPanel.remove(m_selectedWordLabel);
+		m_displayPanel.remove(m_selectedClueLabel);
+		
+		m_selectedWordLabel = null;
 		doLayout();
 		return true;
 	}
-
-	/**
-	 * Provides user with a dialog input for the current word clue. Dialog will
-	 * be populated by the clue already in existence. Dialog input text
-	 * overwrites the current auto-generated or user-entered clue.<br>
-	 */
-	public boolean editSelectedWordClue() {
-
-		String previousClue = "";
-		JLabel m_word = null;
-		JLabel m_clue = null;
-		for (int i = 0; i < m_displayPanel.getComponentCount(); i++) {
-			if (m_displayPanel.getComponent(i) == m_selectedLabel) {
-				if (i % 2 == 0) {
-					m_word = m_selectedLabel;
-					m_clue = (JLabel) m_displayPanel.getComponent(i + 1);
-				} else {
-					m_word = (JLabel) m_displayPanel.getComponent(i - 1);
-					m_clue = m_selectedLabel;
-				}
-				previousClue = m_clue.getText();
-			}
+	
+	/** Deselects the selected labels, if there are any. */
+	public void deselectLabels() {
+		if (m_selectedWordLabel == null || m_selectedClueLabel == null) {
+			return;
 		}
-
-		String text = "";
-		text = JOptionPane.showInputDialog(null, "Enter new clue here",
-				previousClue);
-		if (text != null) {
-
-			if (m_model.editWord(m_word.getText(), text)) {
-				setStyle(m_selectedLabel, Font.PLAIN);
-				m_selectedLabel = null;
-				doLayout();
-			}
-		}
-		return true;
-
+		
+		setStyle(m_selectedWordLabel, Font.PLAIN);
+		setStyle(m_selectedClueLabel, Font.PLAIN);
+		m_selectedWordLabel = null;
+		m_selectedClueLabel = null;
+		return;
 	}
-
-	private void setStyle(JLabel label, int fontStyle) {
-		label.setFont(label.getFont().deriveFont(fontStyle));
-		label.setSize(minWidth(label), label.getHeight());
-	}
-
-	/**
-	 * Sets the locations and sizes of all of the word list's labels using a
-	 * SpringLayout.
-	 * 
-	 * @author Samuel Wiley
-	 */
-	private void doLayout() {
-		boolean useNewLayout = true;
-		System.out.println("Doing layout.");
-
-		if (useNewLayout) {
-
-			int availableWidth = m_displayPanel.getSize().width
-					- (m_displayPanel.getInsets().left + m_displayPanel
-							.getInsets().right);
-			int maxColumnWidth = (availableWidth - COLUMN_GAP) / 2;
-
-			ArrayList<WordCluePair> modelData = m_model.getWordCluePairList();
-			SpringLayout layout = (SpringLayout) m_displayPanel.getLayout();
-			Component currentComponent;
-			int biggestWidthInColumn = 0;
-
-			System.out.println("modelData.size() = " + modelData.size());
-			for (int i = 0; i < modelData.size(); i++) {
-				currentComponent = m_displayPanel.getComponent(i * 2); // this
-																		// should
-																		// grab
-																		// all
-																		// word
-																		// labels
-				// System.out.println("Laying out " +
-				// ((JLabel)currentComponent).getText());
-				SpringLayout.Constraints constraints = layout
-						.getConstraints(currentComponent);
-				constraints.setX(Spring.constant(0));
-				constraints.setY(Spring.constant(i * (ROW_HEIGHT + ROW_GAP)));
-				System.out.println(((JLabel) currentComponent).getText()
-						+ "'s height: " + (i * (ROW_HEIGHT + ROW_GAP)));
-				int labelWidth = Math.min(maxColumnWidth,
-						minWidth(((JLabel) currentComponent)));
-				constraints.setWidth(Spring.constant(labelWidth));
-				constraints.setHeight(Spring.constant(ROW_HEIGHT));
-
-				biggestWidthInColumn = Math.max(labelWidth,
-						biggestWidthInColumn);
-			}
-
-			System.out.println("Biggest width in column = "
-					+ biggestWidthInColumn);
-			int remainingWidth = availableWidth
-					- (biggestWidthInColumn + COLUMN_GAP);
-
-			for (int i = 0; i < modelData.size(); i++) {
-				currentComponent = m_displayPanel.getComponent((i * 2) + 1);
-				// System.out.println("Laying out " +
-				// ((JLabel)currentComponent).getText());
-				((JLabel) currentComponent).setText(modelData.get(i).getClue());
-				SpringLayout.Constraints constraints = layout
-						.getConstraints(currentComponent);
-				constraints.setX(Spring.constant(biggestWidthInColumn
-						+ COLUMN_GAP));
-				constraints.setY(Spring.constant(i * (ROW_HEIGHT + ROW_GAP)));
-				System.out.println(((JLabel) currentComponent).getText()
-						+ "'s height: " + (i * (ROW_HEIGHT + ROW_GAP)));
-				constraints.setWidth(Spring.constant(Math.min(remainingWidth,
-						minWidth((JLabel) currentComponent))));
-				constraints.setHeight(Spring.constant(ROW_HEIGHT));
-			}
-
-			SpringLayout.Constraints panelConstraints = layout
-					.getConstraints(m_displayPanel);
-			panelConstraints.setConstraint(SpringLayout.EAST,
-					Spring.constant(availableWidth));
-
-			// TODO: Not sure about this line.. whether or not this spring
-			// layout needs to constrain it's vertical size since we have a
-			// scroll bar...
-			panelConstraints.setConstraint(SpringLayout.SOUTH, Spring
-					.constant(((modelData.size() / 2) * (ROW_HEIGHT + ROW_GAP))
-							- ROW_GAP));
-		} else {
-			if (m_displayPanel.getComponentCount() > 0) {
-				SpringLayout layout = (SpringLayout) m_displayPanel.getLayout();
-
-				// The "available" prefix refers to the limit of the display
-				// panel.
-				int availableHeight = m_displayPanel.getSize().height
-						- (m_displayPanel.getInsets().top + m_displayPanel
-								.getInsets().bottom);
-				int availableWidth = m_displayPanel.getSize().width
-						- (m_displayPanel.getInsets().left + m_displayPanel
-								.getInsets().right);
-
-				int availableRows = availableHeight / (ROW_HEIGHT + ROW_GAP);
-				int rows = m_displayPanel.getComponentCount() > availableRows ? availableRows
-						: m_displayPanel.getComponentCount();
-				int columns = (m_displayPanel.getComponentCount() / availableRows) + 1;
-				if (m_displayPanel.getComponentCount() % availableRows == 0) {
-					columns--;
-				}
-				int maxColumnWidth = (availableWidth - ((columns - 1) * COLUMN_GAP))
-						/ columns;
-
-				// Set label locations and sizes.
-				Component currentComponent;
-				int x = 0;
-				int componentIndex = 0;
-				int biggestWidthInColumn = 0;
-				for (int c = 0; c < columns; c++) {
-					for (int r = 0; r < rows; r++) {
-						if (componentIndex == m_displayPanel
-								.getComponentCount()) {
-							break;
-						}
-						currentComponent = m_displayPanel
-								.getComponent(componentIndex);
-						SpringLayout.Constraints constraints = layout
-								.getConstraints(currentComponent);
-
-						constraints.setX(Spring.constant(x));
-						constraints.setY(Spring.constant(r
-								* (ROW_HEIGHT + ROW_GAP)));
-						int labelWidth = Math.min(maxColumnWidth,
-								minWidth((JLabel) currentComponent));
-						constraints.setWidth(Spring.constant(labelWidth));
-						constraints.setHeight(Spring.constant(ROW_HEIGHT));
-
-						biggestWidthInColumn = Math.max(labelWidth,
-								biggestWidthInColumn);
-						componentIndex++;
-					}
-					x += biggestWidthInColumn + COLUMN_GAP;
-					biggestWidthInColumn = 0;
-				}
-
-				SpringLayout.Constraints panelConstraints = layout
-						.getConstraints(m_displayPanel);
-				panelConstraints.setConstraint(SpringLayout.EAST, Spring
-						.constant((columns * (maxColumnWidth + COLUMN_GAP))
-								- COLUMN_GAP));
-				panelConstraints.setConstraint(
-						SpringLayout.SOUTH,
-						Spring.constant((rows * (ROW_HEIGHT + ROW_GAP))
-								- ROW_GAP));
-			}
-		}
-
-		m_displayPanel.revalidate();
-
-		/*
-		 * When the most recently entered word gets deleted, the part of the
-		 * word that wasn't covered by the popup menu hangs around because
-		 * m_displayPanel shrinks and THEN revalidates its area. For this
-		 * reason, we need to repaint m_displayPanel's parent.
-		 */
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				m_displayPanel.getParent().repaint();
-			}
-		});
-	}
-
-	private int minWidth(JLabel label) {
-		return label.getFontMetrics(label.getFont()).stringWidth(
-				label.getText());
-	}
-
-	private void updateSelection(Component cmp) {
-		deselectWord();
-
-		if (cmp.getName().equals(WORD_LABEL_NAME)) {
-			m_selectedLabel = (JLabel) cmp;
-			setStyle(m_selectedLabel, Font.BOLD);
-			doLayout(); // Since the label's width will change.
-		}
-		if (cmp.getName().equals(CLUE_LABEL_NAME)) {
-			m_selectedLabel = (JLabel) cmp;
-			setStyle(m_selectedLabel, Font.BOLD);
-			doLayout(); // Since the label's width will change.
-		}
-	}
-
-	/************************************************************
-	 * LISTENER FUNCTIONS
-	 ************************************************************/
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		String command = e.getActionCommand();
-
-		if (command.equals(DELETE_LABEL)) {
-			deleteSelectedWord();
-		}
-		if (command.equals(EDIT_CLUE_LABEL)) {
-			editSelectedWordClue();
-		}
-	}
-
-	@Override
-	public void componentResized(ComponentEvent e) {
-
-		// Without this check, exceptions will be thrown during initial loading.
-		if (m_displayPanel.getComponentCount() > 0) {
-			doLayout();
-		}
-	}
-
-	@Override
-	public void mousePressed(MouseEvent e) {
-		updateSelection(e.getComponent());
-	}
-
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		if (e.getComponent().getName().equals(WORD_LABEL_NAME)) {
-			updateSelection(e.getComponent());
-			if (e.getButton() == MouseEvent.BUTTON1) {
-				JLabel lbl = (JLabel) e.getComponent();
-				m_model.setSelected(lbl.getText());
-				m_model.getView().updatePuzzlePanel();
-			}
-			// If it was a right-click, also show the popup menu.
-			if (e.getButton() == MouseEvent.BUTTON3) {
-				/*
-				 * TODO: This might need testing on a multi-monitor device; getX
-				 * and getY might not work properly. They have alternatives,
-				 * getXOnScreen and getYOnScreen, but I haven't tried them. -SBW
-				 */
-				m_popupMenu.show(e.getComponent(), e.getX(), e.getY());
-			}
-		}
-		if (e.getComponent().getName().equals(CLUE_LABEL_NAME)) {
-			updateSelection(e.getComponent());
-			// highlights the word associated with the clue
-			if (e.getButton() == MouseEvent.BUTTON1) {
-				JLabel lbl = (JLabel) e.getComponent();
-				JLabel m_clueword = null;
-				for (int i = 0; i < m_displayPanel.getComponentCount(); i++) {
-					if (m_displayPanel.getComponent(i) == lbl) {
-						m_clueword = (JLabel) m_displayPanel
-								.getComponent(i - 1);
-					}
-				}
-				m_model.setSelected(m_clueword.getText());
-				m_model.getView().updatePuzzlePanel();
-			}
-			if (e.getButton() == MouseEvent.BUTTON3) {
-				/*
-				 * TODO: This might need testing on a multi-monitor device; getX
-				 * and getY might not work properly. They have alternatives,
-				 * getXOnScreen and getYOnScreen, but I haven't tried them. -SBW
-				 */
-				m_popupMenu2.show(e.getComponent(), e.getX(), e.getY());
-			}
-		}
-
-	}
-
-	/************************************************************
-	 * UNUSED INHERITED FUNCTIONS
-	 ************************************************************/
-
-	@Override
-	public void mouseReleased(MouseEvent e) {
-	}
-
-	@Override
-	public void mouseEntered(MouseEvent e) {
-	}
-
-	@Override
-	public void mouseExited(MouseEvent e) {
-	}
-
-	@Override
-	public void componentMoved(ComponentEvent e) {
-	}
-
-	@Override
-	public void componentShown(ComponentEvent e) {
-	}
-
-	@Override
-	public void componentHidden(ComponentEvent e) {
-	}
-
+	
 	public void changeToWordList(ArrayList<String> wordList) {
 		while (!m_data.isEmpty()) {
 			m_data.get(0).removeMouseListener(this);
 			m_displayPanel.remove(m_data.remove(0));
 		}
-
+		
 		for (String s : wordList) {
-			addWord(s); // TODO: reallly inefficient that this calls doLayout()
-						// each time
+			addWord(s); // TODO: reallly inefficient that this calls doLayout() each time
 		}
-
+		
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
+			public void run () {
 				m_displayPanel.getParent().repaint();
 			}
 		});
 	}
 
-	@Override
-	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+	private void setStyle(final JLabel label, int fontStyle) {
+		label.setFont(label.getFont().deriveFont(fontStyle));
+		label.setSize(minWidth(label), label.getHeight());
+		
+		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+			public void run () {
+				label.repaint();
+			}
+		});
 	}
+	
+	private int minWidth(JLabel label) {
+		return label.getFontMetrics(label.getFont()).stringWidth(label.getText());
+	}
+	
+	/** Sets the locations and sizes of all of the word list's labels using a SpringLayout. 
+	 * @author Samuel Wiley*/
+	private void doLayout() {
 
+		int availableWidth = m_displayPanel.getSize().width - (m_displayPanel.getInsets().left + m_displayPanel.getInsets().right);
+		int maxColumnWidth = (availableWidth - COLUMN_GAP) / 2;
+
+		
+		ArrayList<WordCluePair> modelData = m_model.getWordCluePairList();
+		SpringLayout layout = (SpringLayout) m_displayPanel.getLayout();
+		Component currentComponent;
+		int biggestWidthInColumn = 0;
+		
+		// Set up all word labels.
+		for (int i = 0; i < modelData.size(); i++) {
+			currentComponent = m_displayPanel.getComponent(i * 2); // this should grab all word labels
+			SpringLayout.Constraints constraints = layout.getConstraints(currentComponent);
+			constraints.setX(Spring.constant(0));
+			constraints.setY(Spring.constant(i * (ROW_HEIGHT + ROW_GAP)));
+			int labelWidth = Math.min(maxColumnWidth, minWidth(((JLabel)currentComponent)) + COLUMN_GAP);
+//			constraints.setWidth(Spring.constant(labelWidth));
+			constraints.setHeight(Spring.constant(ROW_HEIGHT));
+			
+			biggestWidthInColumn = Math.max(labelWidth, biggestWidthInColumn);
+		}
+		for (int i = 0; i < modelData.size(); i++) {
+			currentComponent = m_displayPanel.getComponent(i * 2); // this should grab all word labels
+			SpringLayout.Constraints constraints = layout.getConstraints(currentComponent);
+			constraints.setWidth(Spring.constant(biggestWidthInColumn));
+		}
+		
+		
+		int remainingWidth = availableWidth - (biggestWidthInColumn);
+		
+		// Set up all clue labels.
+		for (int i = 0; i < modelData.size(); i++) {
+			currentComponent = m_displayPanel.getComponent((i * 2) + 1);
+			((JLabel)currentComponent).setText(modelData.get(i).getClue());
+			SpringLayout.Constraints constraints = layout.getConstraints(currentComponent);
+			constraints.setX(Spring.constant(biggestWidthInColumn));
+			constraints.setY(Spring.constant(i * (ROW_HEIGHT + ROW_GAP)));
+			constraints.setWidth(Spring.constant(Math.min(remainingWidth, minWidth((JLabel)currentComponent) + 30)));
+			constraints.setHeight(Spring.constant(ROW_HEIGHT));
+		}
+		
+//		SpringLayout.Constraints panelConstraints = layout.getConstraints(m_displayPanel);
+//		panelConstraints.setConstraint(SpringLayout.EAST, Spring.constant(availableWidth));
+		
+		// TODO: Not sure about this line.. whether or not this spring layout needs to constrain it's vertical size since we have a scroll bar...
+//		panelConstraints.setConstraint(SpringLayout.SOUTH, Spring.constant(((modelData.size() / 2) * (ROW_HEIGHT + ROW_GAP)) - ROW_GAP));
+
+		m_displayPanel.revalidate();
+		
+		/* When the most recently entered word gets deleted, the part of the word that wasn't covered
+		 * by the popup menu hangs around because m_displayPanel shrinks and THEN revalidates its area.
+		 * For this reason, we need to repaint m_displayPanel's parent. */
+		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+			public void run () {
+				m_displayPanel.getParent().repaint();
+			}
+		});
+	}
+	
+	/************************************************************
+	  					LISTENER FUNCTIONS
+	 ************************************************************/
+	
 	@Override
-	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+	public void actionPerformed(ActionEvent e) {
+		String command = e.getActionCommand();
+		
+		if (command.equals(DELETE_LABEL)) {
+			deleteSelected();
+		}
+		if (command.equals(EDIT_CLUE)) {			
+			editSelectedWordClue();
+		}
+	}
+	
+	@Override
+	public void mousePressed(MouseEvent e) {
+		updateSelection(e.getComponent());
+	}
+	
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		if (e.getButton() == MouseEvent.BUTTON3) {
+			m_popupMenu.show(e.getComponent(), e.getX(), e.getY());
+		}
 	}
 
 	@Override
 	public void popupMenuCanceled(PopupMenuEvent e) {
-		deselectWord();
+		deselectLabels();
 	}
+	
+	/************************************************************
+	  				UNUSED INHERITED FUNCTIONS
+	 ************************************************************/
+	
+	@Override
+	public void mouseReleased(MouseEvent e) {}
+	
+	@Override
+	public void mouseEntered(MouseEvent e) {}
+	
+	@Override
+	public void mouseExited(MouseEvent e) {}
+
+	@Override
+	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {}
+
+	@Override
+	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
 }

@@ -187,17 +187,18 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 		}
 	}
 
-	public void selectWord(int x, int y) {
+	public String selectWord(int x, int y) {
 		for(Word w : m_wordList) {
 			GridWalker walker=new GridWalker(m_grid,w.getX(),w.getY(),w.getDirection());
 			for(int i=0; i<w.toString().length(); i++) {
 				if(walker.x==x && walker.y==y) {
 					m_selectedWord=w;
-					return;
+					return m_selectedWord.toString();
 				}
 				walker.tryNextCell();
 			}
 		}
+		return null;
 	}
 	public boolean isSelected(int x, int y) {
 		if(m_selectedWord!=null) {
