@@ -27,7 +27,6 @@ public class Crossword extends Puzzle {
 	
 	@Override
 	public boolean isLegal() {
-		
 		GridWalker walker = new GridWalker(m_grid);
 		char cellChar;
 		String letters;
@@ -69,7 +68,6 @@ public class Crossword extends Puzzle {
 				
 				// Before going to the new line...
 				if (letters.length() > 1) {
-					if (!m_wordList.isEmpty()) {
 						boolean found = false;
 						for (int i = 0; i < m_wordList.size(); i++) {
 							if (letters.equals(m_wordList.get(i).toString())) {
@@ -77,20 +75,10 @@ public class Crossword extends Puzzle {
 								walker.setWordData(tmpWord, 0, 0);
 								newWordList.add(tmpWord);
 								found = true;
-								if (m_wordList.isEmpty()) { 
-									m_wordList = newWordList;
-									return true; 
-								}
 								break;
 							}
 						}
-						if (!found) { 
-							return false; }
-					}
-					else { 
-						m_wordList = newWordList;
-						return true; 
-						}
+						if (!found) { return false; }
 				}
 			} while (walker.tryNextLine());	
 		}

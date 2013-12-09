@@ -93,7 +93,7 @@ public class Model {
 			return false;
 		}
 		
-		return m_selectedWordList.add(new WordCluePair(word, word + "'s clue"));
+		return m_selectedWordList.add(new WordCluePair(word, "(no clue)"));
 		// TODO: uncomment below, delete above.
 //		return m_selectedWordList.add(new WordCluePair(word));
 	}
@@ -108,8 +108,6 @@ public class Model {
 		return false;
 //		return m_selectedWordList.remove(word);
 	}
-	
-
 	
 	public ArrayList<WordCluePair> getWordCluePairList() {
 		return m_selectedWordList;
@@ -214,7 +212,8 @@ public class Model {
 	}
 	
 	public void setSelected(String text) {
-		Puzzle puzzle=getPuzzle();
-		puzzle.selectWord(text);
+		if (m_selectedPuzzle != null) {
+			m_selectedPuzzle.selectWord(text);
+		}
 	}	
 }
