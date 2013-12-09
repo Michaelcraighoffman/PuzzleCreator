@@ -284,9 +284,8 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_wordEntryFields.add(m_wordEntryField);
 		m_wordsPanel.add(m_wordEntryFields.get(m_Windex));	
 		
-		m_wordLabelList = new WordLabelList(m_model, this, m_wordListPanel);
-		m_wordLabelLists.add(m_wordLabelList);
-
+		//m_wordLabelList = new WordLabelList(m_model, this, m_wordListPanel);
+		m_wordLabelLists.add(new WordLabelList(m_model, this, m_wordListPanel));
         JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new GridLayout(1, 2, 10, 10));
 
@@ -366,7 +365,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_Tabs.addTab("Tab " + (m_Tabs.getTabCount()+1), m_wordsPanels.get(0));
 		setComponentSizes(m_Tabs, 200, 200, 200, 500, 200, 500);
 		add(m_Tabs);
-		tabDeletebox = new JMenuItem("Delete", KeyEvent.VK_D);
+		tabDeletebox = new JMenuItem("Delete");
 		m_Tabs.addChangeListener(new ChangeListener() {
 		    public void stateChanged(ChangeEvent e) {
 		    	updateTab();
@@ -378,6 +377,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		m_wordPopupMenu = new JPopupMenu("Delete");
 		m_wordPopupMenu.add(tabDeletebox);
 		m_Tabs.setComponentPopupMenu(m_wordPopupMenu);
+		m_wordLabelList = m_wordLabelLists.get(0);
 	}
 	
 	/** @author Samuel Wiley */
@@ -601,15 +601,17 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		int value = dlgSave.showOpenDialog(m_wordsPanel);
 		if (value == JFileChooser.APPROVE_OPTION){ 
             file = dlgSave.getSelectedFile();
-		
 			BufferedReader reader = null;
 			try {
 				reader = new BufferedReader(new FileReader(file));
 				String line = null;
 				while ((line = reader.readLine()) != null) {
-					m_wordLabelList.addWord(line);//basic no string tokenizer yet
+					m_wordLabelLists.get(wordDex).addWord(line);
 					m_model.addWord(line);
 				}
+				 
+				
+				
 		
 			}
 			catch(IOException e){
@@ -1448,12 +1450,14 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 			String word = m_wordEntryFields.get(m_Tabs.getSelectedIndex()).getText();
 			if(m_model.getPuzzle()!=null) {
-				  ArrayList<String> old=m_model.getWordList();
-				  m_model.getNewWordList();
-				  for(String s : old) {
-					  m_model.addWord(s);
-				  }
-				  m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getWordList());
+//				  ArrayList<String> old=m_model.getWordList();
+//				  m_model.getNewWordList();
+//				  for(String s : old) {
+//					  m_model.addWord(s);
+//					  m_wordLabelLists.get(m_Tabs.getSelectedIndex()).addWord(s);
+//				  }
+
+				  //m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getWordList());
 				 // m_model.clearSelectedPuzzle();
 			}
 			if (m_model.addWord(word)) {
@@ -1478,25 +1482,24 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			System.err.println("Get next word list.");
 			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getNextWordList());
 		}
-		else if (e.getKeyCode() == KeyEvent.VK_D){
-			System.err.println("Delete current tab.");
-			//m_Tabs.remove(m_Tabs.getSelectedIndex());
-			m_Windex--;
-			wordDex--;
-			updateTab();
-			
-		}
+		
 	}
-	/**Author: Alex*/
+	/**Author: Alex*
+	 * Traverses the tree to find the selectedTab
+	 *  Using an index that tries to track tree progression through higher and lower
+	 *  keys
+	 * */
 	public void updateTab(){
-		System.err.println(Constants.filterWord(m_model.getWordList().toString()));
-		System.err.println(wordDex + ", " + (m_Tabs.getSelectedIndex()));
+		//System.err.println(Constants.filterWord(m_model.getWordList().toString()));
+		System.err.println("Changes" + wordDex + ", " + (m_Tabs.getSelectedIndex()));
+		m_model.clearSelectedPuzzle();
 		if (wordDex ==  m_Tabs.getSelectedIndex())
 			return;
 		while(wordDex > m_Tabs.getSelectedIndex())
 		{
 			wordDex--;
 			System.err.println("Prev");
+			System.err.println(m_model.getWordList());
 			//while(Constants.filterWord(m_model.getWordList().toString()).equals(Constants.filterWord(m_model.getPreviousWordList().toString())))
 			m_model.getPreviousWordList();
 			System.err.println(Constants.filterWord(m_model.getWordList().toString()));
@@ -1507,15 +1510,28 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			wordDex++;
 			System.err.println("Next");
 			//while(Constants.filterWord(m_model.getWordList().toString()).equals(Constants.filterWord(m_model.getNextWordList().toString())))
+			System.err.println(Constants.filterWord(m_model.getWordList().toString()));
 			m_model.getNextWordList();
 			System.err.println(Constants.filterWord(m_model.getWordList().toString()));
 		}
+	//	m_wordLabelList = m_wordLabelLists.get(m_Tabs.getSelectedIndex());
 		if(m_model.getFirstWordPuzzle() != null){
 				m_puzzleIndex = 1;
 				updatePuzzlePanel();
 		}
-		if(m_model.getWordList() != null)
-		;//	m_wordLabelLists.get(m_Tabs.getSelectedIndex()).changeToWordList(m_model.getWordList());
+		else
+			m_puzzleIndex = 0;
+	//	System.err.println(m_model.getWordList());
+		if(m_model.getWordList() != null){
+			//m_wordLabelLists.get(m_Tabs.getSelectedIndex()).updateWordDisplay();
+			//m_wordLabelLists.get(m_Tabs.getSelectedIndex()).remove();
+			ArrayList<String> old=m_model.getWordList();
+			for(int i = 0; i < old.size(); i++) {
+				m_wordLabelLists.get(m_Tabs.getSelectedIndex()).addWord(old.get(i));
+				//m_model.addWord(old.get(i));
+				
+			}
+		}
 	}
 	@Override
 	public void mouseClicked(MouseEvent e) {
@@ -1530,7 +1546,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 			int x=Integer.parseInt(coords[0]);
 			int y=Integer.parseInt(coords[1]);
 			String wordSelected = m_model.getPuzzle().selectWord(x,y);
-			m_wordLabelList.selectWord(wordSelected);
+			m_wordLabelLists.get(m_Tabs.getSelectedIndex()).selectWord(wordSelected);
 			updatePuzzlePanel();
 			return;
 		}
@@ -1550,17 +1566,7 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				break;
 				
 			case NEW_WORDLIST_BUTTON:
-				//m_wordLabelList.changeToWordList(m_model.getNewWordList());
-				m_model.clearSelectedPuzzle();
-				//updatePuzzlePanel();
-				//System.err.println(m_model.getWordList().toString());
-				m_Windex = m_Tabs.getTabCount();		
-				initWordPanel();
-				wordDex = m_Tabs.getTabCount()-1;
-				m_model.getNewWordList();
-				//System.err.println(m_model.getWordList().toString());
-				m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanels.get(m_Windex));
-				wordDex++;
+				newTab();
 				updateTab();
 				break;
 			case NEXT_PUZZLE_BUTTON:
@@ -1586,29 +1592,44 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 				break;
 		}
 	}
+	/**
+	 * Author: Alex
+	 * Creates new tab and wordList
+	 */
+	private void newTab(){
+		//m_wordLabelList.changeToWordList(m_model.getNewWordList());
+		//updatePuzzlePanel();
+		//System.err.println(m_model.getWordList().toString());
+		m_Windex = m_Tabs.getTabCount();		
+		initWordPanel();
+		wordDex = m_Tabs.getTabCount()-1;
+		//System.err.println(wordDex + " wind " + m_Windex);
+		m_model.getNewWordList();
+		//System.err.println(m_model.getWordList().toString());
+		m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanels.get(m_Windex));
+		wordDex++;
+
+	}
 	private void stopStartGeneration() {
 		if(m_model.isPuzzleGeneratorRunning()) {
 			toggleButtonActivation(true);
 			m_model.stopPuzzleGenerator();
 		}
-else {
-			
+		else {
+			ArrayList<String> old=m_model.getWordList();
 			if(m_model.getFirstWordPuzzle() != null){
-				//System.err.println(m_model.getWordList().toString());
-				m_Windex = m_Tabs.getTabCount();		
-				wordDex = m_Tabs.getTabCount()-1;
-				initWordPanel();
-				//System.err.println(m_model.getWordList().toString());
-				//m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanels.get(m_Windex));
-				m_Tabs.add("Tab " + (m_Tabs.getTabCount()+1) , m_wordsPanel);
-				wordDex++;
+				newTab();
+				
+				for(int i = 0; i < old.size(); i++) {
+					m_wordLabelLists.get(m_Windex).addWord(old.get(i));
+					m_model.addWord(old.get(i));
+				}
+				}
+			for(int i = 0; i < old.size(); i++) {
+				m_wordLabelLists.get(m_Windex).addWord(old.get(i));
 			}
 			//TODO This needs to be converted over to work with Tabs
-				ArrayList<String> old=m_model.getWordList();
-				m_model.getNewWordList();
-				for(String s : old) {
-					m_model.addWord(s);
-				}
+				
 		
 			if (!m_model.getWordList().isEmpty()) {
 				toggleButtonActivation(false);
@@ -1625,8 +1646,9 @@ else {
 					System.err.println(m_Windex); 
 			
 				}//if
-				m_wordLabelLists.get(m_Windex).changeToWordList(m_model.getWordList()); // except we should call this after startPuzzleGenerator in case the Model made a new word list
+				
 				//m_wordLabelList.changeToWordList(m_model.getWordList()); // except we should call this after startPuzzleGenerator in case the Model made a new word list
+				m_puzzleIndex = 1;
 				updatePuzzlePanel();
 				updateTab();
 			}
@@ -1698,7 +1720,7 @@ else {
 	
 	@Override
 	public void mousePressed(MouseEvent e) {
-		m_wordLabelList.deselectLabels();
+		m_wordLabelLists.get(m_Tabs.getSelectedIndex()).deselectLabels();
 	}
 	
 	@Override

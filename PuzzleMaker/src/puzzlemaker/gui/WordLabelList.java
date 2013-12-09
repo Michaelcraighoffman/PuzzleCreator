@@ -79,7 +79,8 @@ public class WordLabelList implements ActionListener, MouseListener, PopupMenuLi
 	  * @param word The word to be added.
 	  * @return <b>true</b> if the add was successful. */
 	public boolean addWord(String word) {
-		word = Constants.filterWord(word);
+		if(word != null){//it's weird, but wordLabelList is weird apparently
+			word = Constants.filterWord(word);
 		
 		if (word != null) {
 			JLabel newLabel = new JLabel(word);
@@ -98,8 +99,14 @@ public class WordLabelList implements ActionListener, MouseListener, PopupMenuLi
 				return true;
 			} 
 		}
+		}
 		
 		return false;
+	}
+	public void remove(){
+		m_data.clear();
+		m_displayPanel.removeAll();
+
 	}
 	
 	private void updateSelection(Component cmp) {
@@ -137,6 +144,14 @@ public class WordLabelList implements ActionListener, MouseListener, PopupMenuLi
 			}
 		}
 	}
+ 	
+ 	public void updateWordDisplay(){
+ 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+			public void run () {
+				m_displayPanel.getParent().repaint();
+			}
+		});
+ 	}
 	
 	/** Resets the current word clue by overwriting the current
 	  * auto-generated or user-entered clue.<br>*/

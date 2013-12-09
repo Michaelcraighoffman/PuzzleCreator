@@ -98,6 +98,7 @@ public class Model {
 //		return m_selectedWordList.add(new WordCluePair(word));
 	}
 	
+	
 	public boolean removeWord(String word) {
 		for (WordCluePair w : m_selectedWordList) {
 			if (w.getWord().equals(word)) {
