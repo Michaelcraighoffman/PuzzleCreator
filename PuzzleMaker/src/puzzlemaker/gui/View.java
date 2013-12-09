@@ -71,6 +71,7 @@ import puzzlemaker.model.Model;
 import puzzlemaker.puzzles.Crossword;
 import puzzlemaker.puzzles.Puzzle;
 import puzzlemaker.puzzles.Word;
+import puzzlemaker.tools.WordCluePair;
 import puzzlemaker.tools.grid.Grid;
 
 public class View extends JFrame implements ActionListener, Printable, KeyListener, MouseListener, WindowListener {
@@ -1199,8 +1200,6 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 								htmlpuz.append(newLine + "</tr>");
 								htmlsoln.append(newLine + "</tr>");
 							}
-							htmlpuz.append(newLine + "</table>");
-							htmlsoln.append(newLine + "</table>");
 
 						} else { // wordsearch
 
@@ -1258,9 +1257,9 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 						txtpuz.append("Word List:" + newLine);
 						txtsoln.append("Word List:" + newLine);
 						htmlpuz.append(newLine
-								+ "<strong><p>Word List:</p></strong>");
+								+ "<tr></tr><tr><td><strong>Word List:</strong></td></tr>");
 						htmlsoln.append(newLine
-								+ "<strong><p>Word List:</p></strong>");
+								+ "<tr></tr><tr><td><strong>Word List:</strong></td></tr>");
 						
 						// Original:
 //						ArrayList<String> word_list = m_model.getWordList();
@@ -1279,21 +1278,35 @@ public class View extends JFrame implements ActionListener, Printable, KeyListen
 						
 						// Alternative:
 						ArrayList<Word> word_list = m_model.getPuzzle().getWordList();
+						ArrayList<WordCluePair> pair_list = m_model.getWordCluePairList();
 						for (int i = 0; i < word_list.size(); i++) {
-
-							csvpuz.append(word_list.get(i).toStringPretty() + newLine);
-							csvsoln.append(word_list.get(i).toStringPretty() + newLine);
-
-							txtpuz.append(word_list.get(i).toStringPretty() + newLine);
-							txtsoln.append(word_list.get(i).toStringPretty() + newLine);
-
-							htmlpuz.append(newLine + "<p>" + word_list.get(i).toStringPretty() + "</p>");
-							htmlsoln.append(newLine + "<p>" + word_list.get(i).toStringPretty() + "</p>");
+							
+							csvpuz.append(pair_list.get(i).getWord());
+							csvsoln.append(word_list.get(i).toStringPretty());
+							txtpuz.append(pair_list.get(i).getWord());
+							txtsoln.append(word_list.get(i).toStringPretty());
+							htmlpuz.append(newLine + "<tr><td>" + pair_list.get(i).getWord());
+							htmlsoln.append(newLine + "<tr><td>" + word_list.get(i).toStringPretty());
+							
+							if(puzzleType.equalsIgnoreCase("Crossword:")){
+								csvpuz.append(":  " + pair_list.get(i).getClue());
+								csvsoln.append(":  " + pair_list.get(i).getClue());								
+								txtpuz.append(":  " + pair_list.get(i).getClue());
+								txtsoln.append(":  " + pair_list.get(i).getClue());
+								htmlpuz.append(":  " + pair_list.get(i).getClue());
+								htmlsoln.append(":  " + pair_list.get(i).getClue());								
+							}
+							
+							csvpuz.append(newLine);
+							csvsoln.append(newLine);							
+							txtpuz.append(newLine);
+							txtsoln.append(newLine);							
+							htmlpuz.append("</td></tr>");
+							htmlsoln.append("</td></tr>");
 						}
 						
-						
-						htmlpuz.append(newLine + "</body></html>");
-						htmlsoln.append(newLine + "</body></html>");
+						htmlpuz.append(newLine + "</table></body></html>");
+						htmlsoln.append(newLine + "</table></body></html>");
 
 						String solution = "";
 						String blank = "";

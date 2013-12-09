@@ -104,7 +104,7 @@ public class WordLabelList implements ActionListener, MouseListener, PopupMenuLi
 	
 	private void updateSelection(Component cmp) {
 		deselectLabels();
-		
+
 		for (int i = 0; i < m_displayPanel.getComponentCount(); i++) {
 			if (m_displayPanel.getComponent(i).equals(cmp)) {
 				if ((i & 1) == 0) {
@@ -122,7 +122,7 @@ public class WordLabelList implements ActionListener, MouseListener, PopupMenuLi
 					m_model.getPuzzle().selectWord(m_selectedWordLabel.getText());
 					m_view.updatePuzzlePanel();
 				}
-				
+
 				return;
 			}
 		}
@@ -141,7 +141,7 @@ public class WordLabelList implements ActionListener, MouseListener, PopupMenuLi
 	/** Resets the current word clue by overwriting the current
 	  * auto-generated or user-entered clue.<br>*/
 	public boolean editSelectedWordClue() {
-		String newClue = JOptionPane.showInputDialog(m_view, "Enter a new clue:");
+		String newClue = JOptionPane.showInputDialog(m_view, "Enter a new clue:", m_model.getWordCluePairList().get(m_data.indexOf(m_selectedWordLabel) / 2).getClue());
 		if (newClue == null) {
 			return false;
 		}
@@ -185,6 +185,12 @@ public class WordLabelList implements ActionListener, MouseListener, PopupMenuLi
 		setStyle(m_selectedClueLabel, Font.PLAIN);
 		m_selectedWordLabel = null;
 		m_selectedClueLabel = null;
+		
+		
+		if (m_model.getPuzzle() != null) {
+			m_model.getPuzzle().selectWord("");
+			m_view.updatePuzzlePanel();
+		}
 		return;
 	}
 	

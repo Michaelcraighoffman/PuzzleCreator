@@ -178,12 +178,16 @@ public abstract class Puzzle implements Comparable<Puzzle> {
 		}
 	}
 
-	public void selectWord(String text) {
+	public void selectWord(String text) {	
 		for(Word w : m_wordList) {
 			if(w.toString().equals(text)) {
 				m_selectedWord=w;
 				return;
 			}
+		}
+		if(text=="") {
+			m_selectedWord=null;
+			return;
 		}
 	}
 
