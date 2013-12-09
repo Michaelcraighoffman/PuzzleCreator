@@ -141,11 +141,12 @@ public class WordLabelList implements ActionListener, MouseListener, PopupMenuLi
 	/** Resets the current word clue by overwriting the current
 	  * auto-generated or user-entered clue.<br>*/
 	public boolean editSelectedWordClue() {
-		String newClue = JOptionPane.showInputDialog(m_view, "Enter a new clue:", m_model.getWordCluePairList().get(m_data.indexOf(m_selectedWordLabel) / 2).getClue());
+		WordCluePair wcp = m_model.getWordCluePairList().get(m_data.indexOf(m_selectedWordLabel) / 2);
+		String newClue = JOptionPane.showInputDialog(m_view, "Edit the clue for \"" + wcp.getWord() + "\":", wcp.getClue());
 		if (newClue == null) {
 			return false;
 		}
-		m_model.getWordCluePairList().get(m_data.indexOf(m_selectedWordLabel) / 2).setClue(newClue);
+		wcp.setClue(newClue);
 		deselectLabels();
 		doLayout();
 		
